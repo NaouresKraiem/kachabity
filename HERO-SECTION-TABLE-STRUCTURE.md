@@ -8,10 +8,14 @@
 
 | sort_order | Purpose | Example |
 |-----------|---------|---------|
-| 0-1 | Carousel slides | Main product showcase |
-| 2 | Left sidebar | Brand message |
-| 3-4 | Right promo cards | Deals & offers |
-| 5+ | More carousel slides | Additional products |
+| 0-1 | Right promo cards (FIXED) | Big Deal, New Item |
+| 2 | Left sidebar card | Brand message |
+| 3+ | Carousel slides (INFINITE) | Add as many as you want! |
+
+**Benefits:**
+- ✅ Right cards (0-1) are fixed promotional spots
+- ✅ Carousel (3+) is unlimited - add 3, 5, 10, 100 slides!
+- ✅ Left sidebar (2) stays consistent
 
 ### Advantages:
 ✅ **Simple** - One table, easy to manage  
@@ -25,9 +29,9 @@
 
 ### Code Example:
 ```typescript
-const carouselSlides = heroData.filter(h => h.sort_order <= 1);
+const rightCards = heroData.filter(h => h.sort_order === 0 || h.sort_order === 1);
 const leftCard = heroData.find(h => h.sort_order === 2);
-const rightCards = heroData.filter(h => h.sort_order >= 3 && h.sort_order <= 4);
+const carouselSlides = heroData.filter(h => h.sort_order >= 3); // Infinite!
 ```
 
 ---

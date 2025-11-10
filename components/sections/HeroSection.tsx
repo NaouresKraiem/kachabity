@@ -48,9 +48,22 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
         setMounted(true);
     }, []);
 
-    const carouselSlides = heroData.length > 0 && heroData[0] ? heroData : [];
+    // NEW STRUCTURE:
+    // sort_order 0-1: Right promotional cards (fixed - always 2 cards)
+    // sort_order 2: Left sidebar card
+    // sort_order 3+: Carousel slides (infinite - add as many as you want)
+    
+    const rightCards = heroData.filter(h => h.sort_order === 0 || h.sort_order === 1).sort((a, b) => a.sort_order - b.sort_order);
+    const leftCard = heroData.find(h => h.sort_order === 2) || {
+        title: "Where",
+        subtitle: "Tradition Meets Elegance",
+        left_image_url: "/assets/images/default-product.jpg",
+        cta_label: "Order Now",
+        bg_color: "#ACDEE6"
+    };
+    const carouselSlides = heroData.filter(h => h.sort_order >= 3).sort((a, b) => a.sort_order - b.sort_order);
+    
     const currentSlideData = carouselSlides[currentSlide];
-
 
     useEffect(() => {
         if (!mounted || carouselSlides.length === 0) return;
@@ -72,19 +85,6 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     const goToSlide = (index: number) => {
         setCurrentSlide(index);
     };
-
-
-    const leftCard = heroData[1] || {
-        title: "Where",
-        subtitle: "Tradition Meets Elegance",
-        left_image_url: "/assets/images/default-product.jpg",
-        cta_label: "Order Now",
-        bg_color: "#ACDEE6"
-    };
-
-    // Right cards from database (indices 2 and 3) with fallback
-    const rightCards = heroData.slice(2, 4).length > 0
-        ? heroData.slice(2, 4):[]
     
 
     return (
