@@ -103,7 +103,7 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
     return (
         <section className="w-full py-12 px-4 bg-white">
             {/* Decorative Flower */}
-            <div className="z-9999 absolute right-0 top-300 w-64 h-64  pointer-events-none">
+            <div className="z-9999 absolute right-0 top-310 w-64 h-64  pointer-events-none">
                 <Image
                     src="/assets/images/flowerFloated.svg"
                     alt="Decorative flower"

@@ -16,6 +16,7 @@ import Footer from "@/components/footer/Footer";
 import CartItem from "@/components/cart/CartItem";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import supabase from "@/lib/supabaseClient";
+import { message } from "antd";
 
 const content = {
     en: {
@@ -318,7 +319,7 @@ export default function CheckoutPage() {
 
     const onSubmit = async (formData: CheckoutFormData) => {
         if (!acceptPolicy) {
-            alert(text.acknowledgePolicy);
+            message.error(text.acknowledgePolicy);
             return;
         }
 
@@ -346,7 +347,7 @@ export default function CheckoutPage() {
             const { order, error } = await createOrder(orderData);
 
             if (error || !order) {
-                alert("Failed to create order. Please try again.");
+                message.error("Failed to create order. Please try again.");
                 setIsProcessing(false);
                 return;
             }
@@ -421,8 +422,7 @@ export default function CheckoutPage() {
             setOrderConfirmed(true);
             setCurrentStep(3);
         } catch (error) {
-            console.error("Order error:", error);
-            alert("An error occurred. Please try again.");
+            message.error("An error occurred. Please try again.");
             setIsProcessing(false);
         }
     };

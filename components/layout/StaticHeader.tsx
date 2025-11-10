@@ -309,7 +309,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                         ))}
                     </nav>
                     <div className="cursor-pointer flex items-center space-x-2 border border-[#FFFFFF] px-4 py-2 rounded-[11px]" onClick={() => router.push('/products')} >
-                        <Image src="/assets/images/icons/cup.svg" alt="handmade" width={16} height={16} />
+                        <Image src="/assets/images/icons/Cup.svg" alt="handmade" width={16} height={16} />
                         <span className="font-medium">100% handmade</span>
                     </div>
                 </div>
