@@ -84,33 +84,8 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
 
     // Right cards from database (indices 2 and 3) with fallback
     const rightCards = heroData.slice(2, 4).length > 0
-        ? heroData.slice(2, 4)
-        : [
-            {
-                id: "fallback-1",
-                title: "Big deal",
-                subtitle: "Big deal Kachabia",
-                sub_subtitle: "Buy 1 Get 1",
-                cta_label: "Buy Now",
-                cta_href: "/products",
-                image_url: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400",
-                bg_color: "#FDE0E6",
-                is_active: true,
-                sort_order: 3
-            },
-            {
-                id: "fallback-2",
-                title: "New",
-                subtitle: "New Item Name",
-                sub_subtitle: "Home Accessories",
-                cta_label: "Shop Now",
-                cta_href: "/products",
-                image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
-                bg_color: "#D4F4DD",
-                is_active: true,
-                sort_order: 4
-            }
-        ];
+        ? heroData.slice(2, 4):[]
+    
 
     return (
         <section className="w-full py-8 px-4" aria-label="Featured Products">
@@ -248,8 +223,8 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                         {/* Small Cards Under Carousel */}
                         <div className="mt-6 grid grid-cols-3 gap-4">
                             {smallCardsData.slice(0, 3).map((card) => (
-                                <div 
-                                    key={card.id} 
+                                <div
+                                    key={card.id}
                                     className="relative rounded-2xl p-4 h-32 flex flex-col justify-between hover:shadow-md transition overflow-hidden"
                                     style={{ backgroundColor: card.bg_color }}
                                 >
@@ -263,26 +238,26 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                                 className="object-cover"
                                             />
                                             {/* Light overlay for text readability */}
-                                            <div className="absolute inset-0 bg-white/50"></div>
+                                            { <div className="absolute inset-0 bg-white/50"></div>}
                                         </div>
                                     )}
 
                                     {/* Content */}
                                     <div className="flex-1 flex flex-col justify-center relative z-10">
-                                        <h3 
+                                        <h3
                                             className="text-sm font-bold mb-1"
                                             style={{ color: card.text_color || '#2b1a16' }}
                                         >
                                             {card.title}
                                         </h3>
-                                        <p 
+                                        <p
                                             className="text-xs"
                                             style={{ color: card.text_color ? `${card.text_color}CC` : '#6b4e45' }}
                                         >
                                             {card.subtitle}
                                         </p>
                                     </div>
-                                    <div className="flex justify-center relative z-10">
+                                    {card.image_url && <div className="flex justify-center relative z-10">
                                         <div className="relative w-12 h-12">
                                             <Image
                                                 src={card.image_url}
@@ -291,7 +266,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                                 className="object-cover rounded-lg"
                                             />
                                         </div>
-                                    </div>
+                                    </div>}
                                 </div>
                             ))}
                         </div>
@@ -346,8 +321,8 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                         ))}
                         <div className="grid grid-cols-2 gap-4 h-[167px]">
                             {smallCardsData.slice(3, 5).map((card) => (
-                                <div 
-                                    key={card.id} 
+                                <div
+                                    key={card.id}
                                     className="relative rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition h-32 overflow-hidden"
                                     style={{ backgroundColor: card.bg_color }}
                                 >
@@ -367,20 +342,20 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
 
                                     {/* Content */}
                                     <div className="flex-1 flex flex-col justify-center relative z-10">
-                                        <h3 
+                                        <h3
                                             className="text-lg font-bold mb-1"
                                             style={{ color: card.text_color || '#2b1a16' }}
                                         >
                                             {card.title}
                                         </h3>
-                                        <p 
+                                        <p
                                             className="text-sm"
                                             style={{ color: card.text_color ? `${card.text_color}CC` : '#6b4e45' }}
                                         >
                                             {card.subtitle}
                                         </p>
                                     </div>
-                                    <div className="flex justify-center relative z-10">
+                                    {card.image_url && <div className="flex justify-center relative z-10">
                                         <div className="relative w-12 h-12">
                                             <Image
                                                 src={card.image_url}
@@ -389,7 +364,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                                 className="object-cover rounded-lg"
                                             />
                                         </div>
-                                    </div>
+                                    </div>}
                                 </div>
                             ))}
 
