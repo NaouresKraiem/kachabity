@@ -26,6 +26,8 @@ type SmallCardData = {
     subtitle: string;
     image_url: string;
     bg_color: string;
+    background_image_url?: string; // Optional background image
+    text_color?: string; // Custom text color
     is_active: boolean;
     sort_order: number;
 };
@@ -115,7 +117,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
             <div className="max-w-7xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-2">
-                        <div 
+                        <div
                             className="relative rounded-2xl px-3 py-9 h-[500px] flex flex-col justify-between items-center overflow-hidden"
                             style={{ backgroundColor: leftCard?.bg_color || '#ACDEE6' }}
                         >
@@ -152,8 +154,8 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                 </div>
                             </div>
 
-                            <button 
-                                onClick={() => router.push('/products')} 
+                            <button
+                                onClick={() => router.push('/products')}
                                 className="relative z-10 bg-white cursor-pointer text-[#2b1a16] px-2 py-2 rounded-[8px] text-sm font-medium hover:bg-gray-50 transition"
                             >
                                 {leftCard.cta_label}
@@ -246,16 +248,41 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                         {/* Small Cards Under Carousel */}
                         <div className="mt-6 grid grid-cols-3 gap-4">
                             {smallCardsData.slice(0, 3).map((card) => (
-                                <div key={card.id} className={`${card.bg_color} rounded-2xl p-4 h-32 flex flex-col justify-between hover:shadow-md transition`}>
-                                    <div className="flex-1 flex flex-col justify-center">
-                                        <h3 className="text-sm font-bold text-[#2b1a16] mb-1">
+                                <div 
+                                    key={card.id} 
+                                    className="relative rounded-2xl p-4 h-32 flex flex-col justify-between hover:shadow-md transition overflow-hidden"
+                                    style={{ backgroundColor: card.bg_color }}
+                                >
+                                    {/* Background Image (optional) */}
+                                    {card.background_image_url && (
+                                        <div className="absolute inset-0">
+                                            <Image
+                                                src={card.background_image_url}
+                                                alt="Background"
+                                                fill
+                                                className="object-cover"
+                                            />
+                                            {/* Light overlay for text readability */}
+                                            <div className="absolute inset-0 bg-white/50"></div>
+                                        </div>
+                                    )}
+
+                                    {/* Content */}
+                                    <div className="flex-1 flex flex-col justify-center relative z-10">
+                                        <h3 
+                                            className="text-sm font-bold mb-1"
+                                            style={{ color: card.text_color || '#2b1a16' }}
+                                        >
                                             {card.title}
                                         </h3>
-                                        <p className="text-[#6b4e45] text-xs">
+                                        <p 
+                                            className="text-xs"
+                                            style={{ color: card.text_color ? `${card.text_color}CC` : '#6b4e45' }}
+                                        >
                                             {card.subtitle}
                                         </p>
                                     </div>
-                                    <div className="flex justify-center">
+                                    <div className="flex justify-center relative z-10">
                                         <div className="relative w-12 h-12">
                                             <Image
                                                 src={card.image_url}
@@ -271,8 +298,8 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                     </div>
                     <div className="lg:col-span-3 space-y-4">
                         {rightCards.map((card, index) => (
-                            <div 
-                                key={card.id || index} 
+                            <div
+                                key={card.id || index}
                                 onClick={() => router.push(card.cta_href || '/products')}
                                 className="relative rounded-2xl p-6 h-[167px] flex items-center cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
                                 style={{ backgroundColor: card.bg_color || (index === 0 ? '#FDE0E6' : '#D4F4DD') }}
@@ -319,16 +346,41 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                         ))}
                         <div className="grid grid-cols-2 gap-4 h-[167px]">
                             {smallCardsData.slice(3, 5).map((card) => (
-                                <div key={card.id} className={`${card.bg_color} rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition h-32`}>
-                                    <div className="flex-1 flex flex-col justify-center">
-                                        <h3 className="text-lg font-bold text-[#2b1a16] mb-1">
+                                <div 
+                                    key={card.id} 
+                                    className="relative rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition h-32 overflow-hidden"
+                                    style={{ backgroundColor: card.bg_color }}
+                                >
+                                    {/* Background Image (optional) */}
+                                    {card.background_image_url && (
+                                        <div className="absolute inset-0">
+                                            <Image
+                                                src={card.background_image_url}
+                                                alt="Background"
+                                                fill
+                                                className="object-cover"
+                                            />
+                                            {/* Light overlay for text readability */}
+                                            <div className="absolute inset-0 bg-white/50"></div>
+                                        </div>
+                                    )}
+
+                                    {/* Content */}
+                                    <div className="flex-1 flex flex-col justify-center relative z-10">
+                                        <h3 
+                                            className="text-lg font-bold mb-1"
+                                            style={{ color: card.text_color || '#2b1a16' }}
+                                        >
                                             {card.title}
                                         </h3>
-                                        <p className="text-[#6b4e45] text-sm">
+                                        <p 
+                                            className="text-sm"
+                                            style={{ color: card.text_color ? `${card.text_color}CC` : '#6b4e45' }}
+                                        >
                                             {card.subtitle}
                                         </p>
                                     </div>
-                                    <div className="flex justify-center">
+                                    <div className="flex justify-center relative z-10">
                                         <div className="relative w-12 h-12">
                                             <Image
                                                 src={card.image_url}
