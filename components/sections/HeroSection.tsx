@@ -13,7 +13,9 @@ type HeroData = {
     cta_label?: string;
     cta_href?: string;
     image_url?: string;
-    background_image_url?: string; // NEW: Separate background image
+    background_image_url?: string; // Separate background image
+    bg_color?: string; // Background color (e.g., 'bg-pink-100', '#ACDEE6')
+    text_color?: string; // Text color for better contrast
     is_active: boolean;
     sort_order: number;
 };
@@ -48,14 +50,14 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     const currentSlideData = carouselSlides[currentSlide];
 
 
-    // useEffect(() => {
-    //     if (!mounted || carouselSlides.length === 0) return;
+    useEffect(() => {
+        if (!mounted || carouselSlides.length === 0) return;
 
-    //     const interval = setInterval(() => {
-    //         setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
-    //     }, 5000);
-    //     return () => clearInterval(interval);
-    // }, [carouselSlides.length, mounted]);
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [carouselSlides.length, mounted]);
 
     const nextSlide = () => {
         setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
@@ -70,56 +72,90 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     };
 
 
-    const leftCard = heroData[1]
-   
+    const leftCard = heroData[1] || {
+        title: "Where",
+        subtitle: "Tradition Meets Elegance",
+        left_image_url: "/assets/images/default-product.jpg",
+        cta_label: "Order Now",
+        bg_color: "#ACDEE6"
+    };
 
-    const rightCards = [
-        {
-            title: "Big deal Kachabia",
-            subtitle: "Buy 1 Get 1",
-            cta_label: "Buy Now",
-            cta_href: "#products",
-            image_url: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400",
-            bgColor: "bg-pink-100"
-        },
-        {
-            title: "New Item Name",
-            subtitle: "Home Accesoire",
-            cta_label: "Shop Now",
-            cta_href: "#products",
-            image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
-            bgColor: "bg-green-100"
-        },
-
-    ];
+    // Right cards from database (indices 2 and 3) with fallback
+    const rightCards = heroData.slice(2, 4).length > 0
+        ? heroData.slice(2, 4)
+        : [
+            {
+                id: "fallback-1",
+                title: "Big deal",
+                subtitle: "Big deal Kachabia",
+                sub_subtitle: "Buy 1 Get 1",
+                cta_label: "Buy Now",
+                cta_href: "/products",
+                image_url: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400",
+                bg_color: "#FDE0E6",
+                is_active: true,
+                sort_order: 3
+            },
+            {
+                id: "fallback-2",
+                title: "New",
+                subtitle: "New Item Name",
+                sub_subtitle: "Home Accessories",
+                cta_label: "Shop Now",
+                cta_href: "/products",
+                image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
+                bg_color: "#D4F4DD",
+                is_active: true,
+                sort_order: 4
+            }
+        ];
 
     return (
         <section className="w-full py-8 px-4" aria-label="Featured Products">
             <div className="max-w-7xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-2">
-                        <div className="bg-[#ACDEE6] rounded-2xl px-3 py-9  h-[500px] flex flex-col justify-between items-center">
-                            <div className='justify-between items-center flex flex-col align-baseline'>
+                        <div 
+                            className="relative rounded-2xl px-3 py-9 h-[500px] flex flex-col justify-between items-center overflow-hidden"
+                            style={{ backgroundColor: leftCard?.bg_color || '#ACDEE6' }}
+                        >
+                            {/* Background Image (optional) */}
+                            {leftCard?.background_image_url && (
+                                <div className="absolute inset-0">
+                                    <Image
+                                        src={leftCard.background_image_url}
+                                        alt="Background"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                    {/* Overlay for text readability */}
+                                    <div className="absolute inset-0 bg-black/20"></div>
+                                </div>
+                            )}
 
-                                <div className="text-sm  font-medium mb-2">Where</div>
-                                <div className="text-[16px] font-bold text-black mb-2">Tradition</div>
-                                <div className="text-[16px] font-semimedium text-black mb-2">Meets</div>
-                                <div className="text-[16px] font-medium text-black mb-2">Elegance</div>
-
-                                {/* <h3 className="text-[20px] font-semibold text-[#000000] mb-4">{leftCard.subtitle}</h3> */}
-
+                            {/* Content */}
+                            <div className='relative z-10 justify-between items-center flex flex-col align-baseline'>
+                                <div className="text-sm font-medium mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>Where</div>
+                                <div className="text-[16px] font-bold text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>Tradition</div>
+                                <div className="text-[16px] font-semimedium text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>Meets</div>
+                                <div className="text-[16px] font-medium text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>Elegance</div>
                             </div>
-                            <div className="flex justify-center">
+
+                            <div className="relative z-10 flex justify-center">
                                 <div className="relative w-32 h-32">
                                     <Image
-                                        src={leftCard.left_image_url || "/vercel.svg"}
+                                        src={leftCard.left_image_url}
                                         alt={`${leftCard.title} - Premium handcrafted traditional product`}
                                         fill
                                         className="object-cover rounded-lg"
                                     />
                                 </div>
                             </div>
-                            <button onClick={() => router.push('/products')} className="bg-white cursor-pointer text-[#2b1a16] px-2 py-2 rounded-[8px] text-sm font-medium hover:bg-gray-50 transition">
+
+                            <button 
+                                onClick={() => router.push('/products')} 
+                                className="relative z-10 bg-white cursor-pointer text-[#2b1a16] px-2 py-2 rounded-[8px] text-sm font-medium hover:bg-gray-50 transition"
+                            >
                                 {leftCard.cta_label}
                             </button>
                         </div>
@@ -152,7 +188,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                         </h1>
                                         <div className="text-sm text-[#000000] font-medium mb-5">{currentSlideData.sub_subtitle}</div>
 
-                                        <button 
+                                        <button
                                             onClick={() => router.push(currentSlideData.cta_href || '/products')}
                                             className="bg-[#7a3b2e] text-white px-3 py-2 rounded-[8px] border border-black text-lg font-medium hover:bg-[#5e2d23] transition cursor-pointer"
                                         >
@@ -160,7 +196,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                         </button>
                                     </div>
                                     {/* Product/Person Image (with transparent background) */}
-                                    <div className="flex-1 flex justify-end items-end">
+                                    {currentSlideData?.image_url && <div className="flex-1 flex justify-end items-end">
                                         <div className="relative w-[300px] h-[350px]">
                                             <Image
                                                 src={currentSlideData.image_url || "/vercel.svg"}
@@ -170,7 +206,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                                 priority
                                             />
                                         </div>
-                                    </div>
+                                    </div>}
                                 </div>
                             )}
                             {mounted && carouselSlides.length > 0 && (
@@ -235,27 +271,50 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                     </div>
                     <div className="lg:col-span-3 space-y-4">
                         {rightCards.map((card, index) => (
-                            <div key={index} className={`${card.bgColor} rounded-2xl p-6 h-[167px] flex items-center`}>
-                                <div className="flex-1">
-                                    <div className="text-sm text-[#7a3b2e] font-medium mb-1">
-                                        {index === 0 ? "Big deal" : "New"}
+                            <div 
+                                key={card.id || index} 
+                                onClick={() => router.push(card.cta_href || '/products')}
+                                className="relative rounded-2xl p-6 h-[167px] flex items-center cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                                style={{ backgroundColor: card.bg_color || (index === 0 ? '#FDE0E6' : '#D4F4DD') }}
+                            >
+                                {/* Background Image (optional) */}
+                                {card.background_image_url && (
+                                    <div className="absolute inset-0">
+                                        <Image
+                                            src={card.background_image_url}
+                                            alt="Background"
+                                            fill
+                                            className="object-cover"
+                                        />
+                                        {/* Overlay for text readability */}
+                                        <div className="absolute inset-0 bg-white/60"></div>
                                     </div>
-                                    <h3 className="text-lg font-bold text-[#2b1a16] mb-2">
-                                        {card.title}
-                                    </h3>
-                                    <p className="text-[#6b4e45] mb-4 text-sm">
-                                        {card.subtitle}
-                                    </p>
+                                )}
 
+                                {/* Content */}
+                                <div className="flex-1 relative z-10">
+                                    <div className="text-sm text-[#7a3b2e] font-medium mb-1" style={{ color: card.text_color || '#7a3b2e' }}>
+                                        {card.title || (index === 0 ? "Big deal" : "New")}
+                                    </div>
+                                    <h3 className="text-lg font-bold text-[#2b1a16] mb-2" style={{ color: card.text_color || '#2b1a16' }}>
+                                        {card.subtitle}
+                                    </h3>
+                                    <p className="text-[#6b4e45] mb-4 text-sm" style={{ color: card.text_color ? `${card.text_color}99` : '#6b4e45' }}>
+                                        {card.sub_subtitle}
+                                    </p>
                                 </div>
-                                <div className="w-20 h-20 relative">
-                                    <Image
-                                        src={card.image_url}
-                                        alt={card.title}
-                                        fill
-                                        className="object-cover rounded-lg"
-                                    />
-                                </div>
+
+                                {/* Product Image */}
+                                {card.image_url && (
+                                    <div className="w-20 h-20 relative z-10">
+                                        <Image
+                                            src={card.image_url}
+                                            alt={card.subtitle || card.title || "Product"}
+                                            fill
+                                            className="object-cover rounded-lg"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ))}
                         <div className="grid grid-cols-2 gap-4 h-[167px]">
