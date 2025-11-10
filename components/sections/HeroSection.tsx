@@ -13,6 +13,7 @@ type HeroData = {
     cta_label?: string;
     cta_href?: string;
     image_url?: string;
+    background_image_url?: string; // NEW: Separate background image
     is_active: boolean;
     sort_order: number;
 };
@@ -125,10 +126,10 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                     </div>
                     <div className="lg:col-span-7 relative">
                         <div className="relative rounded-2xl overflow-hidden h-[350px]">
-                            {/* Background Image */}
+                            {/* Background Image - Use background_image_url if available, otherwise use image_url */}
                             <div className="absolute inset-0">
                                 <Image
-                                    src={currentSlideData?.image_url || "/assets/images/hero-bg.jpg"}
+                                    src={currentSlideData?.background_image_url || currentSlideData?.image_url || "/assets/images/hero-bg.jpg"}
                                     alt="Background"
                                     fill
                                     className="object-cover"
@@ -151,13 +152,14 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                         </h1>
                                         <div className="text-sm text-[#000000] font-medium mb-5">{currentSlideData.sub_subtitle}</div>
 
-                                        <button
+                                        <button 
                                             onClick={() => router.push(currentSlideData.cta_href || '/products')}
                                             className="bg-[#7a3b2e] text-white px-3 py-2 rounded-[8px] border border-black text-lg font-medium hover:bg-[#5e2d23] transition cursor-pointer"
                                         >
                                             {currentSlideData.cta_label}
                                         </button>
                                     </div>
+                                    {/* Product/Person Image (with transparent background) */}
                                     <div className="flex-1 flex justify-end items-end">
                                         <div className="relative w-[300px] h-[350px]">
                                             <Image

@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
                 console.log('Gmail User:', process.env.GMAIL_USER);
                 console.log('Sending welcome email to:', email);
-                
+
                 await transporter.sendMail({
                     from: process.env.GMAIL_USER,
                     to: email,
