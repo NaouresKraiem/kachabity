@@ -7,7 +7,7 @@ import StaticHeader from "@/components/layout/StaticHeader";
 import Footer from "@/components/footer/Footer";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProductListCard from "@/components/products/ProductListCard";
-import { Skeleton, Card } from "antd";
+import { Skeleton, Card, message } from "antd";
 import { useCart } from "@/lib/cart-context";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 
@@ -265,7 +265,7 @@ export default function ProductsPage() {
     const toggleWishlist = async (productId: string) => {
         // If user not logged in, show message or redirect
         if (!userId) {
-            alert("Please login to save favorites");
+            message.error("Please login to save favorites");
             return;
         }
 

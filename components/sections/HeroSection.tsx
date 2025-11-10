@@ -69,28 +69,42 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     };
 
 
-    const leftCard = heroData[1]
-    console.log('leftCard', leftCard)
+    // Left card (index 1 in heroData)
+    const leftCard = heroData[1] || {
+        title: "Where",
+        subtitle: "Tradition Meets Elegance",
+        left_image_url: "/assets/images/default-product.jpg",
+        cta_label: "Order Now"
+    };
 
-    const rightCards = [
-        {
-            title: "Big deal Kachabia",
-            subtitle: "Buy 1 Get 1",
-            cta_label: "Buy Now",
-            cta_href: "#products",
-            image_url: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400",
-            bgColor: "bg-pink-100"
-        },
-        {
-            title: "New Item Name",
-            subtitle: "Home Accesoire",
-            cta_label: "Shop Now",
-            cta_href: "#products",
-            image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
-            bgColor: "bg-green-100"
-        },
-
-    ];
+    // Right cards (indices 2 and 3 in heroData)
+    const rightCards = heroData.slice(2, 4).length > 0
+        ? heroData.slice(2, 4).map((hero, index) => ({
+            title: hero.subtitle || hero.title,
+            subtitle: hero.sub_subtitle || "Shop Now",
+            cta_label: hero.cta_label || "Shop Now",
+            cta_href: hero.cta_href || "/products",
+            image_url: hero.image_url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
+            bgColor: index === 0 ? "bg-pink-100" : "bg-green-100"
+        }))
+        : [
+            {
+                title: "Big deal Kachabia",
+                subtitle: "Buy 1 Get 1",
+                cta_label: "Buy Now",
+                cta_href: "/products",
+                image_url: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400",
+                bgColor: "bg-pink-100"
+            },
+            {
+                title: "New Collection",
+                subtitle: "Home Accessories",
+                cta_label: "Shop Now",
+                cta_href: "/products",
+                image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
+                bgColor: "bg-green-100"
+            }
+        ];
 
     return (
         <section className="w-full py-8 px-4" aria-label="Featured Products">
@@ -138,7 +152,10 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                         </h1>
                                         <div className="text-sm text-[#000000] font-medium mb-5">{currentSlideData.sub_subtitle}</div>
 
-                                        <button className="bg-[#7a3b2e] text-white px-3 py-2 rounded-[8px] border border-black text-lg font-medium hover:bg-[#5e2d23] transition">
+                                        <button 
+                                            onClick={() => router.push(currentSlideData.cta_href || '/products')}
+                                            className="bg-[#7a3b2e] text-white px-3 py-2 rounded-[8px] border border-black text-lg font-medium hover:bg-[#5e2d23] transition cursor-pointer"
+                                        >
                                             {currentSlideData.cta_label}
                                         </button>
                                     </div>
@@ -217,7 +234,11 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                     </div>
                     <div className="lg:col-span-3 space-y-4">
                         {rightCards.map((card, index) => (
-                            <div key={index} className={`${card.bgColor} rounded-2xl p-6 h-[167px] flex items-center`}>
+                            <div 
+                                key={index} 
+                                onClick={() => router.push(card.cta_href || '/products')}
+                                className={`${card.bgColor} rounded-2xl p-6 h-[167px] flex items-center cursor-pointer hover:shadow-lg transition-shadow`}
+                            >
                                 <div className="flex-1">
                                     <div className="text-sm text-[#7a3b2e] font-medium mb-1">
                                         {index === 0 ? "Big deal" : "New"}

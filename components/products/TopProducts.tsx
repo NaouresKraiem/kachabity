@@ -6,6 +6,7 @@ import supabase from '@/lib/supabaseClient';
 import { useCart } from "@/lib/cart-context";
 import ProductListCard from "./ProductListCard";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
+import { message } from "antd";
 
 interface Product {
     id: string;
@@ -145,7 +146,8 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
     const handleToggleFavorite = async (productId: string) => {
         // If user not logged in, show message
         if (!userId) {
-            alert("Please login to save favorites");
+            message.error("Please login to save favorites");
+
             return;
         }
 
