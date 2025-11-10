@@ -47,14 +47,14 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     const currentSlideData = carouselSlides[currentSlide];
 
 
-    useEffect(() => {
-        if (!mounted || carouselSlides.length === 0) return;
+    // useEffect(() => {
+    //     if (!mounted || carouselSlides.length === 0) return;
 
-        const interval = setInterval(() => {
-            setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
-        }, 5000);
-        return () => clearInterval(interval);
-    }, [carouselSlides.length, mounted]);
+    //     const interval = setInterval(() => {
+    //         setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+    //     }, 5000);
+    //     return () => clearInterval(interval);
+    // }, [carouselSlides.length, mounted]);
 
     const nextSlide = () => {
         setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
@@ -69,42 +69,28 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     };
 
 
-    // Left card (index 1 in heroData)
-    const leftCard = heroData[1] || {
-        title: "Where",
-        subtitle: "Tradition Meets Elegance",
-        left_image_url: "/assets/images/default-product.jpg",
-        cta_label: "Order Now"
-    };
+    const leftCard = heroData[1]
+   
 
-    // Right cards (indices 2 and 3 in heroData)
-    const rightCards = heroData.slice(2, 4).length > 0
-        ? heroData.slice(2, 4).map((hero, index) => ({
-            title: hero.subtitle || hero.title,
-            subtitle: hero.sub_subtitle || "Shop Now",
-            cta_label: hero.cta_label || "Shop Now",
-            cta_href: hero.cta_href || "/products",
-            image_url: hero.image_url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
-            bgColor: index === 0 ? "bg-pink-100" : "bg-green-100"
-        }))
-        : [
-            {
-                title: "Big deal Kachabia",
-                subtitle: "Buy 1 Get 1",
-                cta_label: "Buy Now",
-                cta_href: "/products",
-                image_url: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400",
-                bgColor: "bg-pink-100"
-            },
-            {
-                title: "New Collection",
-                subtitle: "Home Accessories",
-                cta_label: "Shop Now",
-                cta_href: "/products",
-                image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
-                bgColor: "bg-green-100"
-            }
-        ];
+    const rightCards = [
+        {
+            title: "Big deal Kachabia",
+            subtitle: "Buy 1 Get 1",
+            cta_label: "Buy Now",
+            cta_href: "#products",
+            image_url: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400",
+            bgColor: "bg-pink-100"
+        },
+        {
+            title: "New Item Name",
+            subtitle: "Home Accesoire",
+            cta_label: "Shop Now",
+            cta_href: "#products",
+            image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
+            bgColor: "bg-green-100"
+        },
+
+    ];
 
     return (
         <section className="w-full py-8 px-4" aria-label="Featured Products">
@@ -138,7 +124,20 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                         </div>
                     </div>
                     <div className="lg:col-span-7 relative">
-                        <div className="relative bg-[#F4D3C6] rounded-2xl overflow-hidden h-[350px]">
+                        <div className="relative rounded-2xl overflow-hidden h-[350px]">
+                            {/* Background Image */}
+                            <div className="absolute inset-0">
+                                <Image
+                                    src={currentSlideData?.image_url || "/assets/images/hero-bg.jpg"}
+                                    alt="Background"
+                                    fill
+                                    className="object-cover"
+                                    priority
+                                />
+                                {/* Overlay for better text readability */}
+                                <div className="absolute inset-0 bg-linear-to-r from-[#F4D3C6]/95 via-[#F4D3C6]/60 to-transparent"></div>
+                            </div>
+
                             {!mounted || !currentSlideData ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="text-gray-400">Loading...</div>
@@ -152,20 +151,20 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                         </h1>
                                         <div className="text-sm text-[#000000] font-medium mb-5">{currentSlideData.sub_subtitle}</div>
 
-                                        <button 
+                                        <button
                                             onClick={() => router.push(currentSlideData.cta_href || '/products')}
                                             className="bg-[#7a3b2e] text-white px-3 py-2 rounded-[8px] border border-black text-lg font-medium hover:bg-[#5e2d23] transition cursor-pointer"
                                         >
                                             {currentSlideData.cta_label}
                                         </button>
                                     </div>
-                                    <div className="flex-1 flex justify-end">
-                                        <div className="relative w-50 h-80">
+                                    <div className="flex-1 flex justify-end items-end">
+                                        <div className="relative w-[300px] h-[350px]">
                                             <Image
                                                 src={currentSlideData.image_url || "/vercel.svg"}
                                                 alt={`${currentSlideData.subtitle} - Premium handcrafted traditional product`}
                                                 fill
-                                                // className="object-cover "
+                                                className="object-contain object-bottom"
                                                 priority
                                             />
                                         </div>
@@ -234,11 +233,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                     </div>
                     <div className="lg:col-span-3 space-y-4">
                         {rightCards.map((card, index) => (
-                            <div 
-                                key={index} 
-                                onClick={() => router.push(card.cta_href || '/products')}
-                                className={`${card.bgColor} rounded-2xl p-6 h-[167px] flex items-center cursor-pointer hover:shadow-lg transition-shadow`}
-                            >
+                            <div key={index} className={`${card.bgColor} rounded-2xl p-6 h-[167px] flex items-center`}>
                                 <div className="flex-1">
                                     <div className="text-sm text-[#7a3b2e] font-medium mb-1">
                                         {index === 0 ? "Big deal" : "New"}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabase from '@/lib/supabaseClient';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {
     try {
@@ -55,14 +55,21 @@ export async function POST(request: NextRequest) {
             if (insertError) throw insertError;
         }
 
-        if (process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL) {
+        if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
             try {
-                const resend = new Resend(process.env.RESEND_API_KEY);
-                console.log('Resend API Key:', process.env.RESEND_API_KEY);
-                console.log('Resend From Email:', process.env.RESEND_FROM_EMAIL);
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: process.env.GMAIL_USER,
+                        pass: process.env.GMAIL_APP_PASSWORD,
+                    },
+                });
+
+                console.log('Gmail User:', process.env.GMAIL_USER);
                 console.log('Sending welcome email to:', email);
-                await resend.emails.send({
-                    from: process.env.RESEND_FROM_EMAIL,
+                
+                await transporter.sendMail({
+                    from: process.env.GMAIL_USER,
                     to: email,
                     subject: 'Welcome to Kachabity Newsletter! 🎉',
                     html: `
@@ -93,7 +100,7 @@ export async function POST(request: NextRequest) {
                                    style="color: #842E1B;">Unsubscribe</a>
                             </p>
                         </div>
-                    `
+                    `,
                 });
             } catch (emailError) {
                 console.error('Error sending welcome email:', emailError);

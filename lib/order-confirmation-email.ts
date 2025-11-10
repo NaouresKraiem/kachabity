@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { Order, OrderItem } from './orders';
 
 interface EmailData {
@@ -11,44 +11,39 @@ export async function sendOrderConfirmationEmail(data: EmailData) {
     const { order, orderItems, customerName } = data;
 
     try {
-        // Check if API key is configured
-        if (!process.env.RESEND_API_KEY) {
-            const errorMsg = 'RESEND_API_KEY is not configured in environment variables';
+        // Check if Gmail is configured
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+            const errorMsg = 'Gmail credentials are not configured in environment variables';
             console.error(errorMsg);
             return {
                 success: false,
                 error: {
                     message: errorMsg,
-                    details: 'Please add RESEND_API_KEY to your .env.local file'
+                    details: 'Please add GMAIL_USER and GMAIL_APP_PASSWORD to your .env.local file'
                 }
             };
         }
 
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'orders@kachabity.com';
-        console.log('Attempting to send email from:', fromEmail, 'to:', order.customer_email);
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.GMAIL_USER,
+                pass: process.env.GMAIL_APP_PASSWORD,
+            },
+        });
+
+        console.log('Attempting to send email from:', process.env.GMAIL_USER, 'to:', order.customer_email);
 
         const emailHtml = generateOrderConfirmationHTML(order, orderItems, customerName);
 
-        const { data: emailResult, error } = await resend.emails.send({
-            from: fromEmail,
+        const emailResult = await transporter.sendMail({
+            from: process.env.GMAIL_USER,
             to: order.customer_email,
             subject: `Order Confirmation - ${order.order_number}`,
             html: emailHtml,
         });
 
-        if (error) {
-            console.error('Resend API error:', JSON.stringify(error, null, 2));
-            return {
-                success: false,
-                error: {
-                    message: error.message || 'Email sending failed',
-                    details: error
-                }
-            };
-        }
-
-        console.log('Order confirmation email sent successfully:', emailResult);
+        console.log('Order confirmation email sent successfully:', emailResult.messageId);
         return { success: true, data: emailResult };
     } catch (error: unknown) {
         console.error('Failed to send order confirmation email:', error);
