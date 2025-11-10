@@ -1,8 +1,6 @@
 import { Resend } from 'resend';
 import { Order, OrderItem } from './orders';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 interface EmailData {
     order: Order;
     orderItems: OrderItem[];
@@ -26,6 +24,7 @@ export async function sendOrderConfirmationEmail(data: EmailData) {
             };
         }
 
+        const resend = new Resend(process.env.RESEND_API_KEY);
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'orders@kachabity.com';
         console.log('Attempting to send email from:', fromEmail, 'to:', order.customer_email);
 

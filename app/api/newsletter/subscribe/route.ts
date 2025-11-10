@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import supabase from '@/lib/supabaseClient';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: NextRequest) {
     try {
         const { email } = await request.json();
@@ -59,6 +57,7 @@ export async function POST(request: NextRequest) {
 
         if (process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL) {
             try {
+                const resend = new Resend(process.env.RESEND_API_KEY);
                 console.log('Resend API Key:', process.env.RESEND_API_KEY);
                 console.log('Resend From Email:', process.env.RESEND_FROM_EMAIL);
                 console.log('Sending welcome email to:', email);
