@@ -38,6 +38,7 @@ type HeroSectionProps = {
 };
 
 export default function HeroSection({ heroData, smallCardsData }: HeroSectionProps) {
+    console.log('smallCardsData', smallCardsData)
     console.log('heroData', heroData)
     const router = useRouter()
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -52,17 +53,12 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     // sort_order 0-1: Right promotional cards (fixed - always 2 cards)
     // sort_order 2: Left sidebar card
     // sort_order 3+: Carousel slides (infinite - add as many as you want)
-    
+
     const rightCards = heroData.filter(h => h.sort_order === 0 || h.sort_order === 1).sort((a, b) => a.sort_order - b.sort_order);
-    const leftCard = heroData.find(h => h.sort_order === 2) || {
-        title: "Where",
-        subtitle: "Tradition Meets Elegance",
-        left_image_url: "/assets/images/default-product.jpg",
-        cta_label: "Order Now",
-        bg_color: "#ACDEE6"
-    };
+    const leftCard = heroData.find(h => h.sort_order === 2) 
+    console.log('rightCards', rightCards)
     const carouselSlides = heroData.filter(h => h.sort_order >= 3).sort((a, b) => a.sort_order - b.sort_order);
-    
+
     const currentSlideData = carouselSlides[currentSlide];
 
     useEffect(() => {
@@ -85,7 +81,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     const goToSlide = (index: number) => {
         setCurrentSlide(index);
     };
-    
+
 
     return (
         <section className="w-full py-8 px-4" aria-label="Featured Products">
@@ -140,7 +136,8 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                     <div className="lg:col-span-7 relative">
                         <div className="relative rounded-2xl overflow-hidden h-[350px]">
                             {/* Background Image - Use background_image_url if available, otherwise use image_url */}
-                            <div className="absolute inset-0">
+                            <div className="absolute inset-0"
+                            >
                                 <Image
                                     src={currentSlideData?.background_image_url || currentSlideData?.image_url || "/assets/images/hero-bg.jpg"}
                                     alt="Background"
@@ -238,7 +235,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                                 className="object-cover"
                                             />
                                             {/* Light overlay for text readability */}
-                                            { <div className="absolute inset-0 bg-white/50"></div>}
+                                            {<div className="absolute inset-0 bg-white/50"></div>}
                                         </div>
                                     )}
 
@@ -277,11 +274,12 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                 key={card.id || index}
                                 onClick={() => router.push(card.cta_href || '/products')}
                                 className="relative rounded-2xl p-6 h-[167px] flex items-center cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-                                style={{ backgroundColor: card.bg_color || (index === 0 ? '#FDE0E6' : '#D4F4DD') }}
+                            // style={{ backgroundColor: card.bg_color || (index === 0 ? '#FDE0E6' : '#D4F4DD') }}
+
                             >
                                 {/* Background Image (optional) */}
                                 {card.background_image_url && (
-                                    <div className="absolute inset-0">
+                                    <div className="absolute inset-0" style={{ backgroundColor: card.bg_color || (index === 0 ? '#FDE0E6' : '#D4F4DD') }}>
                                         <Image
                                             src={card.background_image_url}
                                             alt="Background"
