@@ -8,6 +8,24 @@ import ProductListCard from "./ProductListCard";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 import { message } from "antd";
 
+const translations = {
+    en: {
+        topSold: "Top Sold Products",
+        browseProducts: "Browse through some of our most popular products",
+        loginToSave: "Please login to save favorites"
+    },
+    fr: {
+        topSold: "Produits les plus vendus",
+        browseProducts: "Parcourez certains de nos produits les plus populaires",
+        loginToSave: "Veuillez vous connecter pour enregistrer vos favoris"
+    },
+    ar: {
+        topSold: "المنتجات الأكثر مبيعاً",
+        browseProducts: "تصفح بعض منتجاتنا الأكثر شعبية",
+        loginToSave: "يرجى تسجيل الدخول لحفظ المفضلة"
+    }
+};
+
 interface Product {
     id: string;
     title: string;
@@ -31,7 +49,6 @@ interface TopProductsProps {
 export default function TopProducts({ locale = 'en' }: TopProductsProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [categoryMap, setCategoryMap] = useState<Map<string, string>>(new Map());
-    console.log(categoryMap)
     const [mounted, setMounted] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -39,6 +56,7 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [userId, setUserId] = useState<string | null>(null);
     const { addItem } = useCart();
+    const t = translations[locale as keyof typeof translations] || translations.en;
 
     useEffect(() => {
         setMounted(true);
@@ -146,7 +164,7 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
     const handleToggleFavorite = async (productId: string) => {
         // If user not logged in, show message
         if (!userId) {
-            message.error("Please login to save favorites");
+            message.error(t.loginToSave);
 
             return;
         }
@@ -193,10 +211,10 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
                 {/* Header */}
                 <div className="text-center mb-12 ">
                     <h2 className="text-4xl font-bold text-[#2b1a16] mb-2">
-                        Top Salled product
+                        {t.topSold}
                     </h2>
                     <p className="text-gray-500 text-sm">
-                        Browse through some of our most popular products
+                        {t.browseProducts}
                     </p>
                     <Image src="/assets/images/highlight.svg" alt="Decorative" height={100} width={150} className="mx-auto block mt-4" />
                 </div>

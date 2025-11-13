@@ -28,27 +28,28 @@ const getContent = (): Record<string, TermsContent> => ({
         ctaButton: "Contact Us",
         sections: {
             intro: {
-                title: "Terms and Conditions",
+                title: "Terms & Conditions Overview",
                 content: [
-                    "Welcome to Kachabity. These terms and conditions outline the rules and regulations for the use of Kachabity's Website and services.",
-                    "By accessing this website, we assume you accept these terms and conditions. Do not continue to use Kachabity if you do not agree to take all of the terms and conditions stated on this page.",
-                    "The following terminology applies to these Terms and Conditions, Privacy Statement and Disclaimer Notice and all Agreements: 'Client', 'You' and 'Your' refers to you, the person log on this website and compliant to the Company's terms and conditions. 'The Company', 'Ourselves', 'We', 'Our' and 'Us', refers to our Company. 'Party', 'Parties', or 'Us', refers to both the Client and ourselves."
+                    "Welcome to Kachabity. These Terms & Conditions explain the legal agreement between you and Kachabity when you use our website, browse our catalogue, or place an order.",
+                    "Please read this document together with our Privacy Policy and Shipping Policy. The Terms & Conditions describe the contractual rules of engagement, while the Privacy Policy focuses on how we handle your personal data and the Shipping Policy outlines how and when your order will arrive.",
+                    "By accessing or using this website, you agree to comply with these Terms & Conditions. If you do not agree with any part of these terms, please discontinue use of the site."
                 ]
             },
             orders: {
-                title: "Orders and Payments",
+                title: "Orders, Payments, & Eligibility",
                 content: [
-                    "When you place an order through our website, you are offering to purchase a product subject to these Terms and Conditions. All orders are subject to availability and confirmation of the order price.",
-                    "We accept payment via cash on delivery. All prices are in Tunisian Dinar (TND) and include applicable taxes unless otherwise stated.",
-                    "We reserve the right to refuse any order you place with us. We may, at our sole discretion, limit or cancel quantities purchased per person, per household or per order."
+                    "When you place an order, you make an offer to purchase one or more products under these Terms & Conditions. All orders are subject to product availability and price confirmation at the time of checkout.",
+                    "Payments are accepted via cash on delivery. Prices are displayed in Tunisian Dinar (TND) and include applicable taxes unless otherwise indicated.",
+                    "We reserve the right to refuse or cancel any order, limit quantities purchased per person or household, and request additional information to verify billing or identity."
                 ]
             },
             shipping: {
-                title: "Shipping and Delivery",
+                title: "Shipping Policy",
                 content: [
-                    "We ship to addresses within Tunisia. Shipping costs and delivery times vary based on your location and will be calculated at checkout.",
-                    "We strive to deliver your products within the estimated timeframe. However, delivery times are not guaranteed and may be affected by factors beyond our control.",
-                    "Risk of loss and title for items purchased pass to you upon delivery to the shipping carrier."
+                    "We currently ship to addresses within Tunisia. Delivery lead times typically range from 2 to 7 business days depending on destination, product availability, and courier capacity.",
+                    "Shipping fees are calculated at checkout and include handling and packaging. Orders over the free-shipping threshold listed on our website may qualify for complimentary delivery.",
+                    "Once your parcel is transferred to the carrier, risk of loss passes to you. Please inspect your package upon receipt and contact us within 48 hours if anything is missing or damaged.",
+                    "For the most up-to-date information on delivery windows, carrier partners, or international shipping availability, please review the dedicated Shipping Policy page."
                 ]
             },
             returns: {
@@ -76,8 +77,9 @@ const getContent = (): Record<string, TermsContent> => ({
             privacy: {
                 title: "Privacy Policy",
                 content: [
-                    "Your privacy is important to us. Our Privacy Policy explains how we collect, use, and protect your personal information when you use our website and services.",
-                    "By using our website, you consent to our Privacy Policy and agree to its terms."
+                    "Your privacy matters to us. Our Privacy Policy explains in detail what personal information we collect, how we use it, how long we retain it, and the safeguards we implement to protect it.",
+                    "We only collect the data necessary to process orders, communicate with you, and improve our services. You can request access to, correction of, or deletion of your personal data at any time by contacting us.",
+                    "By using our services, you consent to the practices described in the Privacy Policy. If you disagree with any part of that policy, please discontinue use of the site or contact us for clarification."
                 ]
             },
             changes: {
@@ -104,27 +106,28 @@ const getContent = (): Record<string, TermsContent> => ({
         ctaButton: "Contactez-nous",
         sections: {
             intro: {
-                title: "Termes et Conditions",
+                title: "Aperçu des Termes & Conditions",
                 content: [
-                    "Bienvenue sur Kachabity. Ces termes et conditions décrivent les règles et réglementations pour l'utilisation du site Web et des services de Kachabity.",
-                    "En accédant à ce site Web, nous supposons que vous acceptez ces termes et conditions. Ne continuez pas à utiliser Kachabity si vous n'acceptez pas tous les termes et conditions énoncés sur cette page.",
-                    "La terminologie suivante s'applique à ces Termes et Conditions, Déclaration de confidentialité et Avis de non-responsabilité : 'Client', 'Vous' et 'Votre' se réfèrent à vous, la personne qui se connecte à ce site Web."
+                    "Bienvenue sur Kachabity. Ces Termes & Conditions précisent l'accord juridique qui vous lie à Kachabity lorsque vous utilisez notre site, naviguez sur notre catalogue ou passez commande.",
+                    "Veuillez lire attentivement ce document ainsi que notre Politique de Confidentialité et notre Politique d'Expédition. Les Termes & Conditions définissent les règles contractuelles, la Politique de Confidentialité traite de la gestion de vos données personnelles et la Politique d'Expédition explique comment et quand votre commande vous sera livrée.",
+                    "En accédant à ce site, vous acceptez de respecter ces Termes & Conditions. Si vous n'êtes pas d'accord avec l'une de ces conditions, veuillez cesser d'utiliser le site."
                 ]
             },
             orders: {
-                title: "Commandes et Paiements",
+                title: "Commandes, Paiements et Admissibilité",
                 content: [
-                    "Lorsque vous passez une commande sur notre site Web, vous proposez d'acheter un produit sous réserve de ces Termes et Conditions.",
-                    "Nous acceptons le paiement par paiement à la livraison. Tous les prix sont en Dinar Tunisien (TND) et incluent les taxes applicables sauf indication contraire.",
-                    "Nous nous réservons le droit de refuser toute commande que vous passez avec nous."
+                    "Lorsque vous passez une commande, vous formulez une offre d'achat d'un ou plusieurs produits conformément aux présents Termes & Conditions. Toutes les commandes sont soumises à la disponibilité des produits et à la confirmation du prix indiqué au moment du paiement.",
+                    "Nous acceptons le paiement à la livraison. Les prix sont affichés en dinar tunisien (TND) et incluent les taxes applicables, sauf indication contraire.",
+                    "Nous nous réservons le droit de refuser ou d'annuler toute commande, de limiter les quantités par personne ou foyer et de vous demander des informations supplémentaires pour vérifier l'identité ou la facturation."
                 ]
             },
             shipping: {
-                title: "Expédition et Livraison",
+                title: "Politique d'Expédition",
                 content: [
-                    "Nous expédions aux adresses en Tunisie. Les frais d'expédition et les délais de livraison varient en fonction de votre emplacement.",
-                    "Nous nous efforçons de livrer vos produits dans les délais estimés. Cependant, les délais de livraison ne sont pas garantis.",
-                    "Le risque de perte et le titre des articles achetés vous sont transférés lors de la livraison au transporteur."
+                    "Nous livrons actuellement partout en Tunisie. Les délais de livraison varient généralement de 2 à 7 jours ouvrables selon la destination, la disponibilité des produits et la capacité des transporteurs.",
+                    "Les frais de livraison sont calculés au moment du paiement et incluent la manutention et l'emballage. Les commandes dépassant le seuil de livraison gratuite indiqué sur notre site peuvent bénéficier de frais d'expédition offerts.",
+                    "Dès que votre colis est remis au transporteur, le risque de perte vous est transféré. Veuillez inspecter votre colis à la réception et nous contacter dans les 48 heures en cas de produit manquant ou endommagé.",
+                    "Pour des informations à jour sur les transporteurs, les zones desservies ou la livraison internationale, consultez notre Politique d'Expédition détaillée."
                 ]
             },
             returns: {
@@ -152,8 +155,9 @@ const getContent = (): Record<string, TermsContent> => ({
             privacy: {
                 title: "Politique de Confidentialité",
                 content: [
-                    "Votre vie privée est importante pour nous. Notre Politique de confidentialité explique comment nous collectons et protégeons vos informations personnelles.",
-                    "En utilisant notre site Web, vous consentez à notre Politique de confidentialité."
+                    "Votre vie privée est essentielle. Notre Politique de Confidentialité décrit quelles données personnelles nous collectons, comment nous les utilisons, combien de temps nous les conservons et les mesures mises en place pour les protéger.",
+                    "Nous ne collectons que les informations nécessaires pour traiter vos commandes, communiquer avec vous et améliorer nos services. Vous pouvez demander l'accès, la rectification ou la suppression de vos données personnelles à tout moment en nous contactant.",
+                    "En utilisant nos services, vous acceptez les pratiques décrites dans la Politique de Confidentialité. Si vous avez des questions ou des objections, merci de nous contacter avant de poursuivre l'utilisation du site."
                 ]
             },
             changes: {
@@ -180,27 +184,28 @@ const getContent = (): Record<string, TermsContent> => ({
         ctaButton: "اتصل بنا",
         sections: {
             intro: {
-                title: "الشروط والأحكام",
+                title: "نظرة عامة على الشروط والأحكام",
                 content: [
-                    "مرحبا بكم في كشابيتي. توضح هذه الشروط والأحكام القواعد واللوائح الخاصة باستخدام موقع وخدمات كشابيتي.",
-                    "من خلال الوصول إلى هذا الموقع، نفترض أنك تقبل هذه الشروط والأحكام. لا تستمر في استخدام كشابيتي إذا كنت لا توافق على جميع الشروط والأحكام المذكورة في هذه الصفحة.",
-                    "تنطبق المصطلحات التالية على هذه الشروط والأحكام وبيان الخصوصية وإشعار إخلاء المسؤولية."
+                    "مرحبًا بكم في قشابِـيتي. توضح هذه الشروط والأحكام الاتفاق القانوني بينك وبين قشابِـيتي عند استخدام الموقع، تصفّح المنتجات أو تقديم الطلبات.",
+                    "يرجى قراءة هذه الوثيقة مع سياسة الخصوصية وسياسة الشحن الخاصة بنا. تحدد الشروط والأحكام قواعد التعامل، بينما تشرح سياسة الخصوصية كيفية معالجة بياناتك، وتوضح سياسة الشحن كيفية تسليم طلباتك ومتى تصل.",
+                    "باستخدامك للموقع، فإنك توافق على الالتزام بهذه الشروط. إذا لم توافق على أي جزء منها، يرجى التوقف عن استخدام الموقع والتواصل معنا للاستفسار."
                 ]
             },
             orders: {
-                title: "الطلبات والمدفوعات",
+                title: "الطلبات والمدفوعات والأهلية",
                 content: [
-                    "عند تقديم طلب من خلال موقعنا، فإنك تعرض شراء منتج وفقًا لهذه الشروط والأحكام.",
-                    "نحن نقبل الدفع عند الاستلام. جميع الأسعار بالدينار التونسي وتشمل الضرائب المطبقة ما لم ينص على خلاف ذلك.",
-                    "نحتفظ بالحق في رفض أي طلب تقدمه معنا."
+                    "عند تقديم طلب، فإنك تعرض شراء منتج أو أكثر وفقًا لهذه الشروط والأحكام. جميع الطلبات خاضعة لتوافر المنتجات وتأكيد السعر أثناء الدفع.",
+                    "نقبل الدفع عند الاستلام. تُعرض الأسعار بالدينار التونسي وتشمل الضرائب المطبقة ما لم يُذكر خلاف ذلك.",
+                    "نحتفظ بالحق في رفض أو إلغاء أي طلب، وتحديد الكميات لكل شخص أو لكل عنوان، وطلب معلومات إضافية للتحقق من الهوية أو الفوترة."
                 ]
             },
             shipping: {
-                title: "الشحن والتسليم",
+                title: "سياسة الشحن",
                 content: [
-                    "نحن نشحن إلى العناوين داخل تونس. تختلف تكاليف الشحن وأوقات التسليم بناءً على موقعك.",
-                    "نسعى جاهدين لتسليم منتجاتك خلال الإطار الزمني المقدر. ومع ذلك، فإن أوقات التسليم غير مضمونة.",
-                    "ينتقل خطر الخسارة والملكية للمنتجات المشتراة إليك عند التسليم إلى شركة الشحن."
+                    "نقوم حاليًا بالشحن داخل تونس. تتراوح مدة التوصيل عادةً بين 2 و7 أيام عمل حسب الوجهة وتوفر المنتج وطاقة شركات النقل.",
+                    "تُحتسب رسوم الشحن عند إتمام الطلب وتشمل المناولة والتغليف. الطلبات التي تتجاوز حد الشحن المجاني المذكور على موقعنا قد تستفيد من توصيل مجاني.",
+                    "بعد تسليم الطرد لشركة النقل يتحمّل العميل مخاطر الفقدان. يرجى فحص الطرد فور الاستلام وإبلاغنا خلال 48 ساعة في حال وجود نقص أو تلف.",
+                    "للحصول على أحدث المعلومات حول شركات النقل، والمناطق المشمولة أو خيارات الشحن الدولي، يُرجى الاطلاع على صفحة سياسة الشحن."
                 ]
             },
             returns: {
@@ -214,22 +219,23 @@ const getContent = (): Record<string, TermsContent> => ({
             intellectual: {
                 title: "الملكية الفكرية",
                 content: [
-                    "جميع المحتويات على هذا الموقع هي ملك لكشابيتي ومحمية بموجب قوانين حقوق النشر الدولية.",
+                    "جميع المحتويات على هذا الموقع هي ملك لقشابِـيتي ومحمية بموجب قوانين حقوق النشر الدولية.",
                     "لا يجوز لك إعادة إنتاج أو توزيع أو تعديل المحتوى الخاص بنا دون إذن كتابي صريح منا."
                 ]
             },
             liability: {
                 title: "حدود المسؤولية",
                 content: [
-                    "لن تكون كشابيتي مسؤولة عن أي أضرار غير مباشرة أو عرضية أو خاصة ناتجة عن استخدامك للخدمة.",
+                    "لن تكون قشابِـيتي مسؤولة عن أي أضرار غير مباشرة أو عرضية أو خاصة ناتجة عن استخدامك للخدمة.",
                     "لن تتجاوز مسؤوليتنا الإجمالية تجاهك المبلغ الذي دفعته لنا مقابل المنتجات."
                 ]
             },
             privacy: {
                 title: "سياسة الخصوصية",
                 content: [
-                    "خصوصيتك مهمة بالنسبة لنا. توضح سياسة الخصوصية الخاصة بنا كيفية جمع معلوماتك الشخصية وحمايتها.",
-                    "باستخدام موقعنا، فإنك توافق على سياسة الخصوصية الخاصة بنا."
+                    "نُولي خصوصيتك أهمية كبيرة. توضح سياسة الخصوصية لدينا البيانات الشخصية التي نجمعها، وكيفية استخدامها، ومدة الاحتفاظ بها، والإجراءات المتبعة لحمايتها.",
+                    "نجمع فقط المعلومات اللازمة لمعالجة طلباتك، والتواصل معك، وتحسين خدماتنا. يمكنك طلب الوصول إلى بياناتك أو تعديلها أو حذفها في أي وقت عبر التواصل معنا.",
+                    "باستخدامك لخدماتنا، فإنك توافق على الممارسات الموضحة في سياسة الخصوصية. إذا كانت لديك أي أسئلة أو اعتراضات، يسعدنا تواصلك معنا قبل مواصلة استخدام الموقع."
                 ]
             },
             changes: {

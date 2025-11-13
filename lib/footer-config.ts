@@ -30,7 +30,6 @@ export const footerConfig = {
             title: "About",
             links: [
                 { label: "About Us", href: "/about" },
-                { label: "Our Story", href: "/story" },
                 { label: "Contact", href: "/contact" },
                 { label: "FAQs", href: "/faqs" }
             ]
@@ -40,8 +39,7 @@ export const footerConfig = {
             links: [
                 { label: "Terms & Conditions", href: "/terms-and-conditions" },
                 { label: "Privacy Policy", href: "/privacy" },
-                { label: "Shipping Policy", href: "/shipping" },
-                { label: "Returns", href: "/returns" }
+                { label: "Shipping Policy", href: "/shipping" }
             ]
         }
     ],

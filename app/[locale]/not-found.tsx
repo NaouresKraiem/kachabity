@@ -11,17 +11,20 @@ const content = {
     en: {
         oops: "Oops!",
         message: "We can't seem to find the page you are looking for",
-        backButton: "Back To Homepage"
+        backButton: "Back To Homepage",
+        followUs: "Follow us on"
     },
     fr: {
         oops: "Oups!",
         message: "Nous ne trouvons pas la page que vous recherchez",
-        backButton: "Retour à l'accueil"
+        backButton: "Retour à l'accueil",
+        followUs: "Suivez-nous sur"
     },
     ar: {
         oops: "عذراً!",
         message: "لا يمكننا العثور على الصفحة التي تبحث عنها",
-        backButton: "العودة إلى الصفحة الرئيسية"
+        backButton: "العودة إلى الصفحة الرئيسية",
+        followUs: "تابعنا على"
     }
 };
 
@@ -75,7 +78,7 @@ export default function NotFound() {
 
                     {/* Follow us section */}
                     <div className="mt-16">
-                        <p className="text-gray-600 mb-6 font-medium">Follow us on</p>
+                        <p className="text-gray-600 mb-6 font-medium">{text.followUs}</p>
 
 
 

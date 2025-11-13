@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 
 interface NewsletterFormProps {
     title: string;
@@ -8,11 +9,45 @@ interface NewsletterFormProps {
     placeholder?: string;
 }
 
+const translations = {
+    en: {
+        enterEmail: "Please enter your email",
+        validEmail: "Please enter a valid email address",
+        subscribing: "Subscribing...",
+        subscribe: "Subscribe",
+        thankYou: "Thank you for subscribing!",
+        somethingWrong: "Something went wrong. Please try again.",
+        networkError: "Network error. Please try again."
+    },
+    fr: {
+        enterEmail: "Veuillez entrer votre e-mail",
+        validEmail: "Veuillez entrer une adresse e-mail valide",
+        subscribing: "Abonnement...",
+        subscribe: "S'abonner",
+        thankYou: "Merci de vous être abonné!",
+        somethingWrong: "Une erreur est survenue. Veuillez réessayer.",
+        networkError: "Erreur réseau. Veuillez réessayer."
+    },
+    ar: {
+        enterEmail: "يرجى إدخال بريدك الإلكتروني",
+        validEmail: "يرجى إدخال عنوان بريد إلكتروني صحيح",
+        subscribing: "جاري الاشتراك...",
+        subscribe: "اشترك",
+        thankYou: "شكراً لك على الاشتراك!",
+        somethingWrong: "حدث خطأ. يرجى المحاولة مرة أخرى.",
+        networkError: "خطأ في الشبكة. يرجى المحاولة مرة أخرى."
+    }
+};
+
 export default function NewsletterForm({
     title,
     subtitle,
     placeholder = "Enter your email"
 }: NewsletterFormProps) {
+    const params = useParams();
+    const locale = (params?.locale as string) || 'en';
+    const t = translations[locale as keyof typeof translations] || translations.en;
+
     const [email, setEmail] = useState("");
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
     const [message, setMessage] = useState("");
@@ -22,13 +57,13 @@ export default function NewsletterForm({
 
         if (!email) {
             setStatus("error");
-            setMessage("Please enter your email");
+            setMessage(t.enterEmail);
             return;
         }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             setStatus("error");
-            setMessage("Please enter a valid email address");
+            setMessage(t.validEmail);
             return;
         }
 
@@ -47,7 +82,7 @@ export default function NewsletterForm({
 
             if (response.ok) {
                 setStatus("success");
-                setMessage(data.message || "Thank you for subscribing!");
+                setMessage(data.message || t.thankYou);
                 setEmail("");
 
                 setTimeout(() => {
@@ -56,11 +91,11 @@ export default function NewsletterForm({
                 }, 5000);
             } else {
                 setStatus("error");
-                setMessage(data.error || "Something went wrong. Please try again.");
+                setMessage(data.error || t.somethingWrong);
             }
         } catch {
             setStatus("error");
-            setMessage("Network error. Please try again.");
+            setMessage(t.networkError);
         }
     };
 
@@ -88,7 +123,7 @@ export default function NewsletterForm({
                     disabled={status === "loading"}
                     className="px-6 py-2.5 bg-[#842E1B] text-white rounded-lg hover:bg-[#6b2516] transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
-                    {status === "loading" ? "Subscribing..." : "Subscribe"}
+                    {status === "loading" ? t.subscribing : t.subscribe}
                 </button>
             </form>
             {message && (

@@ -27,6 +27,11 @@ const content: Record<Locale, {
     emailLabel: string;
     success: string;
     error: string;
+    home: string;
+    emailPlaceholder: string;
+    phonePlaceholder: string;
+    contactUsTitle: string;
+    weLoveToHear: string;
 }> = {
     en: {
         title: "Contact Us",
@@ -44,7 +49,12 @@ const content: Record<Locale, {
         phoneLabel: "Phone",
         emailLabel: "Email",
         success: "Thanks! Your message has been sent.",
-        error: "Something went wrong. Please try again."
+        error: "Something went wrong. Please try again.",
+        home: "Home",
+        emailPlaceholder: "you@company.com",
+        phonePlaceholder: "+216 XX XXX XXX",
+        contactUsTitle: "Contact Us",
+        weLoveToHear: "We'd love to hear from you"
     },
     fr: {
         title: "Contactez-nous",
@@ -62,7 +72,12 @@ const content: Record<Locale, {
         phoneLabel: "Téléphone",
         emailLabel: "Email",
         success: "Merci ! Votre message a été envoyé.",
-        error: "Une erreur est survenue. Veuillez réessayer."
+        error: "Une erreur est survenue. Veuillez réessayer.",
+        home: "Accueil",
+        emailPlaceholder: "vous@entreprise.com",
+        phonePlaceholder: "+216 XX XXX XXX",
+        contactUsTitle: "Contactez-nous",
+        weLoveToHear: "Nous serions ravis d'avoir de vos nouvelles"
     },
     ar: {
         title: "اتصل بنا",
@@ -80,7 +95,12 @@ const content: Record<Locale, {
         phoneLabel: "الهاتف",
         emailLabel: "البريد الإلكتروني",
         success: "شكرًا! تم إرسال رسالتك.",
-        error: "حدث خطأ. يرجى المحاولة مرة أخرى."
+        error: "حدث خطأ. يرجى المحاولة مرة أخرى.",
+        home: "الرئيسية",
+        emailPlaceholder: "you@company.com",
+        phonePlaceholder: "+216 XX XXX XXX",
+        contactUsTitle: "اتصل بنا",
+        weLoveToHear: "يسعدنا سماعك"
     }
 };
 
@@ -126,17 +146,17 @@ export default function ContactPage({ params }: { params: Promise<{ locale: Loca
 
     return (
         <main className="min-h-screen bg-white">
-            <StaticHeader />
+            <StaticHeader locale={locale} />
 
             <section className="bg-[#FAF1EE] border-b border-neutral-200">
-           
+
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                     <div className="flex items-start justify-between">
                         <div>
                             <h1 className="text-2xl font-semibold text-[#5A1F16]">{text.title}</h1>
                             <p className="text-sm text-neutral-600 mt-2 max-w-xl">{text.subtitle}</p>
                         </div>
-                        <p className="text-sm text-neutral-500">Home/ {text.title}</p>
+                        <p className="text-sm text-neutral-500">{text.home}/ {text.title}</p>
                     </div>
                 </div>
             </section>
@@ -168,7 +188,7 @@ export default function ContactPage({ params }: { params: Promise<{ locale: Loca
                                 label={text.email}
                                 name={"email"}
                                 type="email"
-                                placeholder="you@company.com"
+                                placeholder={text.emailPlaceholder}
                                 register={register}
                                 error={errors.email}
                                 required
@@ -177,7 +197,7 @@ export default function ContactPage({ params }: { params: Promise<{ locale: Loca
                                 label={text.phone}
                                 name={"phone"}
                                 type="tel"
-                                placeholder="+216 XX XXX XXX"
+                                placeholder={text.phonePlaceholder}
                                 register={register}
                                 error={errors.phone as any}
                             />
@@ -213,8 +233,8 @@ export default function ContactPage({ params }: { params: Promise<{ locale: Loca
 
                 <div className="mt-12">
                     <div className="flex flex-col items-center gap-2 mb-15 ">
-                        <h3 className="text-black">Contact Us </h3>
-                        <h2 className="text-black text-[32px]">We’d love to hear from you</h2>
+                        <h3 className="text-black">{text.contactUsTitle}</h3>
+                        <h2 className="text-black text-[32px]">{text.weLoveToHear}</h2>
                         <h3 className="text-center text-sm text-neutral-600">{text.contactUs}</h3>
                     </div>
                     <div className="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-6">

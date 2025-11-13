@@ -5,6 +5,19 @@ import Image from "next/image";
 import Link from "next/link";
 import CountdownTimer from "../timers/CountdownTimer";
 import supabase from '@/lib/supabaseClient';
+import { useParams } from "next/navigation";
+
+const translations = {
+    en: {
+        shopNow: "Shop Now"
+    },
+    fr: {
+        shopNow: "Acheter maintenant"
+    },
+    ar: {
+        shopNow: "تسوق الآن"
+    }
+};
 
 interface Promotion {
     id: string;
@@ -19,6 +32,9 @@ interface Promotion {
 }
 
 export default function SaleBanner() {
+    const params = useParams();
+    const locale = (params?.locale as string) || 'en';
+    const t = translations[locale as keyof typeof translations] || translations.en;
     const [promotion, setPromotion] = useState<Promotion | null>(null);
     const [mounted, setMounted] = useState(false);
 
@@ -80,10 +96,10 @@ export default function SaleBanner() {
                         </div>
 
                         <Link
-                            href="/products"
+                            href={`/${locale}/products`}
                             className="inline-block bg-[#842E1B] text-white px-12 py-4 rounded-[9px] text-lg font-semibold hover:bg-[#6b2516] transition-colors uppercase"
                         >
-                            Shop Now
+                            {t.shopNow}
                         </Link>
                     </div>
 

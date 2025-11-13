@@ -16,40 +16,49 @@ const content = {
         myCart: "My Cart",
         emptyCart: "Your cart is empty",
         startShopping: "Start Shopping",
+        startAddingItems: "Start adding items to your cart",
         subtotal: "Subtotal",
         shipping: "Shipping",
         freeShipping: "Free Shipping",
+        calculating: "Calculating...",
         orderTotal: "Order Total",
         orderSummary: "Order Summary",
         continueShopping: "Continue Shopping",
         checkout: "Proceed to Checkout",
-        reviews: "reviews"
+        reviews: "reviews",
+        loadingCart: "Loading cart..."
     },
     fr: {
         myCart: "Mon Panier",
         emptyCart: "Votre panier est vide",
         startShopping: "Commencer vos achats",
+        startAddingItems: "Commencez à ajouter des articles à votre panier",
         subtotal: "Sous-total",
         shipping: "Livraison",
         freeShipping: "Livraison Gratuite",
+        calculating: "Calcul en cours...",
         orderTotal: "Total de la commande",
         orderSummary: "Résumé de la commande",
         continueShopping: "Continuer vos achats",
         checkout: "Passer à la caisse",
-        reviews: "avis"
+        reviews: "avis",
+        loadingCart: "Chargement du panier..."
     },
     ar: {
         myCart: "سلة التسوق",
         emptyCart: "سلتك فارغة",
         startShopping: "ابدأ التسوق",
+        startAddingItems: "ابدأ بإضافة العناصر إلى سلة التسوق",
         subtotal: "المجموع الفرعي",
         shipping: "الشحن",
         freeShipping: "شحن مجاني",
+        calculating: "جاري الحساب...",
         orderTotal: "إجمالي الطلب",
         orderSummary: "ملخص الطلب",
         continueShopping: "متابعة التسوق",
         checkout: "المتابعة للدفع",
-        reviews: "تقييم"
+        reviews: "تقييم",
+        loadingCart: "جاري تحميل السلة..."
     }
 };
 
@@ -82,7 +91,7 @@ export default function CartPage() {
 
     // Show loading while cart is loading from localStorage
     if (!isCartLoaded || isLoadingShipping) {
-        return <LoadingSpinner message="Loading cart..." />;
+        return <LoadingSpinner message={text.loadingCart} />;
     }
 
     if (items.length === 0) {
@@ -105,7 +114,7 @@ export default function CartPage() {
                             />
                         </svg>
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">{text.emptyCart}</h2>
-                        <p className="text-gray-600 mb-6">Start adding items to your cart</p>
+                        <p className="text-gray-600 mb-6">{text.startAddingItems}</p>
                         <Link
                             href={`/${locale}`}
                             className="inline-block px-6 py-3 bg-[#842E1B] text-white rounded-lg hover:bg-[#6b2516] transition font-medium"
@@ -158,7 +167,7 @@ export default function CartPage() {
                                     <div className="flex justify-between text-gray-700">
                                         <span>{text.shipping}</span>
                                         {isLoadingShipping ? (
-                                            <span className="text-gray-400">Calculating...</span>
+                                            <span className="text-gray-400">{text.calculating}</span>
                                         ) : shippingCost === 0 ? (
                                             <span className="font-semibold text-green-600">{text.freeShipping}</span>
                                         ) : (

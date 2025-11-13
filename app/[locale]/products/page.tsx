@@ -50,7 +50,12 @@ const content = {
         discount: "Discount",
         noProducts: "No products found",
         showingResults: "Showing {count} products",
-        applyFilters: "Filter"
+        applyFilters: "Filter",
+        loadingProducts: "Loading products...",
+        pleaseLogin: "Please login to save favorites",
+        tryAdjustingFilters: "Try adjusting your filters",
+        previous: "Previous",
+        next: "Next"
     },
     fr: {
         filter: "Filtrer",
@@ -63,7 +68,12 @@ const content = {
         discount: "Réduction",
         noProducts: "Aucun produit trouvé",
         showingResults: "Affichage de {count} produits",
-        applyFilters: "Filtrer"
+        applyFilters: "Filtrer",
+        loadingProducts: "Chargement des produits...",
+        pleaseLogin: "Veuillez vous connecter pour enregistrer vos favoris",
+        tryAdjustingFilters: "Essayez d'ajuster vos filtres",
+        previous: "Précédent",
+        next: "Suivant"
     },
     ar: {
         filter: "تصفية",
@@ -76,7 +86,12 @@ const content = {
         discount: "خصم",
         noProducts: "لم يتم العثور على منتجات",
         showingResults: "عرض {count} منتجات",
-        applyFilters: "تصفية"
+        applyFilters: "تصفية",
+        loadingProducts: "جاري تحميل المنتجات...",
+        pleaseLogin: "يرجى تسجيل الدخول لحفظ المفضلة",
+        tryAdjustingFilters: "حاول تعديل المرشحات",
+        previous: "السابق",
+        next: "التالي"
     }
 };
 
@@ -89,6 +104,17 @@ const FILTER_COLORS = [
 ];
 
 const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL", "4XL"];
+
+// Helper function to get translated category name
+function getCategoryName(category: Category, locale: string): string {
+    if (locale === 'ar' && category.name_ar) {
+        return category.name_ar;
+    }
+    if (locale === 'fr' && category.name_fr) {
+        return category.name_fr;
+    }
+    return category.name;
+}
 
 export default function ProductsPage() {
     const params = useParams();
@@ -119,6 +145,7 @@ export default function ProductsPage() {
     // Get category from URL if present
     const urlCategory = searchParams.get('category');
     const promoOnly = searchParams.get('promo');
+    const sortParam = searchParams.get('sort');
     const search = searchParams?.get('search') || "";
 
     // Initialize: Fetch categories and user favorites
@@ -224,8 +251,20 @@ export default function ProductsPage() {
                 query = query.not('discount_percent', 'is', null).gt('discount_percent', 0);
             }
 
-            // Order by newest first
-            query = query.order('created_at', { ascending: false });
+            // Apply sort options
+            if (sortParam === 'new') {
+                const newArrivalThreshold = new Date();
+                newArrivalThreshold.setDate(newArrivalThreshold.getDate() - 30);
+                query = query.gte('created_at', newArrivalThreshold.toISOString());
+                query = query.order('created_at', { ascending: false });
+            } else if (sortParam === 'popular') {
+                query = query
+                    .order('review_count', { ascending: false, nullsFirst: true })
+                    .order('rating', { ascending: false, nullsFirst: true })
+                    .order('created_at', { ascending: false });
+            } else {
+                query = query.order('created_at', { ascending: false });
+            }
 
             // Apply pagination
             const from = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -257,7 +296,7 @@ export default function ProductsPage() {
             fetchProducts();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [priceRange, selectedSizes, selectedColors, selectedCategoryIds, categories.length]);
+    }, [priceRange, selectedSizes, selectedColors, selectedCategoryIds, categories.length, sortParam]);
 
 
 
@@ -265,7 +304,7 @@ export default function ProductsPage() {
     const toggleWishlist = async (productId: string) => {
         // If user not logged in, show message or redirect
         if (!userId) {
-            message.error("Please login to save favorites");
+            message.error(text.pleaseLogin);
             return;
         }
 
@@ -343,11 +382,11 @@ export default function ProductsPage() {
         // Scroll to top when page changes
         window.scrollTo({ top: 0, behavior: 'smooth' });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPage, promoOnly, search])    // 👈 added
+    }, [currentPage, promoOnly, search, sortParam])    // 👈 added
 
 
     if (loading) {
-        return <LoadingSpinner message="Loading products..." />;
+        return <LoadingSpinner message={text.loadingProducts} />;
     }
 
     return (
@@ -456,7 +495,7 @@ export default function ProductsPage() {
                                                     onChange={() => toggleCategory(category.id)}
                                                     className="w-4 h-4 text-[#842E1B] border-gray-300 rounded focus:ring-[#842E1B]"
                                                 />
-                                                <span className="text-sm text-gray-700">{category.name}</span>
+                                                <span className="text-sm text-gray-700">{getCategoryName(category, locale)}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -514,7 +553,7 @@ export default function ProductsPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                     </svg>
                                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{text.noProducts}</h3>
-                                    <p className="text-gray-600">Try adjusting your filters</p>
+                                    <p className="text-gray-600">{text.tryAdjustingFilters}</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 pb-4">
@@ -547,7 +586,7 @@ export default function ProductsPage() {
                                         disabled={currentPage === 1}
                                         className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                     >
-                                        Previous
+                                        {text.previous}
                                     </button>
 
                                     <div className="flex gap-1">
@@ -582,7 +621,7 @@ export default function ProductsPage() {
                                         disabled={currentPage >= Math.ceil(totalCount / ITEMS_PER_PAGE)}
                                         className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                     >
-                                        Next
+                                        {text.next}
                                     </button>
                                 </div>
                             )}

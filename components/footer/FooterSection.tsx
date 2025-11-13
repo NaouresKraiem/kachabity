@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { FooterSection as FooterSectionType } from "@/lib/footer-config";
 

@@ -2,14 +2,37 @@
 
 import { useCart } from "@/lib/cart-context";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+
+const translations = {
+    en: {
+        cart: "Cart",
+        item: "item",
+        items: "items"
+    },
+    fr: {
+        cart: "Panier",
+        item: "article",
+        items: "articles"
+    },
+    ar: {
+        cart: "السلة",
+        item: "عنصر",
+        items: "عناصر"
+    }
+};
 
 export default function CartButton() {
     const router = useRouter();
+    const pathname = usePathname();
+
+    // Extract locale from pathname
+    const locale = pathname?.split('/')[1] || 'en';
+    const t = translations[locale as keyof typeof translations] || translations.en;
 
     // Try to use cart context, fallback to defaults if outside provider
     let totalItems = 0;
-    let openCart = () => router.push('/en/cart');
+    let openCart = () => router.push(`/${locale}/cart`);
 
     try {
         const cartContext = useCart();
@@ -33,7 +56,7 @@ export default function CartButton() {
                     </span>
                 )}
             </div>
-            <span className="font-medium">Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
+            <span className="font-medium">{t.cart} </span>
         </button>
     );
 }

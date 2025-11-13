@@ -21,7 +21,8 @@ const content = {
         viewOrder: "View Order Details",
         createAccountTitle: "Want to track your order?",
         createAccountDesc: "Create an account to easily track your orders and checkout faster next time",
-        createAccountButton: "Create Account"
+        createAccountButton: "Create Account",
+        loading: "Loading..."
     },
     fr: {
         title: "Commande confirmée!",
@@ -36,7 +37,8 @@ const content = {
         viewOrder: "Voir les détails de la commande",
         createAccountTitle: "Voulez-vous suivre votre commande?",
         createAccountDesc: "Créez un compte pour suivre facilement vos commandes et payer plus rapidement la prochaine fois",
-        createAccountButton: "Créer un compte"
+        createAccountButton: "Créer un compte",
+        loading: "Chargement..."
     },
     ar: {
         title: "تم تأكيد الطلب!",
@@ -51,7 +53,8 @@ const content = {
         viewOrder: "عرض تفاصيل الطلب",
         createAccountTitle: "هل تريد تتبع طلبك؟",
         createAccountDesc: "أنشئ حساباً لتتبع طلباتك بسهولة والدفع بشكل أسرع في المرة القادمة",
-        createAccountButton: "إنشاء حساب"
+        createAccountButton: "إنشاء حساب",
+        loading: "جاري التحميل..."
     }
 };
 
@@ -163,10 +166,13 @@ function OrderConfirmationContent() {
 }
 
 export default function OrderConfirmationPage() {
+    const { locale } = useLanguage();
+    const text = content[locale as keyof typeof content] || content.en;
+
     return (
         <>
             <StaticHeader />
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<div>{text.loading}</div>}>
                 <OrderConfirmationContent />
             </Suspense>
             <Footer />
