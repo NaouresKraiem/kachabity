@@ -282,7 +282,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
             {/* Main Header */}
             <div className="bg-white border-b border-gray-200 py-4 px-4">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <div className="cursor-pointer flex items-center space-x-2" onClick={() => router.push('/')}>
+                    <div className="cursor-pointer flex items-center space-x-2" onClick={() => router.push(`/${locale}`)}>
                         <Image src="/assets/images/logoKachabity.jpg" alt="logo" width={60} height={60} />
                     </div>
 

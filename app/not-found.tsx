@@ -1,19 +1,24 @@
 "use client";
 
 import { Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import StaticHeader from "@/components/layout/StaticHeader";
 import Footer from "@/components/footer/Footer";
 import Image from "next/image";
 import { headerConfig } from "@/lib/config";
+import { defaultLanguage } from "@/lib/language-utils";
 
 export default function RootNotFound() {
     const router = useRouter();
+    const pathname = usePathname();
+
+    // Extract locale from pathname or use default
+    const locale = pathname?.split('/')[1] || defaultLanguage;
 
     return (
         <>
             <Suspense fallback={<div className="h-20" />}>
-                <StaticHeader locale="en" />
+                <StaticHeader locale={locale} />
             </Suspense>
 
             <div className="min-h-screen bg-white flex items-center justify-center px-4 py-16">
@@ -42,7 +47,7 @@ export default function RootNotFound() {
 
                     {/* Back to Homepage Button */}
                     <button
-                        onClick={() => router.push('/')}
+                        onClick={() => router.push(`/${locale}`)}
                         className="inline-block px-8 py-4 bg-[#7a3b2e] text-white text-lg font-medium rounded-lg hover:bg-[#5e2d23] transition-colors shadow-lg hover:shadow-xl"
                     >
                         Back To Homepage
