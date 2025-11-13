@@ -9,6 +9,22 @@ import CarouselNavigation from '../carousel/CarouselNavigation';
 import CarouselIndicators from '../carousel/CarouselIndicators';
 import { useCarousel } from '@/hooks/useCarousel';
 import { getServiceHighlights } from '@/lib/service-highlights';
+import { useParams } from "next/navigation";
+
+const translations = {
+    en: {
+        title: "Our Customer Feedback",
+        subtitle: "Don't take our word for it. Trust our customers"
+    },
+    fr: {
+        title: "Avis de nos clients",
+        subtitle: "Ne nous croyez pas sur parole. Faites confiance à nos clients"
+    },
+    ar: {
+        title: "آراء عملائنا",
+        subtitle: "لا تأخذ كلمتنا فقط. ثق بعملائنا"
+    }
+};
 
 interface User {
     id: string;
@@ -30,6 +46,9 @@ const ITEMS_PER_SLIDE = 3;
 const MAX_REVIEWS = 9;
 
 export default function CustomerFeedback() {
+    const params = useParams();
+    const locale = (params?.locale as string) || 'en';
+    const t = translations[locale as keyof typeof translations] || translations.en;
     const [reviews, setReviews] = useState<Review[]>([]);
     const [mounted, setMounted] = useState(false);
 
@@ -90,8 +109,8 @@ export default function CustomerFeedback() {
         <section className="w-full py-16 px-4 bg-[#F5F5F5]">
             <div className="max-w-7xl mx-auto">
                 <SectionHeader
-                    title="Our Customer Feedback"
-                    subtitle="Don't take our word for it. Trust our customers"
+                    title={t.title}
+                    subtitle={t.subtitle}
                 />
 
                 {reviews.length > ITEMS_PER_SLIDE && (

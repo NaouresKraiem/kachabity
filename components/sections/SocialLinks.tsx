@@ -1,3 +1,5 @@
+"use client";
+
 import { headerConfig } from "@/lib/config";
 
 interface SocialLinksProps {

@@ -1,6 +1,6 @@
 // Language detection utilities
 export const supportedLanguages = ['en', 'fr', 'ar'] as const;
-export const defaultLanguage = 'en';
+export const defaultLanguage = 'ar';
 
 export type SupportedLanguage = typeof supportedLanguages[number];
 

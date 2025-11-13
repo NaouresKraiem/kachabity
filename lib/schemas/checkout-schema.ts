@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 // Checkout form validation schema
+// Only firstName, lastName, and phone are required to simplify checkout
 export const checkoutSchema = z.object({
     firstName: z.string()
         .min(2, "First name must be at least 2 characters")
@@ -10,31 +11,35 @@ export const checkoutSchema = z.object({
         .min(2, "Last name must be at least 2 characters")
         .max(50, "Last name must be less than 50 characters"),
 
-    email: z.string()
-        .email("Please enter a valid email address"),
-
     phone: z.string()
         .min(8, "Phone number must be at least 8 digits")
         .regex(/^[\d\s+()-]+$/, "Please enter a valid phone number"),
 
+    // Optional fields
+    email: z.union([
+        z.string().email("Please enter a valid email address"),
+        z.literal(""),
+        z.undefined()
+    ]).optional(),
+
     address: z.string()
-        .min(5, "Address must be at least 5 characters")
-        .max(200, "Address must be less than 200 characters"),
+        .max(200, "Address must be less than 200 characters")
+        .optional(),
 
     city: z.string()
-        .min(2, "City must be at least 2 characters")
-        .max(50, "City must be less than 50 characters"),
+        .max(50, "City must be less than 50 characters")
+        .optional(),
 
     state: z.string()
-        .min(2, "State/Province must be at least 2 characters")
-        .max(50, "State/Province must be less than 50 characters"),
+        .max(50, "State/Province must be less than 50 characters")
+        .optional(),
 
     zipCode: z.string()
-        .min(4, "Postal code must be at least 4 characters")
-        .max(10, "Postal code must be less than 10 characters"),
+        .max(10, "Postal code must be less than 10 characters")
+        .optional(),
 
     country: z.string()
-        .min(1, "Please select a country"),
+        .optional(),
 
     orderNotes: z.string()
         .max(500, "Order notes must be less than 500 characters")

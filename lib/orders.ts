@@ -2,15 +2,15 @@ import supabase from "./supabaseClient";
 import { CartItem } from "./cart-context";
 
 export interface OrderData {
-    customerEmail: string;
+    customerEmail?: string; // Optional - only name and phone are required
     customerFirstName: string;
     customerLastName: string;
     customerPhone: string;
-    shippingAddress: string;
-    shippingCity: string;
-    shippingState: string;
-    shippingZip: string;
-    shippingCountry: string;
+    shippingAddress?: string; // Optional
+    shippingCity?: string; // Optional
+    shippingState?: string; // Optional
+    shippingZip?: string; // Optional
+    shippingCountry?: string; // Optional
     items: CartItem[];
     subtotal: number;
     shippingCost: number;
@@ -85,15 +85,15 @@ export async function createOrder(orderData: OrderData): Promise<{ order: Order 
             .insert({
                 order_number: orderNumber,
                 user_id: orderData.userId || null,
-                customer_email: orderData.customerEmail,
+                customer_email: orderData.customerEmail || null,
                 customer_first_name: orderData.customerFirstName,
                 customer_last_name: orderData.customerLastName,
                 customer_phone: orderData.customerPhone,
-                shipping_address: orderData.shippingAddress,
-                shipping_city: orderData.shippingCity,
-                shipping_state: orderData.shippingState,
-                shipping_zip: orderData.shippingZip,
-                shipping_country: orderData.shippingCountry,
+                shipping_address: orderData.shippingAddress || null,
+                shipping_city: orderData.shippingCity || null,
+                shipping_state: orderData.shippingState || null,
+                shipping_zip: orderData.shippingZip || null,
+                shipping_country: orderData.shippingCountry || null,
                 subtotal: orderData.subtotal,
                 shipping_cost: orderData.shippingCost,
                 total: orderData.total,

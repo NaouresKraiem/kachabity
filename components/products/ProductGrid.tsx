@@ -8,15 +8,43 @@ import Link from "next/link";
 interface Category {
     id: string;
     name: string;
+    name_ar?: string;
+    name_fr?: string;
     slug: string;
     image_url: string;
     sort_order: number;
     is_featured?: boolean;
 }
 
+// Helper function to get translated category name
+function getCategoryName(category: Category, locale: string): string {
+    if (locale === 'ar' && category.name_ar) {
+        return category.name_ar;
+    }
+    if (locale === 'fr' && category.name_fr) {
+        return category.name_fr;
+    }
+    return category.name;
+}
+
 interface ProductGridProps {
     locale?: string;
 }
+
+const translations = {
+    en: {
+        featuredCategories: "Featured Categories",
+        browseCategories: "Browse through some of our most popular categories"
+    },
+    fr: {
+        featuredCategories: "Catégories en vedette",
+        browseCategories: "Parcourez certaines de nos catégories les plus populaires"
+    },
+    ar: {
+        featuredCategories: "الفئات المميزة",
+        browseCategories: "تصفح بعض فئاتنا الأكثر شعبية"
+    }
+};
 
 export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -24,6 +52,7 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
+    const t = translations[locale as keyof typeof translations] || translations.en;
 
     // Prevent hydration mismatch
     useEffect(() => {
@@ -33,11 +62,27 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
     useEffect(() => {
         async function fetchCategories() {
             try {
-                const { data, error } = await supabase
+                // Try to fetch with translation fields first
+                let { data, error } = await supabase
                     .from('categories')
-                    .select('id, name, slug, image_url, sort_order, is_featured')
+                    .select('id, name, name_ar, name_fr, slug, image_url, sort_order, is_featured')
                     .eq('is_featured', true)
                     .order('sort_order', { ascending: true });
+
+                // If error, try without translation fields (fallback for databases without these columns)
+                if (error) {
+                    const fallbackResult = await supabase
+                        .from('categories')
+                        .select('id, name, slug, image_url, sort_order, is_featured')
+                        .eq('is_featured', true)
+                        .order('sort_order', { ascending: true });
+
+                    if (fallbackResult.error) {
+                        throw fallbackResult.error;
+                    }
+                    data = fallbackResult.data;
+                    error = null;
+                }
 
                 if (error) throw error;
 
@@ -46,6 +91,8 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);
+                // Set empty array on error to prevent UI issues
+                setCategories([]);
             }
         }
 
@@ -103,7 +150,7 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
     return (
         <section className="w-full py-12 px-4 bg-white">
             {/* Decorative Flower */}
-            <div className="z-9999 absolute right-0 top-310 w-64 h-64  pointer-events-none">
+            <div className="z-9 absolute right-0 top-310 w-64 h-64  pointer-events-none">
                 <Image
                     src="/assets/images/flowerFloated.svg"
                     alt="Decorative flower"
@@ -116,10 +163,10 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-[#2b1a16] mb-2">
-                        Featured Categories
+                        {t.featuredCategories}
                     </h2>
                     <p className="text-gray-500 text-sm">
-                        Browse through some of our most popular categories
+                        {t.browseCategories}
                     </p>
                 </div>
 
@@ -153,13 +200,13 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
                                             <div className="relative w-52 h-52 rounded-2xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
                                                 <Image
                                                     src={category.image_url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300"}
-                                                    alt={category.name}
+                                                    alt={getCategoryName(category, locale)}
                                                     fill
                                                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
                                             <h3 className="text-center font-medium text-[#2b1a16] text-sm group-hover:text-[#7a3b2e] transition">
-                                                {category.name}
+                                                {getCategoryName(category, locale)}
                                             </h3>
                                         </div>
                                     </Link>

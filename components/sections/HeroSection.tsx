@@ -2,15 +2,24 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { isRTL } from "@/lib/language-utils";
 
 type HeroData = {
     id: string;
     title: string;
+    title_ar?: string;
+    title_fr?: string;
     subtitle?: string;
+    subtitle_ar?: string;
+    subtitle_fr?: string;
     sub_subtitle?: string;
+    sub_subtitle_ar?: string;
+    sub_subtitle_fr?: string;
     left_image_url?: string;
     cta_label?: string;
+    cta_label_ar?: string;
+    cta_label_fr?: string;
     cta_href?: string;
     image_url?: string;
     background_image_url?: string; // Separate background image
@@ -19,6 +28,57 @@ type HeroData = {
     is_active: boolean;
     sort_order: number;
 };
+
+// Common translations mapping (fallback only - database columns are primary)
+// This provides automatic translation for common terms until database columns are populated
+const commonTranslations: Record<string, Record<string, string>> = {
+    'Shop Now': { ar: 'تسوق الآن', fr: 'Acheter maintenant' },
+    'Buy Now': { ar: 'اشتري الآن', fr: 'Acheter maintenant' },
+    'Order Now': { ar: 'اطلب الآن', fr: 'Commander maintenant' },
+    'Handmade': { ar: 'مصنوع يدوياً', fr: 'Fait main' },
+    'Premium Quality': { ar: 'جودة عالية', fr: 'Qualité supérieure' },
+    'Traditional Elegance': { ar: 'أناقة تقليدية', fr: 'Élégance traditionnelle' },
+    'Top Saled': { ar: 'الأكثر مبيعاً', fr: 'Les plus vendus' },
+    'Top Sold': { ar: 'الأكثر مبيعاً', fr: 'Les plus vendus' },
+    'New Arrival': { ar: 'وصل حديثاً', fr: 'Nouveautés' },
+    'Big deal': { ar: 'عرض كبير', fr: 'Grosse affaire' },
+    'Big Deal': { ar: 'عرض كبير', fr: 'Grosse affaire' },
+    'New': { ar: 'جديد', fr: 'Nouveau' },
+    'Quachabia': { ar: 'قشّابية', fr: 'Qachabiya' },
+    'Qachabiya': { ar: 'قشّابية', fr: 'Qachabiya' }
+};
+
+/**
+ * Get translated text for hero sections
+ * Priority: 1. Database columns (title_ar, subtitle_ar, etc.) - RECOMMENDED
+ *           2. Common translations mapping (fallback for common terms)
+ *           3. Original English text
+ * 
+ * @param text - Original English text from database
+ * @param textAr - Arabic translation from database column (if exists)
+ * @param textFr - French translation from database column (if exists)
+ * @param locale - Current locale ('en', 'fr', 'ar')
+ * @returns Translated text based on priority
+ */
+function getHeroText(text: string | undefined, textAr: string | undefined, textFr: string | undefined, locale: string): string {
+    if (!text) return '';
+
+    // PRIORITY 1: Database translation columns (RECOMMENDED APPROACH)
+    // These are managed in Supabase and allow for custom, language-specific content
+    if (locale === 'ar' && textAr) return textAr;
+    if (locale === 'fr' && textFr) return textFr;
+
+    // PRIORITY 2: Common translations mapping (fallback)
+    // Provides automatic translation for common terms until database columns are populated
+    const common = commonTranslations[text];
+    if (common) {
+        if (locale === 'ar' && common.ar) return common.ar;
+        if (locale === 'fr' && common.fr) return common.fr;
+    }
+
+    // PRIORITY 3: Fallback to original text
+    return text;
+}
 
 type SmallCardData = {
     id: string;
@@ -37,12 +97,46 @@ type HeroSectionProps = {
     smallCardsData: SmallCardData[];
 };
 
+const translations = {
+    en: {
+        where: "Where",
+        tradition: "Tradition",
+        meets: "Meets",
+        elegance: "Elegance",
+        loading: "Loading...",
+        bigDeal: "Big deal",
+        new: "New"
+    },
+    fr: {
+        where: "Où",
+        tradition: "Tradition",
+        meets: "Rencontre",
+        elegance: "Élégance",
+        loading: "Chargement...",
+        bigDeal: "Grosse affaire",
+        new: "Nouveau"
+    },
+    ar: {
+        where: "حيث",
+        tradition: "التقليد",
+        meets: "يلتقي",
+        elegance: "الأناقة",
+        loading: "جاري التحميل...",
+        bigDeal: "عرض كبير",
+        new: "جديد"
+    }
+};
+
 export default function HeroSection({ heroData, smallCardsData }: HeroSectionProps) {
-    console.log('smallCardsData', smallCardsData)
-    console.log('heroData', heroData)
     const router = useRouter()
+    const pathname = usePathname();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [mounted, setMounted] = useState(false);
+
+    // Detect locale from pathname
+    const locale = pathname?.split('/')[1] || 'en';
+    const t = translations[locale as keyof typeof translations] || translations.en;
+    const rtl = isRTL(locale);
 
     // Prevent hydration mismatch by only rendering carousel after mount
     useEffect(() => {
@@ -55,8 +149,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
     // sort_order 3+: Carousel slides (infinite - add as many as you want)
 
     const rightCards = heroData.filter(h => h.sort_order === 0 || h.sort_order === 1).sort((a, b) => a.sort_order - b.sort_order);
-    const leftCard = heroData.find(h => h.sort_order === 2) 
-    console.log('rightCards', rightCards)
+    const leftCard = heroData.find(h => h.sort_order === 2)
     const carouselSlides = heroData.filter(h => h.sort_order >= 3).sort((a, b) => a.sort_order - b.sort_order);
 
     const currentSlideData = carouselSlides[currentSlide];
@@ -84,7 +177,7 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
 
 
     return (
-        <section className="w-full py-8 px-4" aria-label="Featured Products">
+        <section className="w-full py-8 px-4" aria-label="Featured Products" >
             <div className="max-w-7xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-2">
@@ -108,29 +201,33 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
 
                             {/* Content */}
                             <div className='relative z-10 justify-between items-center flex flex-col align-baseline'>
-                                <div className="text-sm font-medium mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>Where</div>
-                                <div className="text-[16px] font-bold text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>Tradition</div>
-                                <div className="text-[16px] font-semimedium text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>Meets</div>
-                                <div className="text-[16px] font-medium text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>Elegance</div>
+                                <div className="text-sm font-medium mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>{t.where}</div>
+                                <div className="text-[16px] font-bold text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>{t.tradition}</div>
+                                <div className="text-[16px] font-semimedium text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>{t.meets}</div>
+                                <div className="text-[16px] font-medium text-black mb-2" style={{ color: leftCard?.text_color || 'inherit' }}>{t.elegance}</div>
                             </div>
 
-                            <div className="relative z-10 flex justify-center">
-                                <div className="relative w-32 h-32">
-                                    <Image
-                                        src={leftCard.left_image_url}
-                                        alt={`${leftCard.title} - Premium handcrafted traditional product`}
-                                        fill
-                                        className="object-cover rounded-lg"
-                                    />
+                            {leftCard?.left_image_url && (
+                                <div className="relative z-10 flex justify-center">
+                                    <div className="relative w-32 h-32">
+                                        <Image
+                                            src={leftCard.left_image_url}
+                                            alt={`${leftCard.title || ''} - Premium handcrafted traditional product`}
+                                            fill
+                                            className="object-cover rounded-lg"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
-                            <button
-                                onClick={() => router.push('/products')}
-                                className="relative z-10 bg-white cursor-pointer text-[#2b1a16] px-2 py-2 rounded-[8px] text-sm font-medium hover:bg-gray-50 transition"
-                            >
-                                {leftCard.cta_label}
-                            </button>
+                            {leftCard?.cta_label && (
+                                <button
+                                    onClick={() => router.push('/products')}
+                                    className="relative z-10 bg-white cursor-pointer text-[#2b1a16] px-2 py-2 rounded-[8px] text-sm font-medium hover:bg-gray-50 transition"
+                                >
+                                    {getHeroText(leftCard.cta_label, leftCard.cta_label_ar, leftCard.cta_label_fr, locale)}
+                                </button>
+                            )}
                         </div>
                     </div>
                     <div className="lg:col-span-7 relative">
@@ -151,22 +248,26 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
 
                             {!mounted || !currentSlideData ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-gray-400">Loading...</div>
+                                    <div className="text-gray-400">{t.loading}</div>
                                 </div>
                             ) : (
                                 <div className="absolute inset-0 flex items-center p-8 pb-0">
                                     <div className="flex-1 z-10">
-                                        <div className="text-sm text-[#000000] font-medium mb-2">{currentSlideData.title}</div>
+                                        <div className="text-sm text-[#000000] font-medium mb-2">
+                                            {getHeroText(currentSlideData.title, currentSlideData.title_ar, currentSlideData.title_fr, locale)}
+                                        </div>
                                         <h1 className="text-[36px]  font-semibold text-[#000000] mb-2">
-                                            {currentSlideData.subtitle}
+                                            {getHeroText(currentSlideData.subtitle, currentSlideData.subtitle_ar, currentSlideData.subtitle_fr, locale)}
                                         </h1>
-                                        <div className="text-sm text-[#000000] font-medium mb-5">{currentSlideData.sub_subtitle}</div>
+                                        <div className="text-sm text-[#000000] font-medium mb-5">
+                                            {getHeroText(currentSlideData.sub_subtitle, currentSlideData.sub_subtitle_ar, currentSlideData.sub_subtitle_fr, locale)}
+                                        </div>
 
                                         <button
                                             onClick={() => router.push(currentSlideData.cta_href || '/products')}
                                             className="bg-[#7a3b2e] text-white px-3 py-2 rounded-[8px] border border-black text-lg font-medium hover:bg-[#5e2d23] transition cursor-pointer"
                                         >
-                                            {currentSlideData.cta_label}
+                                            {getHeroText(currentSlideData.cta_label, currentSlideData.cta_label_ar, currentSlideData.cta_label_fr, locale)}
                                         </button>
                                     </div>
                                     {/* Product/Person Image (with transparent background) */}
@@ -294,13 +395,13 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                                 {/* Content */}
                                 <div className="flex-1 relative z-10">
                                     <div className="text-sm text-[#7a3b2e] font-medium mb-1" style={{ color: card.text_color || '#7a3b2e' }}>
-                                        {card.title || (index === 0 ? "Big deal" : "New")}
+                                        {getHeroText(card.title, card.title_ar, card.title_fr, locale) || (index === 0 ? t.bigDeal : t.new)}
                                     </div>
                                     <h3 className="text-lg font-bold text-[#2b1a16] mb-2" style={{ color: card.text_color || '#2b1a16' }}>
-                                        {card.subtitle}
+                                        {getHeroText(card.subtitle, card.subtitle_ar, card.subtitle_fr, locale)}
                                     </h3>
                                     <p className="text-[#6b4e45] mb-4 text-sm" style={{ color: card.text_color ? `${card.text_color}99` : '#6b4e45' }}>
-                                        {card.sub_subtitle}
+                                        {getHeroText(card.sub_subtitle, card.sub_subtitle_ar, card.sub_subtitle_fr, locale)}
                                     </p>
                                 </div>
 

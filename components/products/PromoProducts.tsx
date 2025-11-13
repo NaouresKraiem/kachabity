@@ -7,6 +7,27 @@ import supabase from '@/lib/supabaseClient';
 import PromoProductCard from "./PromoProductCard";
 import type { PromoProduct } from "@/types/product";
 
+const translations = {
+    en: {
+        promotionalProducts: "Promotional Products",
+        limitedTimeOffers: "Limited time offers on our best products",
+        scrollToSeeMore: "Scroll to see more",
+        seeAll: "See All"
+    },
+    fr: {
+        promotionalProducts: "Produits promotionnels",
+        limitedTimeOffers: "Offres à durée limitée sur nos meilleurs produits",
+        scrollToSeeMore: "Faites défiler pour voir plus",
+        seeAll: "Voir tout"
+    },
+    ar: {
+        promotionalProducts: "المنتجات الترويجية",
+        limitedTimeOffers: "عروض محدودة على أفضل منتجاتنا",
+        scrollToSeeMore: "قم بالتمرير لرؤية المزيد",
+        seeAll: "عرض الكل"
+    }
+};
+
 interface PromoProductsProps {
     locale?: string;
 }
@@ -15,6 +36,7 @@ export default function PromoProducts({ locale = 'en' }: PromoProductsProps) {
     const [products, setProducts] = useState<PromoProduct[]>([]);
     const [categoryMap, setCategoryMap] = useState<Map<string, string>>(new Map());
     const [mounted, setMounted] = useState(false);
+    const t = translations[locale as keyof typeof translations] || translations.en;
 
     useEffect(() => {
         setMounted(true);
@@ -71,10 +93,10 @@ export default function PromoProducts({ locale = 'en' }: PromoProductsProps) {
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h2 className="text-4xl font-bold text-[#2b1a16] mb-2">
-                        Promotional Products
+                        {t.promotionalProducts}
                     </h2>
                     <p className="text-gray-500 text-sm mb-4">
-                        Limited time offers on our best products
+                        {t.limitedTimeOffers}
                     </p>
                     <Image
                         src="/assets/images/highlight.svg"
@@ -126,7 +148,7 @@ export default function PromoProducts({ locale = 'en' }: PromoProductsProps) {
                                 <svg className="w-5 h-5 animate-bounce-x" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
-                                <span>Scroll to see more</span>
+                                <span>{t.scrollToSeeMore}</span>
                             </div>
                         )}
                     </>
@@ -138,7 +160,7 @@ export default function PromoProducts({ locale = 'en' }: PromoProductsProps) {
                             href={`/${locale}/products?promo=true`}
                             className="text-[#842E1B] font-medium hover:underline inline-flex items-center gap-2"
                         >
-                            See All
+                            {t.seeAll}
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>

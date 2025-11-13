@@ -11,8 +11,9 @@ import CustomerFeedback from "@/components/reviews/CustomerFeedback";
 import SaleBanner from "@/components/sections/SaleBanner";
 import ServiceHighlights from "@/components/services/ServiceHighlights";
 import ProductGrid from "@/components/products/ProductGrid";
+import FAQ from "@/components/sections/FAQ";
 
-async function HeroContent() {
+async function HeroContent({ locale }: { locale: string }) {
   try {
     const [heroResult, smallCardsResult] = await Promise.all([
       supabase
@@ -36,14 +37,29 @@ async function HeroContent() {
     );
   } catch (error) {
     console.error('Error fetching hero data:', error);
+    const errorMessages = {
+      en: {
+        welcome: "Welcome to our traditional store",
+        discover: "Discover our amazing handcrafted products"
+      },
+      fr: {
+        welcome: "Bienvenue dans notre magasin traditionnel",
+        discover: "Découvrez nos produits artisanaux étonnants"
+      },
+      ar: {
+        welcome: "مرحباً بكم في متجرنا التقليدي",
+        discover: "اكتشف منتجاتنا الحرفية الرائعة"
+      }
+    };
+    const t = errorMessages[locale as keyof typeof errorMessages] || errorMessages.en;
     return (
       <div className="w-full py-8 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-[#2b1a16] mb-4">
-            Welcome to our traditional store
+            {t.welcome}
           </h2>
           <p className="text-[#7a3b2e]">
-            Discover our amazing handcrafted products
+            {t.discover}
           </p>
         </div>
       </div>
@@ -52,13 +68,13 @@ async function HeroContent() {
 }
 
 export default async function Home({ params }: { params: { locale: string } }) {
-  const locale = params.locale || 'en';
+  const locale = params.locale || 'ar';
 
   return (
     <ErrorBoundary>
       <main className="min-h-screen bg-white">
         <StaticHeader />
-        <HeroContent />
+        <HeroContent locale={locale} />
         <Suspense fallback={<LoadingSpinner />}>
           <ServiceHighlights />
           <ProductGrid locale={locale} />
@@ -66,6 +82,7 @@ export default async function Home({ params }: { params: { locale: string } }) {
           <PromoProducts locale={locale} />
           <SaleBanner />
           <CustomerFeedback />
+          <FAQ />
         </Suspense>
         <Footer />
       </main>

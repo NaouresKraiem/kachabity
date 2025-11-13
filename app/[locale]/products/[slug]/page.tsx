@@ -53,7 +53,20 @@ interface Product {
 interface Category {
     id: string;
     name: string;
+    name_ar?: string;
+    name_fr?: string;
     slug: string;
+}
+
+// Helper function to get translated category name
+function getCategoryName(category: Category, locale: string): string {
+    if (locale === 'ar' && category.name_ar) {
+        return category.name_ar;
+    }
+    if (locale === 'fr' && category.name_fr) {
+        return category.name_fr;
+    }
+    return category.name;
 }
 
 interface Review {
@@ -241,22 +254,49 @@ export default function ProductDetailPage() {
                             setSimilarProducts(similarData);
                         }
                         // Fetch related categories excluding current
-                        const { data: catData } = await supabase
+                        let { data: catData, error: catError } = await supabase
                             .from('categories')
-                            .select('id, name, slug')
+                            .select('id, name, name_ar, name_fr, slug')
                             .neq('id', data.category_id)
                             .order('name', { ascending: true })
                             .limit(6);
+
+                        // If error, try without translation fields
+                        if (catError) {
+                            const fallbackResult = await supabase
+                                .from('categories')
+                                .select('id, name, slug')
+                                .neq('id', data.category_id)
+                                .order('name', { ascending: true })
+                                .limit(6);
+                            if (!fallbackResult.error) {
+                                catData = fallbackResult.data;
+                            }
+                        }
+
                         if (catData) {
                             setRelatedCategories(catData);
                         }
                     } else {
                         // Fallback: fetch some categories
-                        const { data: catData } = await supabase
+                        let { data: catData, error: catError } = await supabase
                             .from('categories')
-                            .select('id, name, slug')
+                            .select('id, name, name_ar, name_fr, slug')
                             .order('name', { ascending: true })
                             .limit(6);
+
+                        // If error, try without translation fields
+                        if (catError) {
+                            const fallbackResult = await supabase
+                                .from('categories')
+                                .select('id, name, slug')
+                                .order('name', { ascending: true })
+                                .limit(6);
+                            if (!fallbackResult.error) {
+                                catData = fallbackResult.data;
+                            }
+                        }
+
                         if (catData) {
                             setRelatedCategories(catData);
                         }
@@ -296,14 +336,30 @@ export default function ProductDetailPage() {
         async function fetchCategoryName() {
             if (categorySlug) {
                 try {
-                    const { data, error } = await supabase
+                    // Try to fetch with translation fields first
+                    let { data, error } = await supabase
                         .from('categories')
-                        .select('name')
+                        .select('name, name_ar, name_fr')
                         .eq('slug', categorySlug)
                         .single();
 
+                    // If error, try without translation fields (fallback)
+                    if (error) {
+                        const fallbackResult = await supabase
+                            .from('categories')
+                            .select('name')
+                            .eq('slug', categorySlug)
+                            .single();
+
+                        if (fallbackResult.error) {
+                            throw fallbackResult.error;
+                        }
+                        data = fallbackResult.data;
+                        error = null;
+                    }
+
                     if (data && !error) {
-                        setCategoryName(data.name);
+                        setCategoryName(getCategoryName(data, locale));
                     }
                 } catch (error) {
                     console.error('Error fetching category:', error);
@@ -312,7 +368,7 @@ export default function ProductDetailPage() {
         }
 
         fetchCategoryName();
-    }, [categorySlug]);
+    }, [categorySlug, locale]);
 
 
     const onSubmitComment = async (data: CommentFormData) => {
@@ -408,7 +464,7 @@ export default function ProductDetailPage() {
     return (
         <>
             <StaticHeader />
-            <div className="min-h-screen bg-white py-8">
+            <div className="min-h-screen bg-white py-8 " >
                 <div className="max-w-7xl mx-auto px-4">
                     {/* Breadcrumb */}
                     <nav className="flex items-center gap-2 text-sm text-gray-600 mb-8">
@@ -561,7 +617,7 @@ export default function ProductDetailPage() {
                                                 href={`/${locale}/products?category=${cat.slug}`}
                                                 className="px-6 py-3 bg-white border-2 border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-[#7a3b2e] hover:text-[#7a3b2e] hover:bg-[#FFF5F3] transition-all duration-200"
                                             >
-                                                {cat.name}
+                                                {getCategoryName(cat, locale)}
                                             </Link>
                                         ))}
                                     </div>
@@ -994,7 +1050,7 @@ export default function ProductDetailPage() {
                                             </div>
 
                                         )}
-                                    <div className="z-9999 absolute right-0 top-390 w-64 h-64  pointer-events-none">
+                                    <div className="z-9 absolute right-0 top-390 w-64 h-64  pointer-events-none">
                                         <Image
                                             src="/assets/images/flowerFloated.svg"
                                             alt="Decorative flower"

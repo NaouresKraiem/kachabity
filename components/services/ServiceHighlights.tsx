@@ -1,37 +1,92 @@
 "use client";
 
 import Image from "next/image";
+import { useParams } from "next/navigation";
 
-const services = [
-    {
-        icon: "/assets/images/icons/support.svg",
-        title: "Fastest Delivery",
-        description: "Order and Receive in 1 day"
+const translations = {
+    en: {
+        services: [
+            {
+                title: "Fastest Delivery",
+                description: "Order and Receive in 1 day"
+            },
+            {
+                title: "Anima Wallet",
+                description: "Earn loyalty points for every order"
+            },
+            {
+                title: "24/7 Online Support",
+                description: "Get advice from our pet professionals"
+            },
+            {
+                title: "Customers Trusted",
+                description: "5 star reviews from customers"
+            }
+        ]
     },
-    {
-        icon: "/assets/images/icons/wallet.svg",
-        title: "Anima Wallet",
-        description: "Earn loyalty points for every order"
+    fr: {
+        services: [
+            {
+                title: "Livraison la plus rapide",
+                description: "Commandez et recevez en 1 jour"
+            },
+            {
+                title: "Portefeuille Anima",
+                description: "Gagnez des points de fidélité pour chaque commande"
+            },
+            {
+                title: "Support en ligne 24/7",
+                description: "Obtenez des conseils de nos professionnels"
+            },
+            {
+                title: "Clients de confiance",
+                description: "Avis 5 étoiles de nos clients"
+            }
+        ]
     },
-    {
-        icon: "/assets/images/icons/delivery.svg",
-        title: "24/7 Online Support",
-        description: "Get advice from our pet professionals"
-    },
-    {
-        icon: "/assets/images/icons/chat.svg",
-        title: "Customers Trusted",
-        description: "5 star reviews from customers"
+    ar: {
+        services: [
+            {
+                title: "أسرع توصيل",
+                description: "اطلب واستلم في يوم واحد"
+            },
+            {
+                title: "محفظة أنيما",
+                description: "اكسب نقاط الولاء لكل طلب"
+            },
+            {
+                title: "دعم على الإنترنت 24/7",
+                description: "احصل على نصائح من محترفينا"
+            },
+            {
+                title: "عملاء موثوقون",
+                description: "تقييمات 5 نجوم من العملاء"
+            }
+        ]
     }
+};
+
+const serviceIcons = [
+    "/assets/images/icons/support.svg",
+    "/assets/images/icons/wallet.svg",
+    "/assets/images/icons/delivery.svg",
+    "/assets/images/icons/chat.svg"
 ];
 
 export default function ServiceHighlights() {
+    const params = useParams();
+    const locale = (params?.locale as string) || 'en';
+    const t = translations[locale as keyof typeof translations] || translations.en;
+    const services = t.services.map((service, index) => ({
+        ...service,
+        icon: serviceIcons[index]
+    }));
     return (
         <section className="w-full py-2 px-1 bg-[#FCF1EE]">
             <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between gap-8">
                     {/* Service Items */}
-                    <div className="flex items-center gap-12 flex-1">
+                    <div className="flex items-center gap-12 flex-1 justify-center">
                         {services.map((service, index) => (
                             <div key={index} className="flex items-center gap-3">
                                 <div className="shrink-0">
