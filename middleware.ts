@@ -1,17 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supportedLanguages, defaultLanguage, detectLanguageFromHeader, isValidLocale } from './lib/language-utils';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
-    // Skip middleware for static files and API routes
+    // Skip middleware for static files
     if (
         pathname.startsWith('/_next/') ||
-        pathname.startsWith('/api/') ||
         pathname.startsWith('/favicon.ico') ||
         pathname.includes('.')
     ) {
         return NextResponse.next();
+    }
+
+    // Allow /admin routes to bypass locale redirection
+    if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+        return NextResponse.next();
+    }
+
+    // Allow /api-docs and /api routes to bypass locale redirection
+    if (pathname === '/api-docs' || pathname.startsWith('/api-docs/') || pathname.startsWith('/api/')) {
+        return NextResponse.next();
+    }
+
+    // Redirect /[locale]/api-docs to /api-docs (strip locale)
+    const segments = pathname.split('/');
+    if (segments.length >= 3 && segments[2] === 'api-docs') {
+        const locale = segments[1];
+        if (isValidLocale(locale)) {
+            return NextResponse.redirect(new URL('/api-docs', request.url));
+        }
     }
 
     // Check if pathname already has a language prefix
@@ -31,7 +49,6 @@ export function middleware(request: NextRequest) {
     }
 
     // Validate the locale in the URL
-    const segments = pathname.split('/');
     const locale = segments[1];
 
     if (locale && !isValidLocale(locale)) {
@@ -44,7 +61,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        // Skip all internal paths (_next)
-        '/((?!_next|api|favicon.ico).*)',
+        // Include API routes and admin routes for session refresh
+        '/((?!_next|favicon.ico).*)',
     ],
 };

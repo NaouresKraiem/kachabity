@@ -13,21 +13,28 @@ import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 
 interface Product {
     id: string;
-    title: string;
-    title_ar?: string;
-    title_fr?: string;
+    name: string;
+    name_ar?: string;
+    name_fr?: string;
     slug: string;
     description?: string;
-    price_cents: number;
-    currency: string;
+    base_price: number;
+    currency?: string;
     discount_percent?: number;
-    image_url: string;
+    image_url?: string;
     stock: number;
     rating?: number;
     review_count?: number;
     category_id?: string;
     colors?: string[];
     sizes?: string[];
+    product_images?: Array<{
+        id: string;
+        image_url: string;
+        alt_text?: string;
+        is_main: boolean;
+        position: number;
+    }>;
 }
 
 interface Category {
@@ -95,15 +102,15 @@ const content = {
     }
 };
 
-// Predefined colors for filter
-const FILTER_COLORS = [
-    { name: "Gold", value: "#D4AF37" },
-    { name: "Teal", value: "#2F4F4F" },
-    { name: "Beige", value: "#DEB887" },
-    { name: "Purple", value: "#9370DB" }
-];
-
 const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL", "4XL"];
+
+interface Color {
+    id: string;
+    name: string;
+    hex_code?: string;
+    rgb_code?: string;
+    display_name?: string;
+}
 
 // Helper function to get translated category name
 function getCategoryName(category: Category, locale: string): string {
@@ -125,6 +132,7 @@ export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const { addItem } = useCart();
     const [categories, setCategories] = useState<Category[]>([]);
+    const [availableColors, setAvailableColors] = useState<Color[]>([]);
     const [loading, setLoading] = useState(true);
     const [productsLoading, setProductsLoading] = useState(false); // Separate loading for products
     const [wishlist, setWishlist] = useState<Set<string>>(new Set());
@@ -148,9 +156,10 @@ export default function ProductsPage() {
     const sortParam = searchParams.get('sort');
     const search = searchParams?.get('search') || "";
 
-    // Initialize: Fetch categories and user favorites
+    // Initialize: Fetch categories, colors and user favorites
     useEffect(() => {
         fetchCategories();
+        fetchColors();
         fetchUserAndFavorites();
     }, []);
 
@@ -201,29 +210,80 @@ export default function ProductsPage() {
         }
     }
 
+    async function fetchColors() {
+        try {
+            const { data, error } = await supabase
+                .from('colors')
+                .select('*')
+                .order('sort_order', { ascending: true });
+
+            if (error) throw error;
+            if (data) {
+                setAvailableColors(data);
+            }
+        } catch (error) {
+            console.error('Error fetching colors:', error);
+            // Fallback to empty array if colors table doesn't exist
+            setAvailableColors([]);
+        }
+    }
+
     async function fetchProducts() {
         try {
             setProductsLoading(true);
 
+            // If promo filter is active, get product IDs with active discounts first
+            let promoProductIds: string[] | null = null;
+            if (promoOnly) {
+                const { data: discountsData } = await supabase
+                    .from('product_discounts')
+                    .select('product_id')
+                    .eq('active', true);
+
+                if (discountsData && discountsData.length > 0) {
+                    promoProductIds = discountsData.map((d: { product_id: string }) => d.product_id);
+                } else {
+                    // No active discounts, return empty result
+                    setProducts([]);
+                    setTotalCount(0);
+                    setProductsLoading(false);
+                    setLoading(false);
+                    return;
+                }
+            }
+
             // Build query with filters applied at database level
             let query = supabase
                 .from('products')
-                .select('*', { count: 'exact' })
+                .select(`
+                    *,
+                    product_images (
+                        id,
+                        image_url,
+                        alt_text,
+                        is_main,
+                        position
+                    )
+                `, { count: 'exact' })
+                .is('deleted_at', null)
+                .eq('status', 'active')
 
 
             if (search) {
-                query = query.ilike('title', `%${search}%`);
+                query = query.ilike('name', `%${search}%`);
             }
 
-
-            // query = query.or(`name.ilike.%${search}%,category.ilike.%${search}%`);
+            // Apply promo filter (products with active discounts)
+            if (promoOnly && promoProductIds) {
+                query = query.in('id', promoProductIds);
+            }
 
             // Apply price range filter
             if (priceRange[0] > 0) {
-                query = query.gte('price_cents', priceRange[0]);
+                query = query.gte('base_price', priceRange[0]);
             }
             if (priceRange[1] < 1000) {
-                query = query.lte('price_cents', priceRange[1]);
+                query = query.lte('base_price', priceRange[1]);
             }
 
             // Apply category filter
@@ -231,24 +291,47 @@ export default function ProductsPage() {
                 query = query.in('category_id', Array.from(selectedCategoryIds));
             }
 
-            // Apply size filter (if sizes column exists as array in DB)
-            if (selectedSizes.size > 0) {
-                // This assumes 'sizes' is a JSONB array column
-                // For each selected size, we check if it's contained in the array
-                const sizesArray = Array.from(selectedSizes);
-                query = query.overlaps('sizes', sizesArray);
-            }
+            // Apply size and color filters together
+            // Filter products that have variants matching the selected sizes and/or colors
+            if (selectedSizes.size > 0 || selectedColors.size > 0) {
+                let variantQuery = supabase
+                    .from('product_variants')
+                    .select('product_id');
 
-            // Apply color filter (if colors column exists as array in DB)
-            if (selectedColors.size > 0) {
-                // This assumes 'colors' is a JSONB array column
-                const colorsArray = Array.from(selectedColors);
-                query = query.overlaps('colors', colorsArray);
-            }
+                // Apply size filter
+                if (selectedSizes.size > 0) {
+                    const sizesArray = Array.from(selectedSizes);
+                    variantQuery = variantQuery.in('size_id', sizesArray);
+                }
 
-            // Apply promo filter from URL (?promo=true)
-            if (promoOnly) {
-                query = query.not('discount_percent', 'is', null).gt('discount_percent', 0);
+                // Apply color filter
+                if (selectedColors.size > 0) {
+                    const colorsArray = Array.from(selectedColors);
+                    variantQuery = variantQuery.in('color_id', colorsArray);
+                }
+
+                const { data: matchingVariants, error: variantError } = await variantQuery;
+
+                if (variantError) {
+                    console.error('Error fetching variants:', variantError);
+                    setProducts([]);
+                    setTotalCount(0);
+                    setProductsLoading(false);
+                    setLoading(false);
+                    return;
+                }
+
+                if (matchingVariants && matchingVariants.length > 0) {
+                    const productIds = [...new Set(matchingVariants.map((v: { product_id: string }) => v.product_id))];
+                    query = query.in('id', productIds);
+                } else {
+                    // No products match, return empty result
+                    setProducts([]);
+                    setTotalCount(0);
+                    setProductsLoading(false);
+                    setLoading(false);
+                    return;
+                }
             }
 
             // Apply sort options
@@ -451,30 +534,58 @@ export default function ProductsPage() {
                                 </div>
 
                                 {/* Color Filter */}
-                                <div className="mb-8">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-sm font-medium text-gray-900">{text.color}</span>
-                                        <button className="text-gray-400 hover:text-gray-600">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        {FILTER_COLORS.map(color => (
+                                {availableColors.length > 0 && (
+                                    <div className="mb-8">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-sm font-medium text-gray-900">{text.color}</span>
                                             <button
-                                                key={color.value}
-                                                onClick={() => toggleColor(color.value)}
-                                                className={`w-10 h-10 rounded-full border-2 transition ${selectedColors.has(color.value)
-                                                    ? 'border-[#842E1B] scale-110'
-                                                    : 'border-gray-300'
-                                                    }`}
-                                                style={{ backgroundColor: color.value }}
-                                                title={color.name}
-                                            />
-                                        ))}
+                                                className="text-gray-400 hover:text-gray-600"
+                                                onClick={() => setSelectedColors(new Set())}
+                                                disabled={selectedColors.size === 0}
+                                            >
+                                                {selectedColors.size > 0 && (
+                                                    <span className="text-xs text-[#842E1B]">Clear</span>
+                                                )}
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-3">
+                                            {availableColors.map(color => (
+                                                <button
+                                                    key={color.id}
+                                                    onClick={() => toggleColor(color.id)}
+                                                    className={`relative w-10 h-10 rounded-full border-2 transition-all hover:scale-105 ${selectedColors.has(color.id)
+                                                        ? 'border-[#842E1B] scale-110 ring-2 ring-[#842E1B] ring-offset-2'
+                                                        : 'border-gray-300 hover:border-gray-400'
+                                                        }`}
+                                                    style={{ backgroundColor: color.hex_code || '#CCCCCC' }}
+                                                    title={color.display_name || color.name}
+                                                    aria-label={`Filter by ${color.display_name || color.name}`}
+                                                >
+                                                    {selectedColors.has(color.id) && (
+                                                        <svg
+                                                            className="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow-lg"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={3}
+                                                                d="M5 13l4 4L19 7"
+                                                            />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {selectedColors.size > 0 && (
+                                            <div className="mt-2 text-xs text-gray-600">
+                                                {selectedColors.size} color{selectedColors.size > 1 ? 's' : ''} selected
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Category Filter */}
                                 <div className="mb-8">
@@ -557,24 +668,34 @@ export default function ProductsPage() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 pb-4">
-                                    {products.map(product => {
-                                        return (
-                                            <ProductListCard
-                                                key={product.id}
-                                                product={product as any}
-                                                locale={locale}
-                                                isFavorite={wishlist.has(product.id)}
-                                                onToggleFavorite={toggleWishlist}
-                                                onAddToCart={(p) => addItem({
+                                    {products.map(product => (
+                                        <ProductListCard
+                                            key={product.id}
+                                            product={product as any}
+                                            locale={locale}
+                                            isFavorite={wishlist.has(product.id)}
+                                            onToggleFavorite={toggleWishlist}
+                                            onAddToCart={(p) => {
+                                                // Get product image from product_images or fallback
+                                                const productImage = p.product_images && p.product_images.length > 0
+                                                    ? (p.product_images.find(img => img.is_main)?.image_url || p.product_images[0].image_url)
+                                                    : (p.image_url || '');
+
+                                                // Calculate discounted price
+                                                const price = p.discount_percent
+                                                    ? p.base_price * (1 - p.discount_percent / 100)
+                                                    : p.base_price;
+
+                                                addItem({
                                                     id: p.id,
-                                                    name: p.title,
-                                                    price: p.price_cents,
-                                                    image: p.image_url,
-                                                    reviewCount: p.review_count
-                                                })}
-                                            />
-                                        );
-                                    })}
+                                                    name: p.name,
+                                                    price: Math.round(price),
+                                                    image: productImage,
+                                                    reviewCount: p.review_count || 0
+                                                });
+                                            }}
+                                        />
+                                    ))}
                                 </div>
                             )}
 

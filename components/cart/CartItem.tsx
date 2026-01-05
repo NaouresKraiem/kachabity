@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useLanguage } from "@/lib/language-context";
 
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400";
+
 interface CartItemProps {
     item: {
         id: string;
@@ -22,6 +24,11 @@ interface CartItemProps {
     reviewsText?: string; // Translation for "reviews"
 }
 
+// Helper function to get valid image URL
+function getImageUrl(image: string): string {
+    return image && image.trim() !== '' ? image : FALLBACK_IMAGE;
+}
+
 export default function CartItem({
     item,
     onUpdateQuantity,
@@ -31,12 +38,13 @@ export default function CartItem({
     reviewsText = "reviews",
 }: CartItemProps) {
     const { locale } = useLanguage();
-
+console.log(item);
     const itemName = locale === 'ar' && item.name_ar ? item.name_ar :
         locale === 'fr' && item.name_fr ? item.name_fr :
             item.name;
 
     const itemTotal = item.price * item.quantity;
+    const imageUrl = getImageUrl(item.image);
 
     // Compact variant (for drawer)
     if (variant === "compact") {
@@ -44,10 +52,11 @@ export default function CartItem({
             <div className="flex gap-6">
                 <div className="relative w-30 h-30 shrink-0 bg-gray-100 rounded-[4px] overflow-hidden">
                     <Image
-                        src={item.image}
-                        alt={item.name}
+                        src={imageUrl}
+                        alt={itemName || "Product"}
                         fill
                         className="object-cover"
+                        sizes="120px"
                     />
                 </div>
 
@@ -73,7 +82,8 @@ export default function CartItem({
                             )}
                         </div>
 
-                        {item.rating && (
+                        {item.rating !== 0  && item.reviewCount !== 0 && (
+
                             <div className="flex items-center gap-10 mb-1">
                                 <div className="flex gap-2">
                                     {[...Array(5)].map((_, i) => (
@@ -95,9 +105,9 @@ export default function CartItem({
                                 </span>
                             </div>
                         )}
-                        {/* <span className="text-[10px] font-medium text-gray-900 mt-4 md:mt-0">
-                        x{item.quantity}
-                        </span> */}
+                        <span className="text-[15px] font-medium text-[#777A7E] mt-4 md:mt-0">
+                        Quantity: {item.quantity}
+                        </span>
                     </div>
 
                     <div>
@@ -137,10 +147,11 @@ export default function CartItem({
                 <div className="flex gap-6">
                     <div className="relative w-32 h-32 shrink-0 bg-gray-100 rounded-lg overflow-hidden">
                         <Image
-                            src={item.image}
-                            alt={item.name}
+                            src={imageUrl}
+                            alt={itemName || "Product"}
                             fill
                             className="object-cover"
+                            sizes="128px"
                         />
                     </div>
 
@@ -228,10 +239,11 @@ export default function CartItem({
             <div className="flex items-center gap-4 col-span-2 w-full md:w-auto">
                 <div className="relative w-24 h-24 shrink-0 bg-gray-100 rounded-lg overflow-hidden">
                     <Image
-                        src={item.image}
-                        alt={item.name}
+                        src={imageUrl}
+                        alt={itemName || "Product"}
                         fill
                         className="object-cover"
+                        sizes="96px"
                     />
                 </div>
                 <div className="flex-1">

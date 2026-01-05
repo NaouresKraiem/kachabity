@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabase from '@/lib/supabaseClient';
+import defaultSupabase from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+
+// Use Service Role Key if available to bypass RLS for admin operations
+const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    : defaultSupabase;
 
 export async function POST(request: NextRequest) {
     try {
@@ -37,8 +43,19 @@ export async function POST(request: NextRequest) {
         const fileExtension = file.name.split('.').pop();
         const fileName = `product-${timestamp}-${randomString}.${fileExtension}`;
 
+        // Upload file to Supabase Storage
+        const { data, error } = await supabase.storage
+            .from('products')
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
 
-       
+        if (error) {
+            console.error('Supabase storage upload error:', error);
+            throw error;
+        }
+
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
             .from('products')

@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import supabase from '@/lib/supabaseClient';
+import supabase from "@/lib/supabaseClient";
 import { useCart } from "@/lib/cart-context";
-import ProductListCard from "./ProductListCard";
+import ProductListCard, { ProductListItem } from "./ProductListCard";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 import { message } from "antd";
+import type { ProductImage as SupabaseProductImage } from "@/lib/product-images";
 
 const translations = {
     en: {
@@ -26,28 +27,59 @@ const translations = {
     }
 };
 
-interface Product {
-    id: string;
-    title: string;
-    slug: string;
-    description: string;
-    price_cents: number;
-    currency: string;
-    image_url: string;
-    category_id: string;
-    rating: number;
-    review_count: number;
-    stock: number;
-    is_featured: boolean;
-    discount_percent?: number;
+const DEFAULT_CURRENCY = process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "TND";
+const FALLBACK_IMAGE_URL = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400";
+
+interface ProductReview {
+    rating?: number | null;
 }
+
+type ProductImage = SupabaseProductImage;
+
+interface ProductRow {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    base_price: number;
+    category_id: string | null;
+    status: 'active' | 'inactive' | 'archived';
+    product_images?: ProductImage[];
+    reviews?: ProductReview[];
+}
+
+type TopProduct = ProductListItem & ProductRow & {
+    categorySlug?: string;
+};
 
 interface TopProductsProps {
     locale?: string;
 }
 
+function calculateReviewStats(reviews?: ProductReview[]) {
+    if (!reviews || reviews.length === 0) {
+        return { rating: 0, reviewCount: 0 };
+    }
+
+    const ratedReviews = reviews.filter(
+        (review) => typeof review?.rating === "number" && !Number.isNaN(Number(review.rating))
+    );
+
+    if (ratedReviews.length === 0) {
+        return { rating: 0, reviewCount: 0 };
+    }
+
+    const total = ratedReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0);
+    const average = Number((total / ratedReviews.length).toFixed(1));
+
+    return {
+        rating: average,
+        reviewCount: ratedReviews.length,
+    };
+}
+
 export default function TopProducts({ locale = 'en' }: TopProductsProps) {
-    const [products, setProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<TopProduct[]>([]);
     const [categoryMap, setCategoryMap] = useState<Map<string, string>>(new Map());
     const [mounted, setMounted] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -83,28 +115,12 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
     useEffect(() => {
         async function fetchProducts() {
             try {
-                // Fetch categories first
-                const { data: categoriesData, error: categoriesError } = await supabase
-                    .from('categories')
-                    .select('id, slug');
+                // Fetch products from the new API endpoint
+                const response = await fetch('/api/products/top');
+                const data = await response.json();
 
-                if (!categoriesError && categoriesData) {
-                    const map = new Map<string, string>(categoriesData.map((cat: { id: string; slug: string }) => [cat.id, cat.slug]));
-                    setCategoryMap(map);
-                }
-
-                // Fetch products
-                const { data, error } = await supabase
-                    .from('products')
-                    .select('*')
-                    .eq('is_featured', true)
-                    .order('review_count', { ascending: false })
-                    .limit(10);
-
-                if (error) throw error;
-
-                if (data) {
-                    setProducts(data);
+                if (data.products) {
+                    setProducts(data.products);
                 }
             } catch (error) {
                 console.error('Error fetching products:', error);
@@ -244,23 +260,34 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
                             </div>
                         ) : (
                             <div className="flex gap-6 pb-4" style={{ width: 'max-content' }}>
-                                {products.map((product) => (
+                                {products.map((product: any) => (
                                     <ProductListCard
                                         key={product.id}
                                         product={product}
                                         locale={locale}
                                         isFavorite={favorites.has(product.id)}
                                         onToggleFavorite={handleToggleFavorite}
-                                        onAddToCart={(p) =>
+                                        categorySlug={product.categorySlug}
+                                        onAddToCart={(p) => {
+                                            // Get product image from product_images or fallback
+                                            const productImage = p.product_images && p.product_images.length > 0
+                                                ? (p.product_images.find(img => img.is_main)?.image_url || p.product_images[0].image_url)
+                                                : (p.image_url || FALLBACK_IMAGE_URL);
+
+                                            // Calculate discounted price
+                                            const price = p.discount_percent
+                                                ? p.base_price * (1 - p.discount_percent / 100)
+                                                : p.base_price;
+
                                             addItem({
                                                 id: p.id,
-                                                name: p.title,
-                                                price: p.price_cents,
-                                                image: p.image_url,
-                                                rating: p.rating,
-                                                reviewCount: p.review_count,
-                                            })
-                                        }
+                                                name: p.name,
+                                                price: Math.round(price),
+                                                image: productImage,
+                                                rating: p.rating || 0,
+                                                reviewCount: p.review_count || 0,
+                                            });
+                                        }}
                                     />
                                 ))}
                             </div>

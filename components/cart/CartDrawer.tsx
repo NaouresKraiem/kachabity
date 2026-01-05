@@ -40,7 +40,7 @@ const content = {
 
 export default function CartDrawer() {
     const { items, subtotal, updateQuantity, removeItem, isCartOpen, closeCart } = useCart();
-
+console.log(items);
     const { locale } = useLanguage();
     const text = content[locale as keyof typeof content] || content.en;
     const rtl = isRTL(locale);
@@ -85,7 +85,7 @@ export default function CartDrawer() {
                     </div>
 
                     {/* Cart Items */}
-                    <div className="flex-1 overflow-y-auto px-8 pt-6 bg-white">
+                    <div className="flex-1 overflow-y-auto px-8 pt-6 bg-white max-h-100">
                         {items.length === 0 ? (
                             <div className="pb-12 flex flex-col items-center justify-center h-full text-center">
                                 <svg className="w-24 h-24 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -14,9 +14,11 @@ interface PromoProductCardProps {
 }
 
 export default function PromoProductCard({ product, locale = 'en', categorySlug = 'all' }: PromoProductCardProps) {
+    // Use price_cents if available, otherwise use base_price
+    const basePrice = product.price_cents ?? product.base_price ?? 0;
     const discountedPrice = product.discount_percent
-        ? product.price_cents * (1 - product.discount_percent / 100)
-        : product.price_cents;
+        ? basePrice * (1 - product.discount_percent / 100)
+        : basePrice;
 
     // Include category in search params for context
     const productUrl = categorySlug && categorySlug !== "all"
@@ -29,8 +31,8 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                 <div className="relative w-[280px] lg:w-[220px] xl:w-[250px] 2xl:w-[270px] h-[280px] lg:h-[220px] xl:h-[250px] 2xl:h-[270px] overflow-hidden rounded-[15px] border border-[#E3E3E3] shrink-0 mx-auto lg:mx-0">
                     <Link href={productUrl}>
                         <Image
-                            src={product.image_url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"}
-                            alt={product.title}
+                            src={product?.image_url || '/assets/images/logo.svg'}
+                            alt={product.title || product.name || "Product image"}
                             fill
                             className="p-0.5 object-cover hover:scale-105 transition-transform duration-300 overflow-hidden rounded-[15px] border"
                         />
@@ -51,7 +53,7 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                         {/* Title */}
                         <Link href={productUrl}>
                             <h3 className="text-[16px] font-medium text-[#842E1B] hover:text-[#842E1B] transition leading-tight">
-                                {product.title}
+                                {product.title || product.name}
                             </h3>
                         </Link>
 
@@ -62,7 +64,7 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                             </span>
                             {product.discount_percent && product.discount_percent > 0 && (
                                 <span className="text-[13px] text-gray-400 line-through">
-                                    {product.price_cents} {product.currency}
+                                    {basePrice} {product.currency || 'TND'}
                                 </span>
                             )}
                         </div>
@@ -82,11 +84,11 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                         <AddToCartButton
                             product={{
                                 id: product.id,
-                                name: product.title,
+                                name: product.title || product.name,
                                 price: Math.round(discountedPrice),
-                                image: product.image_url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
-                                rating: 4,
-                                reviewCount: 4300
+                                image: product.image_url || "",
+                                rating: product.rating || 4,
+                                reviewCount: product.review_count || 0
                             }}
                             className="w-full"
                         />

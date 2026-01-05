@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import PromoProducts from "@/components/products/PromoProducts";
 import CustomerFeedback from "@/components/reviews/CustomerFeedback";
 import SaleBanner from "@/components/sections/SaleBanner";
+import Reels from "@/components/sections/Reels";
 import ServiceHighlights from "@/components/services/ServiceHighlights";
 import ProductGrid from "@/components/products/ProductGrid";
 import FAQ from "@/components/sections/FAQ";
@@ -81,6 +82,7 @@ export default async function Home({ params }: { params: { locale: string } }) {
           <TopProducts locale={locale} />
           <PromoProducts locale={locale} />
           <SaleBanner />
+          <Reels />
           <CustomerFeedback />
           <FAQ />
         </Suspense>

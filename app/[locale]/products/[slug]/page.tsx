@@ -23,23 +23,57 @@ interface ProductImage {
     alt?: string;
 }
 
+interface Color {
+    id: string;
+    name: string;
+    hex_code?: string;
+    display_name?: string;
+}
+
+interface Size {
+    id: string;
+    name: string;
+    code?: string;
+    display_name?: string;
+}
+
+interface ProductVariant {
+    id: string;
+    product_id: string;
+    // New structure with foreign keys
+    color_id?: string | null;
+    size_id?: string | null;
+    // Joined data
+    colors?: Color;
+    sizes?: Size;
+    // Legacy fields (for backward compatibility)
+    color?: string;
+    size?: string;
+    sku?: string;
+    price_cents?: number;
+    price?: number;
+    stock: number;
+    images?: ProductImage[];
+    image_url?: string;
+    is_available?: boolean;
+    is_active?: boolean;
+}
+
 interface Product {
     id: string;
-    title: string;
-    title_ar?: string;
-    title_fr?: string;
+    name: string;
+    name_ar?: string;
+    name_fr?: string;
     slug: string;
     description?: string;
     description_ar?: string;
     description_fr?: string;
-    price_cents: number;
-    currency: string;
+    base_price: number;
+    currency?: string;
     discount_percent?: number;
-    image_url: string;
-    images?: ProductImage[];
-    stock: number;
-    rating?: number;
-    review_count?: number;
+    image_url?: string;
+    product_images?: ProductImage[];
+    stock?: number;
     category_id?: string;
     colors?: string[];
     sizes?: string[];
@@ -48,6 +82,7 @@ interface Product {
     shipping_info?: string;
     seller_info?: string;
     views?: number;
+    product_variants?: ProductVariant[];
 }
 
 interface Category {
@@ -208,6 +243,7 @@ export default function ProductDetailPage() {
     const [quantity, setQuantity] = useState(1);
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
     const [expandedSection, setExpandedSection] = useState<string[]>([
         "product",
         "shipping",
@@ -222,23 +258,127 @@ export default function ProductDetailPage() {
 
     useEffect(() => {
         async function fetchProduct() {
+            console.log('Fetching product with slug:', slug);
             try {
-                const { data, error } = await supabase
+                // Fetch product first without variants relation to avoid potential relationship errors
+                const { data: productData, error: productError } = await supabase
                     .from('products')
                     .select('*')
                     .eq('slug', slug)
+                    .is('deleted_at', null)
+                    .eq('status', 'active')
                     .single();
 
-                if (error) throw error;
+                if (productError) throw productError;
 
+                let data = productData;
                 if (data) {
-                    setProduct(data);
-                    // Set default selections
-                    if (data.colors && data.colors.length > 0) {
-                        setSelectedColor(data.colors[0]);
+                    // Fetch product images
+                    const { data: imagesData, error: imagesError } = await supabase
+                        .from('product_images')
+                        .select('*')
+                        .eq('product_id', data.id)
+                        .is('variant_id', null) // Only product-level images, not variant-specific
+                        .order('position', { ascending: true });
+
+                    if (!imagesError && imagesData) {
+                        data.product_images = imagesData.map((img: any) => ({
+                            id: img.id,
+                            url: img.image_url,
+                            alt: img.alt_text,
+                        }));
                     }
-                    if (data.sizes && data.sizes.length > 0) {
-                        setSelectedSize(data.sizes[0]);
+
+                    // Fetch variants with colors and sizes joined
+                    const { data: variantsData, error: variantsError } = await supabase
+                        .from('product_variants')
+                        .select(`
+                            *,
+                            colors (
+                                id,
+                                name,
+                                hex_code,
+                                display_name
+                            ),
+                            sizes (
+                                id,
+                                name,
+                                display_name
+                            )
+                        `)
+                        .eq('product_id', data.id)
+                        .is('deleted_at', null);
+
+                    if (variantsError) {
+                        console.error('Error fetching variants:', variantsError);
+                    } else {
+                        // Fetch images for each variant
+                        if (variantsData && variantsData.length > 0) {
+                            const { data: variantImagesData, error: variantImagesError } = await supabase
+                                .from('product_images')
+                                .select('*')
+                                .eq('product_id', data.id)
+                                .not('variant_id', 'is', null)
+                                .order('position', { ascending: true });
+
+                            if (!variantImagesError && variantImagesData) {
+                                // Attach images to each variant
+                                variantsData.forEach((variant: any) => {
+                                    variant.images = variantImagesData
+                                        .filter((img: any) => img.variant_id === variant.id)
+                                        .map((img: any) => ({
+                                            id: img.id,
+                                            url: img.image_url,
+                                            alt: img.alt_text,
+                                        }));
+                                });
+                            }
+                        }
+
+                        // explicit cast to any to allow merging variants
+                        data = { ...data, product_variants: (variantsData || []) as ProductVariant[] };
+                    }
+
+                    const productWithVariants = data as Product;
+                    setProduct(productWithVariants);
+
+                    // Handle variants if they exist
+                    if (productWithVariants.product_variants && Array.isArray(productWithVariants.product_variants) && productWithVariants.product_variants.length > 0) {
+                        // Get unique colors from variants (using color_id)
+                        const uniqueColorIds = [...new Set(productWithVariants.product_variants
+                            .filter((v: ProductVariant) => v.color_id && (v.is_available !== false))
+                            .map((v: ProductVariant) => v.color_id!))];
+
+                        // Get unique sizes from variants (using size_id)
+                        const uniqueSizeIds = [...new Set(productWithVariants.product_variants
+                            .filter((v: ProductVariant) => v.size_id && (v.is_available !== false))
+                            .map((v: ProductVariant) => v.size_id!))];
+
+                        // Set default color if available
+                        if (uniqueColorIds.length > 0) {
+                            setSelectedColor(uniqueColorIds[0]);
+                            // Find first variant with this color
+                            const firstVariant = productWithVariants.product_variants.find((v: ProductVariant) => v.color_id === uniqueColorIds[0] && (v.is_available !== false));
+                            if (firstVariant) {
+                                setSelectedVariant(firstVariant);
+                                if (firstVariant.size_id) {
+                                    setSelectedSize(firstVariant.size_id);
+                                }
+                            }
+                        }
+
+                        // Set default size if no color selected
+                        if (!selectedColor && uniqueSizeIds.length > 0) {
+                            setSelectedSize(uniqueSizeIds[0]);
+                        }
+                    } else {
+                        // Fallback to old colors/sizes arrays if no variants
+                        if (data.colors && data.colors.length > 0) {
+                            setSelectedColor(data.colors[0]);
+                        }
+                        if (data.sizes && data.sizes.length > 0) {
+                            setSelectedSize(data.sizes[0]);
+                        }
                     }
 
                     // Fetch similar products
@@ -248,6 +388,8 @@ export default function ProductDetailPage() {
                             .select('*')
                             .eq('category_id', data.category_id)
                             .neq('id', data.id)
+                            .is('deleted_at', null)
+                            .eq('status', 'active')
                             .limit(4);
 
                         if (similarData) {
@@ -322,6 +464,7 @@ export default function ProductDetailPage() {
                 }
             } catch (error) {
                 console.error('Error fetching product:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
             } finally {
                 setLoading(false);
             }
@@ -370,6 +513,12 @@ export default function ProductDetailPage() {
         fetchCategoryName();
     }, [categorySlug, locale]);
 
+
+    // Calculate average rating from reviews
+    const averageRating = reviews.length > 0
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+        : 0;
+    const reviewCount = reviews.length;
 
     const onSubmitComment = async (data: CommentFormData) => {
         if (!product) return;
@@ -444,13 +593,102 @@ export default function ProductDetailPage() {
         );
     }
 
+    // Calculate price - use variant price if available, otherwise use product price
+    const basePrice = selectedVariant?.price || product.base_price;
     const discountedPrice = product.discount_percent
-        ? product.price_cents * (1 - product.discount_percent / 100)
-        : product.price_cents;
+        ? basePrice * (1 - product.discount_percent / 100)
+        : basePrice;
 
-    const productImages = product.images && product.images.length > 0
-        ? product.images
-        : [{ id: '1', url: product.image_url, alt: product.title }];
+    // Get images - use variant images if color is selected and variant has images
+    let productImages: ProductImage[] = [];
+    if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
+        productImages = selectedVariant.images.filter(img => img.url && img.url.trim() !== '');
+    } else if (selectedVariant && selectedVariant.image_url && selectedVariant.image_url.trim() !== '') {
+        productImages = [{ id: '1', url: selectedVariant.image_url, alt: product.name }];
+    } else if (product.product_images && product.product_images.length > 0) {
+        productImages = product.product_images.filter(img => img.url && img.url.trim() !== '');
+    } else if (product.image_url && product.image_url.trim() !== '') {
+        productImages = [{ id: '1', url: product.image_url, alt: product.name }];
+    }
+
+    // Fallback to logo if no valid images
+    if (productImages.length === 0) {
+        productImages = [{ id: '1', url: '/assets/images/logo.svg', alt: product.name }];
+    }
+
+    // Get available colors from variants (with joined color data)
+    const availableColors = product.product_variants && product.product_variants.length > 0
+        ? product.product_variants
+            .filter(v => v.color_id && v.colors && (v.is_available !== false))
+            .reduce((acc: Color[], v) => {
+                if (v.colors && !acc.find(c => c.id === v.colors!.id)) {
+                    acc.push(v.colors);
+                }
+                return acc;
+            }, [])
+        : [];
+
+    // Get available sizes based on selected color
+    const getAvailableSizes = (): Size[] => {
+        if (!product.product_variants || product.product_variants.length === 0) {
+            return [];
+        }
+
+        const variants = selectedColor
+            ? product.product_variants.filter(v => v.color_id === selectedColor && v.size_id && v.sizes && (v.is_available !== false))
+            : product.product_variants.filter(v => v.size_id && v.sizes && (v.is_available !== false));
+
+        return variants.reduce((acc: Size[], v) => {
+            if (v.sizes && !acc.find(s => s.id === v.sizes!.id)) {
+                acc.push(v.sizes);
+            }
+            return acc;
+        }, []);
+    };
+
+    const availableSizes = getAvailableSizes();
+
+    // Handle color selection
+    const handleColorSelect = (colorId: string) => {
+        setSelectedColor(colorId);
+        setSelectedImage(0); // Reset to first image
+
+        // Find variant with this color
+        if (product.product_variants && product.product_variants.length > 0) {
+            const variant = product.product_variants.find(v => v.color_id === colorId && (v.is_available !== false));
+            if (variant) {
+                setSelectedVariant(variant);
+                // Auto-select first available size for this color
+                if (variant.size_id) {
+                    setSelectedSize(variant.size_id);
+                } else {
+                    const sizesForColor = getAvailableSizes();
+                    if (sizesForColor.length > 0) {
+                        setSelectedSize(sizesForColor[0].id);
+                    }
+                }
+            }
+        }
+    };
+
+    // Handle size selection
+    const handleSizeSelect = (sizeId: string) => {
+        setSelectedSize(sizeId);
+
+        // Find variant with this color and size
+        if (product.product_variants && product.product_variants.length > 0 && selectedColor) {
+            const variant = product.product_variants.find(
+                v => v.color_id === selectedColor && v.size_id === sizeId && (v.is_available !== false)
+            );
+            if (variant) {
+                setSelectedVariant(variant);
+                setSelectedImage(0); // Reset to first image
+            }
+        }
+    };
+
+    // Get current stock - use variant stock if available
+    const currentStock = selectedVariant?.stock ?? product.stock ?? 0;
 
 
     const toggleSection = (section: string) => {
@@ -485,7 +723,7 @@ export default function ProductDetailPage() {
                                 <span>&gt;</span>
                             </>
                         )}
-                        <span className="text-gray-900">{product.title}</span>
+                        <span className="text-gray-900">{product.name}</span>
                     </nav>
 
                     {/* Main Product Section */}
@@ -496,35 +734,39 @@ export default function ProductDetailPage() {
                                 {/* Thumbnail Column */}
                                 <div className="flex flex-col gap-3">
                                     {productImages.slice(0, 6).map((img, index) => (
-                                        <button
-                                            key={`${img.id || img.url}-${index}`}
-                                            onClick={() => setSelectedImage(index)}
-                                            className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${selectedImage === index
-                                                ? 'border-[#2d2220] shadow-md'
-                                                : 'border-gray-200 hover:border-gray-400'
-                                                }`}
-                                        >
-                                            <Image
-                                                src={img.url}
-                                                alt={img.alt || product.title}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        </button>
+                                        img.url && img.url.trim() !== '' && (
+                                            <button
+                                                key={`${img.id || img.url}-${index}`}
+                                                onClick={() => setSelectedImage(index)}
+                                                className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${selectedImage === index
+                                                    ? 'border-[#2d2220] shadow-md'
+                                                    : 'border-gray-200 hover:border-gray-400'
+                                                    }`}
+                                            >
+                                                <Image
+                                                    src={img.url}
+                                                    alt={img.alt || product.name}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </button>
+                                        )
                                     ))}
                                 </div>
 
                                 {/* Main Image with Preview */}
                                 <div className="flex-1">
                                     <AntImage.PreviewGroup
-                                        items={productImages.map(img => ({
-                                            src: img.url,
-                                            alt: img.alt || product.title
-                                        }))}
+                                        items={productImages
+                                            .filter(img => img.url && img.url.trim() !== '')
+                                            .map(img => ({
+                                                src: img.url,
+                                                alt: img.alt || product.name
+                                            }))}
                                     >
                                         <AntImage
                                             src={productImages[selectedImage].url}
-                                            alt={productImages[selectedImage].alt || product.title}
+                                            alt={productImages[selectedImage].alt || product.name}
                                             className="w-full rounded-2xl object-cover shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
                                             style={{
                                                 aspectRatio: '1/1',
@@ -533,7 +775,8 @@ export default function ProductDetailPage() {
                                                 width: '650px',
                                             }}
                                             preview={{
-                                                mask: (
+                                                // @ts-ignore - cover is the new API but types not updated yet
+                                                cover: (
                                                     <div className="flex flex-col items-center justify-center gap-2">
                                                         <svg
                                                             className="w-10 h-10 text-white"
@@ -551,7 +794,8 @@ export default function ProductDetailPage() {
                                                         <span className="text-white text-sm font-medium">Click to view</span>
                                                     </div>
                                                 ),
-                                                maskClassName: "rounded-2xl backdrop-blur-sm "
+                                                // @ts-ignore - classNames.cover is the new API but types not updated yet
+                                                classNames: { cover: "rounded-2xl backdrop-blur-sm" }
                                             }}
                                         />
                                     </AntImage.PreviewGroup>
@@ -566,8 +810,8 @@ export default function ProductDetailPage() {
                                         <div className="flex flex-wrap gap-4 ">
                                             {similarProducts.map((item) => {
                                                 const itemDiscountedPrice = item.discount_percent
-                                                    ? item.price_cents * (1 - item.discount_percent / 100)
-                                                    : item.price_cents;
+                                                    ? item.base_price * (1 - item.discount_percent / 100)
+                                                    : item.base_price;
 
                                                 return (
                                                     <Link
@@ -579,8 +823,8 @@ export default function ProductDetailPage() {
                                                             {/* Product Image */}
                                                             <div className="relative overflow-hidden h-40 w-40">
                                                                 <Image
-                                                                    src={item.image_url}
-                                                                    alt={item.title}
+                                                                    src={item.image_url || '/assets/images/logo.svg'}
+                                                                    alt={item.name}
                                                                     fill
                                                                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                                                                 />
@@ -590,13 +834,13 @@ export default function ProductDetailPage() {
                                                         </div>
                                                         <div className="py-4 h-35 w-35">
                                                             <h3 className=" text-base font-normal text-gray-900 mb-1 line-clamp-1">
-                                                                {item.title}...
+                                                                {item.name}...
                                                             </h3>
                                                             <p className="text-sm text-gray-500 mb-3">
                                                                 Many of us
                                                             </p>
                                                             <p className="text-xl font-semibold text-[#7a3b2e]">
-                                                                {Math.round(itemDiscountedPrice).toLocaleString()} {item.currency}
+                                                                {Math.round(itemDiscountedPrice).toLocaleString()} {item.currency || 'TND'}
                                                             </p>
                                                         </div>
                                                     </Link>
@@ -779,7 +1023,7 @@ export default function ProductDetailPage() {
 
                         {/* Right: Product Info */}
                         <div className="space-y-6">
-                            <h1 className="text-3xl font-bold text-gray-900">{product.title}</h1>
+                            <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
 
                             {/* Rating & Status */}
                             <div className="flex items-center gap-6">
@@ -788,7 +1032,7 @@ export default function ProductDetailPage() {
                                         {[...Array(5)].map((_, i) => (
                                             <svg
                                                 key={i}
-                                                className={`w-5 h-5 ${i < Math.floor(product.rating || 0)
+                                                className={`w-5 h-5 ${i < Math.floor(averageRating)
                                                     ? 'fill-current'
                                                     : 'fill-gray-300'
                                                     }`}
@@ -799,13 +1043,13 @@ export default function ProductDetailPage() {
                                         ))}
                                     </div>
                                     <Link href="#reviews" className="text-sm text-[#7a3b2e] hover:underline">
-                                        {product.rating?.toFixed(1)} ({product.review_count || 0} {text.reviews})
+                                        {reviewCount > 0 ? averageRating.toFixed(1) : '0.0'} ({reviewCount} {text.reviews})
                                     </Link>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-600">{text.status}:</span>
-                                    <span className={`text-sm font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        {product.stock > 0 ? text.inStock : text.outOfStock}
+                                    <span className={`text-sm font-medium ${currentStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {currentStock > 0 ? text.inStock : text.outOfStock}
                                     </span>
                                 </div>
                                 {product.id && (
@@ -827,11 +1071,11 @@ export default function ProductDetailPage() {
                             {/* Price */}
                             <div className="flex items-baseline gap-3">
                                 <span className="text-3xl font-bold text-gray-900">
-                                    {Math.round(discountedPrice)} {product.currency}
+                                    {Math.round(discountedPrice)} {product.currency || 'TND'}
                                 </span>
                                 {product.discount_percent && product.discount_percent > 0 && (
                                     <span className="text-xl text-gray-400 line-through">
-                                        {product.price_cents} {product.currency}
+                                        {Math.round(product.base_price)} {product.currency || 'TND'}
                                     </span>
                                 )}
                             </div>
@@ -853,7 +1097,7 @@ export default function ProductDetailPage() {
                                         {quantity}
                                     </div>
                                     <button
-                                        onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                                        onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
                                         className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50"
                                     >
                                         +
@@ -863,45 +1107,81 @@ export default function ProductDetailPage() {
                             </div>
 
                             {/* Color Selection */}
-                            {product.colors && product.colors.length > 0 && (
+                            {availableColors.length > 0 && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-900 mb-3">
                                         {text.selectColor}
                                     </label>
-                                    <div className="flex gap-3">
-                                        {product.colors.map((color) => (
-                                            <button
-                                                key={color}
-                                                onClick={() => setSelectedColor(color)}
-                                                className={`w-10 h-10 rounded-full border-2 transition ${selectedColor === color ? 'border-[#7a3b2e] scale-110' : 'border-gray-300'
-                                                    }`}
-                                                style={{ backgroundColor: color }}
-                                                title={color}
-                                            />
-                                        ))}
+                                    <div className="flex gap-3 flex-wrap">
+                                        {availableColors.map((color) => {
+                                            const hexCode = color.hex_code || '#000000';
+                                            const displayName = color.display_name || color.name;
+
+                                            // Check if this color has any stock available
+                                            const hasStock = product.product_variants?.some(v =>
+                                                v.color_id === color.id &&
+                                                v.stock > 0 &&
+                                                (v.is_available !== false)
+                                            );
+
+                                            return (
+                                                <div key={color.id} className="relative">
+                                                    <button
+                                                        onClick={() => handleColorSelect(color.id)}
+                                                        className={`w-10 h-10 rounded-full border-2 transition relative ${selectedColor === color.id
+                                                            ? 'border-[#7a3b2e] scale-110'
+                                                            : 'border-gray-300'
+                                                            } ${!hasStock ? 'opacity-40' : ''}`}
+                                                        style={{ backgroundColor: hexCode }}
+                                                        title={`${displayName}${!hasStock ? ' (Out of stock)' : ''}`}
+                                                    >
+                                                        {!hasStock && (
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <div className="w-12 h-0.5 bg-gray-600 rotate-45"></div>
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
 
                             {/* Size Selection */}
-                            {product.sizes && product.sizes.length > 0 && (
+                            {availableSizes.length > 0 && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-900 mb-3">
                                         {text.selectSize}
                                     </label>
                                     <div className="flex flex-wrap gap-2">
-                                        {product.sizes.map((size) => (
-                                            <button
-                                                key={size}
-                                                onClick={() => setSelectedSize(size)}
-                                                className={`px-6 py-2 border-2 rounded-lg font-medium transition ${selectedSize === size
-                                                    ? 'border-[#7a3b2e] bg-[#7a3b2e] text-white'
-                                                    : 'border-gray-300 hover:border-gray-400'
-                                                    }`}
-                                            >
-                                                {size}
-                                            </button>
-                                        ))}
+                                        {availableSizes.map((size) => {
+                                            // Check if this size is available for selected color
+                                            const isAvailable = !selectedColor ||
+                                                (product.product_variants?.some(v =>
+                                                    v.color_id === selectedColor &&
+                                                    v.size_id === size.id &&
+                                                    (v.is_available !== false)
+                                                ));
+
+                                            const displayName = size.code || size.name;
+
+                                            return (
+                                                <button
+                                                    key={size.id}
+                                                    onClick={() => handleSizeSelect(size.id)}
+                                                    disabled={!isAvailable}
+                                                    className={`px-6 py-2 border-2 rounded-lg font-medium transition ${selectedSize === size.id
+                                                        ? 'border-[#7a3b2e] bg-[#7a3b2e] text-white'
+                                                        : isAvailable
+                                                            ? 'border-gray-300 hover:border-gray-400'
+                                                            : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                                                        }`}
+                                                >
+                                                    {displayName}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -910,11 +1190,11 @@ export default function ProductDetailPage() {
                             <AddToCartButton
                                 product={{
                                     id: product.id,
-                                    name: product.title,
+                                    name: product.name,
                                     price: Math.round(discountedPrice),
-                                    image: product.image_url,
-                                    rating: product.rating || 0,
-                                    reviewCount: product.review_count || 0
+                                    image: selectedVariant?.image_url || product.image_url || '',
+                                    rating: averageRating,
+                                    reviewCount: reviewCount
                                 }}
                                 quantity={quantity}
                                 className="w-full py-4 text-lg"
@@ -1062,11 +1342,6 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
                     </div>
-
-
-
-
-
 
                 </div>
             </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import { Statistic } from 'antd';
 import { useEffect, useState } from 'react';
 
 interface CountdownTimerProps {
@@ -31,13 +30,6 @@ export default function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
     return (
         <div className="flex gap-2 items-center">
-            <Statistic.Timer 
-                type="countdown"
-                value={deadline}
-                format="D:HH:mm:ss"
-                valueStyle={{ display: 'none' }}
-                onFinish={() => console.log('Countdown finished!')}
-            />
             <CountdownDisplay deadline={deadline} />
         </div>
     );
@@ -71,14 +63,10 @@ function CountdownDisplay({ deadline }: { deadline: number }) {
                                 {String(unit.value).padStart(2, '0')}
                             </span>
                             <span className="text-[20px] text-black font-light">
-                            {unit.label}
-                        </span>
+                                {unit.label}
+                            </span>
                         </div>
-                        
                     </div>
-                    {/* {index < timeUnits.length - 1 && (
-                        <span className="text-[16px] font-semibold text-[#2b1a16] -mt-5">:</span>
-                    )} */}
                 </div>
             ))}
         </div>

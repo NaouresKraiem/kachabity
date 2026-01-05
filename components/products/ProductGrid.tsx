@@ -34,15 +34,18 @@ interface ProductGridProps {
 const translations = {
     en: {
         featuredCategories: "Featured Categories",
-        browseCategories: "Browse through some of our most popular categories"
+        browseCategories: "Browse through some of our most popular categories",
+        seeMoreCategories: "See More Categories"
     },
     fr: {
         featuredCategories: "Catégories en vedette",
-        browseCategories: "Parcourez certaines de nos catégories les plus populaires"
+        browseCategories: "Parcourez certaines de nos catégories les plus populaires",
+        seeMoreCategories: "Voir plus de catégories"
     },
     ar: {
         featuredCategories: "الفئات المميزة",
-        browseCategories: "تصفح بعض فئاتنا الأكثر شعبية"
+        browseCategories: "تصفح بعض فئاتنا الأكثر شعبية",
+        seeMoreCategories: "عرض المزيد من الفئات"
     }
 };
 
@@ -200,7 +203,7 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
                                             <div className="relative w-52 h-52 rounded-2xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
                                                 <Image
                                                     src={category.image_url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300"}
-                                                    alt={getCategoryName(category, locale)}
+                                                    alt={getCategoryName(category, locale) || "Category image"}
                                                     fill
                                                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
@@ -246,6 +249,21 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
                         </>
                     )}
                 </div>
+
+                {/* See More Categories Link */}
+                {mounted && categories.length > 0 && (
+                    <div className="text-center mt-8">
+                        <Link
+                            href={`/${locale}/categories`}
+                            className="text-[#842E1B] font-medium hover:underline inline-flex items-center gap-2"
+                        >
+                            {t.seeMoreCategories}
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </Link>
+                    </div>
+                )}
             </div>
 
             <style jsx>{`

@@ -1,4 +1,9 @@
 import supabase from "./supabaseClient";
+import { getActiveProductDiscounts } from "./product-discounts";
+import { getProductImageUrl } from "./product-images";
+
+const DEFAULT_CURRENCY = process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "TND";
+const FALLBACK_IMAGE_URL = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400";
 
 export interface Favorite {
     id: string;
@@ -19,7 +24,7 @@ export interface FavoriteWithProduct {
         price_cents: number;
         currency: string;
         image_url: string;
-        stock: number;
+        stock?: number | null;
         rating?: number;
         review_count?: number;
         discount_percent?: number;
@@ -120,15 +125,23 @@ export async function getUserFavorites(userId: string): Promise<{ favorites: Fav
                 created_at,
                 products (
                     id,
-                    title,
+                    name,
                     slug,
-                    price_cents,
-                    currency,
-                    image_url,
-                    stock,
-                    rating,
-                    review_count,
-                    discount_percent
+                    description,
+                    base_price,
+                    category_id,
+                    status,
+                    product_images (
+                        id,
+                        product_id,
+                        image_url,
+                        alt_text,
+                        is_main,
+                        position
+                    ),
+                    reviews:reviews (
+                        rating
+                    )
                 )
             `)
             .eq("user_id", userId)
@@ -139,20 +152,89 @@ export async function getUserFavorites(userId: string): Promise<{ favorites: Fav
             return { favorites: [], error };
         }
 
+        type FavoriteRow = {
+            id: string;
+            user_id: string;
+            product_id: string;
+            created_at: string;
+            products: any;
+        };
+
+        type FavoriteWithMaybeProduct = Omit<FavoriteWithProduct, "product"> & {
+            product: FavoriteWithProduct["product"] | null;
+        };
+
+        // Get product IDs to fetch discounts
+        const productIds = ((data as FavoriteRow[] | null) ?? [])
+            .map((fav) => fav.products?.id)
+            .filter((id): id is string => !!id);
+
+        // Fetch discounts for all products in batch
+        const discountMap = await getActiveProductDiscounts(productIds);
+
         // Transform the data to match our interface
-        const favorites: FavoriteWithProduct[] = (data || []).map((fav: any) => ({
-            id: fav.id,
-            user_id: fav.user_id,
-            product_id: fav.product_id,
-            created_at: fav.created_at,
-            product: fav.products
-        }));
+        const favorites: FavoriteWithProduct[] = ((data as FavoriteRow[] | null) ?? [])
+            .map<FavoriteWithMaybeProduct>((fav) => ({
+                id: fav.id,
+                user_id: fav.user_id,
+                product_id: fav.product_id,
+                created_at: fav.created_at,
+                product: transformProductForFavorite(fav.products, discountMap.get(fav.products?.id))
+            }))
+            .filter((fav): fav is FavoriteWithProduct => !!fav.product);
 
         return { favorites, error: null };
     } catch (error) {
         console.error("Error in getUserFavorites:", error);
         return { favorites: [], error: error as Error };
     }
+}
+
+function transformProductForFavorite(product: any, discount?: { discount_percent: number } | null) {
+    if (!product) return null;
+
+    const { rating, reviewCount } = calculateReviewStats(product.reviews);
+    const imageUrl = getProductImageUrl(product) || FALLBACK_IMAGE_URL;
+    const normalizedPrice = Number(product.base_price ?? 0);
+    const discountPercent = discount?.discount_percent || undefined;
+
+    return {
+        id: product.id,
+        name: product.name,
+        title: product.name,
+        slug: product.slug,
+        base_price: normalizedPrice,
+        price_cents: normalizedPrice,
+        currency: DEFAULT_CURRENCY,
+        image_url: imageUrl,
+        product_images: product.product_images || [],
+        stock: null,
+        rating,
+        review_count: reviewCount,
+        discount_percent: discountPercent,
+    };
+}
+
+function calculateReviewStats(reviews?: Array<{ rating?: number | null }>) {
+    if (!reviews || reviews.length === 0) {
+        return { rating: 0, reviewCount: 0 };
+    }
+
+    const ratedReviews = reviews.filter(
+        (review) => typeof review?.rating === "number" && !Number.isNaN(Number(review.rating))
+    );
+
+    if (ratedReviews.length === 0) {
+        return { rating: 0, reviewCount: 0 };
+    }
+
+    const total = ratedReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0);
+    const average = Number((total / ratedReviews.length).toFixed(1));
+
+    return {
+        rating: average,
+        reviewCount: ratedReviews.length,
+    };
 }
 
 /**

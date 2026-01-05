@@ -27,7 +27,7 @@ export default function StockProgress({ sold, inStock }: StockProgressProps) {
             <Progress
                 percent={percent}
                 strokeColor={barColor}
-                trailColor="#E3E3E3"
+                railColor="#E3E3E3"
                 showInfo={false}
                 strokeLinecap="round"
             />
