@@ -26,8 +26,8 @@ interface Promotion {
     badge_text: string | null;
     discount_percent: number;
     image_url: string;
-    starts_at: string;
-    ends_at: string;
+    starts_at: string | null;
+    ends_at: string | null;
     active: boolean;
 }
 
@@ -45,18 +45,52 @@ export default function SaleBanner() {
     useEffect(() => {
         async function fetchPromotion() {
             try {
+                const now = new Date().toISOString();
+
+                // Fetch active promotions
                 const { data, error } = await supabase
                     .from('promotions')
                     .select('*')
                     .eq('active', true)
-                    .gte('ends_at', new Date().toISOString())
-                    .order('discount_percent', { ascending: false })
-                    .limit(1)
-                    .single();
+                    .order('discount_percent', { ascending: false });
 
-                if (error) throw error;
-                if (data) {
-                    setPromotion(data);
+                if (error) {
+                    console.error('Error fetching promotion:', error);
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    // Filter promotions that are currently valid
+                    const validPromotions = data.filter((promo: Promotion) => {
+                        // No end date = always valid
+                        if (!promo.ends_at) return true;
+
+                        // Has end date = check if not expired
+                        return new Date(promo.ends_at) >= new Date(now);
+                    });
+
+                    // Also filter by start date if provided
+                    const activePromotions = validPromotions.filter((promo: Promotion) => {
+                        // No start date = started immediately
+                        if (!promo.starts_at) return true;
+
+                        // Has start date = check if already started
+                        return new Date(promo.starts_at) <= new Date(now);
+                    });
+
+                    // Prioritize: First show timed promotions (with end date), then ongoing ones
+                    const timedPromotions = activePromotions.filter((promo: Promotion) =>
+                        promo.ends_at && new Date(promo.ends_at) > new Date(now)
+                    );
+
+                    const ongoingPromotions = activePromotions.filter((promo: Promotion) => !promo.ends_at);
+
+                    // Show timed promotion if available, otherwise show ongoing
+                    if (timedPromotions.length > 0) {
+                        setPromotion(timedPromotions[0]);
+                    } else if (ongoingPromotions.length > 0) {
+                        setPromotion(ongoingPromotions[0]);
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching promotion:', error);
@@ -66,12 +100,23 @@ export default function SaleBanner() {
         fetchPromotion();
     }, []);
 
-    if (!mounted || !promotion) {
+    if (!mounted) {
         return null;
     }
 
-    const saleEndDate = new Date(promotion.ends_at);
+    // If no timed promotion exists, don't show anything
+    if (!promotion) {
+        return null;
+    }
 
+    const hasEndDate = promotion.ends_at && new Date(promotion.ends_at) > new Date();
+
+    // If promotion has no end date, don't show anything
+    if (!hasEndDate) {
+        return null;
+    }
+
+    // Show countdown banner for timed promotions
     return (
         <section className="w-full py-1 px-2 bg-[#ECE5DD] h-[400px]">
             <div className="max-w-7xl mx-auto">
@@ -91,8 +136,9 @@ export default function SaleBanner() {
                             </p>
                         )}
 
+                        {/* Countdown timer (always shown here since hasEndDate is true) */}
                         <div className="mb-8 flex justify-center lg:justify-center">
-                            <CountdownTimer targetDate={saleEndDate} />
+                            <CountdownTimer targetDate={new Date(promotion.ends_at!)} />
                         </div>
 
                         <Link

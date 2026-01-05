@@ -1,21 +1,38 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
 export interface ProductListItem {
     id: string;
-    title: string;
+    name: string;
+    name_ar?: string;
+    name_fr?: string;
     slug: string;
-    image_url: string;
-    price_cents: number;
-    currency: string;
-    rating: number;
-    review_count: number;
+    image_url?: string;
+    base_price: number;
+    currency?: string;
+    rating?: number;
+    review_count?: number;
     discount_percent?: number;
+    product_images?: Array<{
+        id: string;
+        image_url: string;
+        alt_text?: string;
+        is_main: boolean;
+        position: number;
+    }>;
 }
 
-const translations = {
+type Locale = 'en' | 'fr' | 'ar';
+
+const translations: Record<Locale, {
+    discount: string;
+    addToFavorites: string;
+    reviews: string;
+    add: string;
+}> = {
     en: {
         discount: "Discount",
         addToFavorites: "Add to favorites",
@@ -36,12 +53,44 @@ const translations = {
     }
 };
 
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400";
+const DEFAULT_CURRENCY = 'TND';
+
+// Helper function to get translated product name
+function getProductName(product: ProductListItem, locale: string): string {
+    if (locale === 'ar' && product.name_ar) {
+        return product.name_ar;
+    }
+    if (locale === 'fr' && product.name_fr) {
+        return product.name_fr;
+    }
+    return product.name;
+}
+
+// Helper function to get product image (sorted by position)
+function getProductImage(product: ProductListItem): string {
+    if (product.product_images && product.product_images.length > 0) {
+        // Sort by position, then find main image
+        const sortedImages = [...product.product_images].sort((a, b) => a.position - b.position);
+        const mainImage = sortedImages.find(img => img.is_main);
+        if (mainImage?.image_url) return mainImage.image_url;
+        if (sortedImages[0]?.image_url) return sortedImages[0].image_url;
+    }
+    return product.image_url || FALLBACK_IMAGE;
+}
+
+// Helper function to format price
+function formatPrice(price: number, currency: string): string {
+    return `${Math.round(price)} ${currency}`;
+}
+
 interface ProductListCardProps {
     product: ProductListItem;
     locale: string;
     isFavorite: boolean;
     onToggleFavorite: (productId: string) => void;
     onAddToCart: (product: ProductListItem) => void;
+    categorySlug?: string;
 }
 
 export default function ProductListCard({
@@ -50,25 +99,55 @@ export default function ProductListCard({
     isFavorite,
     onToggleFavorite,
     onAddToCart,
+    categorySlug,
 }: ProductListCardProps) {
-    const productUrl = `/${locale}/products/${product.slug}`;
-    const t = translations[locale as keyof typeof translations] || translations.en;
+    // Memoize expensive calculations
+    const productUrl = useMemo(() => `/${locale}/products/${product.slug}`, [locale, product.slug]);
+
+    const t = useMemo(() =>
+        translations[locale as Locale] || translations.en,
+        [locale]
+    );
+
+    const productName = useMemo(() =>
+        getProductName(product, locale),
+        [product.name, product.name_ar, product.name_fr, locale]
+    );
+
+    const productImage = useMemo(() =>
+        getProductImage(product),
+        [product.product_images, product.image_url]
+    );
+
+    const { discountedPrice, hasDiscount } = useMemo(() => {
+        const discountPercent = product.discount_percent;
+        const hasDiscount = !!discountPercent && discountPercent > 0;
+        const price = hasDiscount
+            ? product.base_price * (1 - discountPercent / 100)
+            : product.base_price;
+        return { discountedPrice: price, hasDiscount };
+    }, [product.base_price, product.discount_percent]);
+
+    const currency = product.currency || DEFAULT_CURRENCY;
+    const displayRating = product.rating || 0;
 
     return (
         <div className="w-64 shrink-0">
             <div>
                 {/* Product Image */}
                 <div className="relative h-64 rounded-[15px] border border-[#E3E3E3] group hover:shadow-xl transition-shadow">
-                    <Link href={productUrl}>
+                    <Link href={productUrl} aria-label={`View ${productName}`}>
                         <Image
-                            src={product.image_url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400"}
-                            alt={product.title}
+                            src={productImage}
+                            alt={productName || "Product image"}
                             fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 256px"
                             className="rounded-[15px] p-0.5 overflow-hidden object-cover group-hover:scale-105 transition-transform duration-300"
+                            priority={false}
                         />
                     </Link>
                     {/* Discount Badge */}
-                    {product.discount_percent && product.discount_percent > 0 && (
+                    {hasDiscount && (
                         <div className="absolute top-3 left-3 bg-[#FCF4F2] px-3 py-1 rounded-[9px] border border-[#842E1B] shadow-md">
                             <span className="text-xs font-medium text-[#842E1B]">
                                 -{product.discount_percent}% {t.discount}
@@ -77,9 +156,13 @@ export default function ProductListCard({
                     )}
                     {/* Favorite Button */}
                     <button
-                        onClick={() => onToggleFavorite(product.id)}
-                        className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50 transition"
-                        aria-label={t.addToFavorites}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            onToggleFavorite(product.id);
+                        }}
+                        className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors hover:scale-110"
+                        aria-label={isFavorite ? `Remove ${productName} from favorites` : `Add ${productName} to favorites`}
+                        type="button"
                     >
                         <svg
                             className={`w-5 h-5 ${isFavorite ? 'fill-[#842E1B] text-[#842E1B]' : 'fill-none text-gray-600'}`}
@@ -95,32 +178,56 @@ export default function ProductListCard({
                 <div className="p-4 ">
                     <Link href={productUrl}>
                         <h3 className="font-medium text-[#50555C] text-sm mb-2 hover:text-[#7a3b2e] transition line-clamp-2">
-                            {product.title}
+                            {productName}
                         </h3>
                     </Link>
 
                     {/* Rating */}
                     <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                                <svg key={i} className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-[#842E1B] fill-[#842E1B]' : 'text-gray-300 fill-gray-300'}`} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <div className="flex items-center gap-1" role="img" aria-label={`${displayRating} out of 5 stars`}>
+                            {Array.from({ length: 5 }, (_, i) => (
+                                <svg
+                                    key={i}
+                                    className={`w-4 h-4 transition-colors ${i < Math.floor(displayRating)
+                                        ? 'text-[#842E1B] fill-[#842E1B]'
+                                        : 'text-gray-300 fill-gray-300'
+                                        }`}
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 18 18"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
                                     <path d="M6.65394 1.58646C7.5321 -0.528821 10.4679 -0.52882 11.3461 1.58646L11.9577 3.05983C12.3174 3.9261 13.107 4.52663 14.0227 4.63041L15.7297 4.82385C17.8853 5.06813 18.7756 7.7755 17.2013 9.29884L15.752 10.7012C15.1148 11.3177 14.8333 12.2258 15.0069 13.1045L15.3568 14.8758C15.7997 17.118 13.3977 18.8109 11.5018 17.5927L10.3571 16.8572C9.52764 16.3242 8.47236 16.3242 7.64291 16.8572L6.49819 17.5927C4.60234 18.8109 2.20031 17.118 2.64323 14.8758L2.99315 13.1045C3.16673 12.2258 2.88518 11.3177 2.24798 10.7012L0.798712 9.29884C-0.775619 7.7755 0.114716 5.06813 2.27034 4.82385L3.97726 4.63041C4.89305 4.52663 5.68263 3.9261 6.04226 3.05983L6.65394 1.58646Z" fill="currentColor" />
                                 </svg>
                             ))}
                         </div>
                         <span className="text-xs text-gray-500">
-                            {product.rating} {t.reviews}
+                            {displayRating} ({product.review_count || 0} {t.reviews})
                         </span>
                     </div>
 
                     {/* Price and Add to Cart */}
-                    <div className="flex items-center justify-between cursor-pointer">
-                        <span className="text-sm font-medium text-[#2b1a16]">
-                            {product.price_cents + " " + product.currency}
-                        </span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium text-[#2b1a16]">
+                                {formatPrice(discountedPrice, currency)}
+                            </span>
+                            {hasDiscount && (
+                                <span className="text-xs text-gray-400 line-through">
+                                    {formatPrice(product.base_price, currency)}
+                                </span>
+                            )}
+                        </div>
                         <button
-                            onClick={() => onAddToCart(product)}
-                            className="cursor-pointer rounded-[9px] py-2 px-4 border border-[#E3E3E3] flex items-center gap-2 text-sm text-black hover:text-[#5e2d23] font-medium transition"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onAddToCart(product);
+                            }}
+                            className="rounded-[9px] py-2 px-4 border border-[#E3E3E3] flex items-center gap-2 text-sm text-black hover:text-[#5e2d23] hover:border-[#842E1B] font-medium transition-colors"
+                            aria-label={`Add ${productName} to cart`}
+                            type="button"
                         >
                             {t.add}
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

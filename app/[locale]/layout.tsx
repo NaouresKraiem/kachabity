@@ -9,7 +9,7 @@ import Script from "next/script";
 const metadataByLocale: Record<string, Metadata> = {
     en: {
         title: "Kachabity - Handcrafted Traditional Products | Premium Quality",
-        description: "Discover authentic handcrafted traditional products at Artisan by Kraiem. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items. 100% authentic craftsmanship.",
+        description: "Discover authentic handcrafted traditional products at Kachabiti. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items. 100% authentic craftsmanship.",
         keywords: "handcrafted, traditional products, HBarnous ROSSINI, Serviette de table, artisan, handmade, premium quality, Tunisia, traditional wear, home accessories",
     },
     fr: {
@@ -46,16 +46,16 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
             },
         },
         openGraph: {
-            title: baseMetadata.title || "Artisan by Kraiem",
+            title: baseMetadata.title || "Kachabiti",
             description: baseMetadata.description || "Handcrafted Traditional Products",
             url: "https://your-ecommerce-site.com",
-            siteName: "Artisan by Kraiem",
+            siteName: "Kachabiti",
             images: [
                 {
                     url: "https://your-ecommerce-site.com/og-image.jpg",
                     width: 1200,
                     height: 630,
-                    alt: "Artisan by Kraiem - Handcrafted Traditional Products",
+                    alt: "Kachabiti - Handcrafted Traditional Products",
                 },
             ],
             locale: locale === 'ar' ? 'ar_TN' : locale === 'fr' ? 'fr_TN' : 'en_US',
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
         },
         twitter: {
             card: "summary_large_image",
-            title: baseMetadata.title || "Artisan by Kraiem",
+            title: baseMetadata.title || "Kachabiti",
             description: baseMetadata.description || "Handcrafted Traditional Products",
             images: ["https://your-ecommerce-site.com/twitter-image.jpg"],
         },
@@ -102,7 +102,7 @@ export default async function LocaleLayout({
                         __html: JSON.stringify({
                             "@context": "https://schema.org",
                             "@type": "Organization",
-                            "name": "Artisan by Kraiem",
+                            "name": "Kachabiti",
                             "url": "https://your-ecommerce-site.com",
                             "logo": "https://your-ecommerce-site.com/logo.png",
                             "contactPoint": {

@@ -13,9 +13,6 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 const translations = {
     en: {
         followUs: "Follow Us:",
-        signInRegister: "Sign In / Register",
-        settings: "Settings",
-        logout: "Logout",
         loading: "Loading...",
         allCategories: "All Categories",
         noCategoriesFound: "No categories found",
@@ -28,9 +25,6 @@ const translations = {
     },
     fr: {
         followUs: "Suivez-nous :",
-        signInRegister: "Se connecter / S'inscrire",
-        settings: "Paramètres",
-        logout: "Déconnexion",
         loading: "Chargement...",
         allCategories: "Toutes les catégories",
         noCategoriesFound: "Aucune catégorie trouvée",
@@ -43,9 +37,6 @@ const translations = {
     },
     ar: {
         followUs: "تابعنا:",
-        signInRegister: "تسجيل الدخول / التسجيل",
-        settings: "الإعدادات",
-        logout: "تسجيل الخروج",
         loading: "جاري التحميل...",
         allCategories: "جميع الفئات",
         noCategoriesFound: "لم يتم العثور على فئات",
@@ -92,6 +83,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
     const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     // Always call the hook - safe version returns null if outside provider
     const languageContext = useLanguageSafe();
@@ -101,31 +93,14 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
     const t = translations[locale as keyof typeof translations] || translations.en;
     const rtl = isRTL(locale);
 
-    // Auth state
-    const [userEmail, setUserEmail] = useState<string | null>(null);
-    const [userName, setUserName] = useState<string | null>(null);
+    // Auth state removed - authentication disabled
 
+    // Prevent hydration mismatch
     useEffect(() => {
-        let mounted = true;
-        (async () => {
-            const { data } = await supabase.auth.getUser();
-            if (!mounted) return;
-            if (data.user) {
-                setUserEmail(data.user.email || null);
-                // @ts-ignore
-                const meta = data.user.user_metadata || {};
-                setUserName(meta.first_name || meta.full_name || null);
-            }
-        })();
-        const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
-            const u = session?.user;
-            setUserEmail(u?.email || null);
-            // @ts-ignore
-            const meta = u?.user_metadata || {};
-            setUserName(meta.first_name || meta.full_name || null);
-        });
-        return () => { mounted = false; sub.subscription.unsubscribe(); };
+        setMounted(true);
     }, []);
+
+    // Authentication removed
 
     // Fetch categories from API
     useEffect(() => {
@@ -135,6 +110,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                 let { data, error } = await supabase
                     .from('categories')
                     .select('id, name, name_ar, name_fr, slug, image_url, sort_order, is_featured')
+                    .eq('is_featured', true)
                     .order('sort_order', { ascending: true });
 
                 // If error, try without translation fields (fallback for databases without these columns)
@@ -142,6 +118,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                     const fallbackResult = await supabase
                         .from('categories')
                         .select('id, name, slug, image_url, sort_order, is_featured')
+                        .eq('is_featured', true)
                         .order('sort_order', { ascending: true });
 
                     if (fallbackResult.error) {
@@ -168,7 +145,14 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
         fetchCategories();
     }, []);
 
-    const [search, setSearch] = useState(searchParams.get("search") || "");
+    const [search, setSearch] = useState("");
+
+    // Initialize search from URL after mount to prevent hydration mismatch
+    useEffect(() => {
+        if (mounted) {
+            setSearch(searchParams.get("search") || "");
+        }
+    }, [mounted, searchParams]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -182,18 +166,18 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
     };
 
     return (
-        <header className="w-full sticky top-0 z-1000" dir={rtl ? 'rtl' : 'ltr'}>
+        <header className="w-full " dir={mounted ? (rtl ? 'rtl' : 'ltr') : 'ltr'}>
             {/* Top Bar */}
-            <div className="bg-primary text-white py-4 px-8">
-                <div className={`max-w-7xl mx-auto flex justify-between items-center text-sm `}>
-                    <div className={`flex items-center ${rtl ? 'space-x-reverse space-x-4' : 'space-x-4'}`}>
+            <div className="bg-primary text-white py-4 min-h-[64px]">
+                <div className={`max-w-7xl mx-auto flex justify-between items-center text-sm h-8`}>
+                    <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-4' : 'space-x-4'}`}>
                         <span dir="ltr">{headerConfig.contact.phone}</span>
                         <span dir="ltr">{headerConfig.contact.email}</span>
                     </div>
 
-                    <div className={`flex items-center ${rtl ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
+                    <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
                         <span>{t.followUs}</span>
-                        <div className={`flex ${rtl ? 'space-x-reverse space-x-2' : 'space-x-2'} justify-center`}>
+                        <div className={`flex ${mounted && rtl ? 'space-x-reverse space-x-2' : 'space-x-2'} justify-center`}>
                             {Object.entries(headerConfig.social).map(([platform, data]) => (
                                 <a
                                     key={platform}
@@ -211,42 +195,17 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                         </div>
                     </div>
 
-                    <div className={`flex items-center ${rtl ? 'space-x-reverse space-x-4' : 'space-x-4'}`}>
-                        {userEmail ? (
-                            <div className="relative group">
-                                <button className={`flex items-center gap-2 hover:text-gray-300 ${rtl ? 'flex-row-reverse' : ''}`}>
-                                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center">
-                                        {(userName || userEmail).charAt(0).toUpperCase()}
-                                    </div>
-                                    <span className="text-sm">{userName || userEmail}</span>
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                                <div className={`absolute ${rtl ? 'left-0' : 'right-0'} mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50`}>
-                                    <div className="py-1">
-                                        <Link href={`/${locale}/settings`} className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${rtl ? 'text-right' : 'text-left'}`}>{t.settings}</Link>
-                                        <button
-                                            onClick={async () => { await supabase.auth.signOut(); router.refresh(); }}
-                                            className={`w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${rtl ? 'text-right' : 'text-left'}`}
-                                        >
-                                            {t.logout}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <Link href={`/${locale}/auth`} className="hover:text-gray-300">{t.signInRegister}</Link>
-                        )}
+                    <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-4' : 'space-x-4'} min-h-[32px]`}>
+                        {/* Authentication removed - sign in/register link removed */}
                         <div className="relative group">
-                            <button className={`flex items-center ${rtl ? 'flex-row-reverse space-x-reverse space-x-1' : 'space-x-1'} hover:text-gray-300`}>
+                            <button className={`flex items-center ${mounted && rtl ? 'flex-row-reverse space-x-reverse space-x-1' : 'space-x-1'} hover:text-gray-300`}>
                                 <span>{headerConfig.languages.find(lang => lang.code === locale)?.flag || '🇺🇸'}</span>
                                 <span>{headerConfig.languages.find(lang => lang.code === locale)?.name || 'English'}</span>
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
-                            <div className={`absolute ${rtl ? 'left-0' : 'right-0'} mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50`}>
+                            <div className={`absolute ${mounted && rtl ? 'left-0' : 'right-0'} mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50`}>
                                 <div className="py-1">
                                     {headerConfig.languages.map((lang) => {
                                         // Preserve current path when switching languages
@@ -266,7 +225,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                                             <Link
                                                 key={lang.code}
                                                 href={newPath}
-                                                className={`flex items-center ${rtl ? 'flex-row-reverse space-x-reverse' : 'space-x-2'} px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
+                                                className={`flex items-center ${mounted && rtl ? 'flex-row-reverse space-x-reverse' : 'space-x-2'} px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
                                             >
                                                 <span>{lang.flag}</span>
                                                 <span>{lang.name}</span>
@@ -281,9 +240,16 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
             </div>
             {/* Main Header */}
             <div className="bg-white border-b border-gray-200 py-4 px-4">
-                <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <div className="cursor-pointer flex items-center space-x-2" onClick={() => router.push('/')}>
-                        <Image src="/assets/images/logoKachabity.jpg" alt="logo" width={60} height={60} />
+                <div className="max-w-7xl mx-auto flex justify-between items-center min-h-[72px]">
+                    <div className="cursor-pointer flex items-center space-x-2 shrink-0" onClick={() => router.push(`/${locale}`)}>
+                        <Image
+                            src="/assets/images/logoKachabity.jpg"
+                            alt="logo"
+                            width={60}
+                            height={60}
+                            priority
+                            className="object-contain"
+                        />
                     </div>
 
                     {/* Search - Keep original design */}
@@ -307,15 +273,15 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                     </div>
 
                     {/* Cart */}
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-4 shrink-0">
                         <CartButton />
                     </div>
                 </div>
             </div>
             {/* Navigation Bar */}
-            <div className="bg-black text-white py-3 px-4">
-                <div className={`max-w-7xl mx-auto flex justify-between items-center ${rtl ? 'flex-row-reverse' : ''}`}>
-                    <nav className={`flex ${rtl ? 'space-x-reverse space-x-8' : 'space-x-8'}`}>
+            <div className="bg-black text-white py-3 px-4 min-h-[52px]">
+                <div className={`max-w-7xl mx-auto flex justify-between items-center ${mounted && rtl ? 'flex-row-reverse' : ''}`}>
+                    <nav className={`flex ${mounted && rtl ? 'space-x-reverse space-x-8' : 'space-x-8'}`}>
                         {headerConfig.navigation.map((item) => (
                             item.label === "Categories" ? (
                                 <div
@@ -356,7 +322,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                                                 <>
                                                     <Link
                                                         key={'all-categories'}
-                                                        href={`/${locale}/products`}
+                                                        href={`/${locale}/categories`}
                                                         className={`block px-4 py-1 text-lg font-medium text-gray-700 hover:bg-gray-100 hover:text-[#7a3b2e] transition ${rtl ? 'text-right' : 'text-left'}`}
                                                     >
                                                         {t.allCategories}
@@ -417,7 +383,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                                         )
                         ))}
                     </nav>
-                    <div className={`gap-5 cursor-pointer flex items-center ${rtl ? 'flex-row-reverse space-x-reverse space-x-2' : 'space-x-2'} border border-[#FFFFFF] px-4 py-2 rounded-[11px]`} onClick={() => router.push(`/${locale}/products`)} >
+                    <div className={`gap-5 cursor-pointer flex items-center ${mounted && rtl ? 'flex-row-reverse space-x-reverse space-x-2' : 'space-x-2'} border border-[#FFFFFF] px-4 py-2 rounded-[11px]`} onClick={() => router.push(`/${locale}/products`)} >
                         <Image src="/assets/images/icons/Cup.svg" alt="handmade" width={16} height={16} />
                         <span className="font-medium">{t.handmade}</span>
                     </div>

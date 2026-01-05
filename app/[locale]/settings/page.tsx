@@ -91,8 +91,7 @@ const content: Record<Locale, {
       { id: "orders", label: "My Orders" },
       { id: "account", label: "Account Information" },
       { id: "security", label: "Security" },
-      { id: "saved", label: "Saved Items" },
-      { id: "logout", label: "Logout" }
+      { id: "saved", label: "Saved Items" }
     ],
     myOrders: "My Orders",
     orderDate: "Order Date",
@@ -127,8 +126,7 @@ const content: Record<Locale, {
       { id: "orders", label: "Mes commandes" },
       { id: "account", label: "Informations du compte" },
       { id: "security", label: "Sécurité" },
-      { id: "saved", label: "Articles enregistrés" },
-      { id: "logout", label: "Déconnexion" }
+      { id: "saved", label: "Articles enregistrés" }
     ],
     myOrders: "Mes commandes",
     orderDate: "Date de commande",
@@ -163,8 +161,7 @@ const content: Record<Locale, {
       { id: "orders", label: "طلباتي" },
       { id: "account", label: "معلومات الحساب" },
       { id: "security", label: "الأمان" },
-      { id: "saved", label: "العناصر المحفوظة" },
-      { id: "logout", label: "تسجيل الخروج" }
+      { id: "saved", label: "العناصر المحفوظة" }
     ],
     myOrders: "طلباتي",
     orderDate: "تاريخ الطلب",
@@ -202,12 +199,11 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
   const pathname = usePathname();
   const { addItem } = useCart();
 
-  const [authChecked, setAuthChecked] = useState(false);
   const [activeTab, setActiveTab] = useState("orders");
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [savedItems, setSavedItems] = useState<FavoriteWithProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
 
@@ -314,116 +310,36 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
     }
   };
 
-  // Authentication check
+  // Initialize page (no authentication required)
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!mounted) return;
-      if (!data.user) {
-        router.replace(`/${locale}/auth?redirect=${encodeURIComponent(pathname)}`);
-      } else {
-        setAuthChecked(true);
-        const profile = {
-          id: data.user.id,
-          email: data.user.email || "",
-          full_name: data.user.user_metadata?.first_name
-            + " " + data.user.user_metadata?.last_name || "",
-          phone: data.user.user_metadata?.phone || "",
-          address: data.user.user_metadata?.address || "",
-          city: data.user.user_metadata?.city || "",
-          country: data.user.user_metadata?.country || ""
-        };
-        setUserProfile(profile);
-
-        // Populate profile form
-        profileForm.reset({
-          full_name: profile.full_name || "",
-          email: profile.email,
-          phone: profile.phone || "",
-          country: profile.country || "",
-          city: profile.city || "",
-          address: profile.address || "",
-        });
-
-        setLoading(false);
-
-        // Fetch orders and favorites
-        fetchOrders(data.user.id);
-        fetchFavorites(data.user.id);
-      }
-    })();
-    return () => { mounted = false; };
-  }, [router, pathname, locale, profileForm]);
-
-  // Handle logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push(`/${locale}/auth`);
-  };
+    setLoading(false);
+    // Note: Orders and favorites require user authentication
+    // Without authentication, these features are disabled
+  }, []);
 
   // Handle tab click
   const handleTabClick = (tabId: string) => {
     if (tabId === "logout") {
-      handleLogout();
-    } else {
-      setActiveTab(tabId);
-    }
-  };
-
-  // Handle password change
-  const handlePasswordChange = async (data: PasswordFormData) => {
-    if (data.newPassword !== data.confirmPassword) {
-      message.error("Passwords don't match!");
+      // Logout functionality removed - authentication is disabled
       return;
     }
-
-    const { error } = await supabase.auth.updateUser({
-      password: data.newPassword
-    });
-
-    if (error) {
-      message.error("Error changing password: " + error.message);
-    } else {
-      message.success("Password changed successfully!");
-      passwordForm.reset();
-    }
+    setActiveTab(tabId);
   };
 
-  // Handle profile update
+  // Handle password change (disabled - authentication removed)
+  const handlePasswordChange = async (data: PasswordFormData) => {
+    message.warning("Password change is disabled - authentication has been removed from this project.");
+  };
+
+  // Handle profile update (disabled - authentication removed)
   const handleProfileUpdate = async (data: ProfileFormData) => {
-    if (!userProfile) return;
-
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        full_name: data.full_name,
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-        country: data.country
-      }
-    });
-
-    if (error) {
-      message.error("Error updating profile: " + error.message);
-    } else {
-      message.success("Profile updated successfully!");
-      // Update local state
-      setUserProfile({
-        ...userProfile,
-        full_name: data.full_name,
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-        country: data.country
-      });
-    }
+    message.warning("Profile update is disabled - authentication has been removed from this project.");
   };
 
-  if (!authChecked || loading) {
+  if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center text-sm text-gray-600">
-        Checking authentication...
+        Loading...
       </div>
     );
   }
@@ -707,26 +623,41 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
                           key={item.id}
                           product={{
                             id: item.product.id,
-                            title: item.product.title,
+                            name: item.product.name,
+                            name_ar: item.product.name_ar,
+                            name_fr: item.product.name_fr,
                             slug: item.product.slug,
                             image_url: item.product.image_url || "/assets/images/logoKachabity.jpg",
-                            price_cents: item.product.price_cents,
+                            base_price: item.product.base_price,
                             currency: item.product.currency,
                             rating: item.product.rating || 0,
                             review_count: item.product.review_count || 0,
-                            discount_percent: item.product.discount_percent
+                            discount_percent: item.product.discount_percent,
+                            product_images: item.product.product_images
                           }}
                           locale={locale}
                           isFavorite={true}
                           onToggleFavorite={() => handleRemoveFavorite(item.product_id)}
-                          onAddToCart={(product) => addItem({
-                            id: product.id,
-                            name: product.title,
-                            price: product.price_cents,
-                            image: product.image_url,
-                            rating: product.rating,
-                            reviewCount: product.review_count,
-                          })}
+                          onAddToCart={(product) => {
+                            // Get product image from product_images or fallback
+                            const productImage = product.product_images && product.product_images.length > 0
+                              ? (product.product_images.find(img => img.is_main)?.image_url || product.product_images[0].image_url)
+                              : (product.image_url || '');
+
+                            // Calculate discounted price
+                            const price = product.discount_percent
+                              ? product.base_price * (1 - product.discount_percent / 100)
+                              : product.base_price;
+
+                            addItem({
+                              id: product.id,
+                              name: product.name,
+                              price: Math.round(price),
+                              image: productImage,
+                              rating: product.rating,
+                              reviewCount: product.review_count || 0,
+                            });
+                          }}
                         />
                       ))}
                     </div>

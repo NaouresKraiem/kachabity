@@ -95,7 +95,7 @@ function resolveHref(href: string, locale: string) {
         case "/":
             return `/${locale}`;
         case "/categories":
-            return `/${locale}/products`;
+            return `/${locale}/categories`;
         case "/discounts":
             return `/${locale}/products?promo=true`;
         case "/new":

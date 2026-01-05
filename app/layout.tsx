@@ -13,12 +13,12 @@ const hando = Handlee({
 });
 
 export const metadata: Metadata = {
-  title: "Artisan by Kraiem - Handcrafted Traditional Products | Premium Quality",
-  description: "Discover authentic handcrafted traditional products at Artisan by Kraiem. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items. 100% authentic craftsmanship.",
+  title: "Kachabiti - Handcrafted Traditional Products | Premium Quality",
+  description: "Discover authentic handcrafted traditional products at Kachabiti. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items. 100% authentic craftsmanship.",
   keywords: "handcrafted, traditional products, HBarnous ROSSINI, Serviette de table, artisan, handmade, premium quality, Tunisia, traditional wear, home accessories",
-  authors: [{ name: "Artisan by Kraiem" }],
-  creator: "Artisan by Kraiem",
-  publisher: "Artisan by Kraiem",
+  authors: [{ name: "Kachabiti" }],
+  creator: "Kachabiti",
+  publisher: "Kachabiti",
   robots: {
     index: true,
     follow: true,
@@ -33,23 +33,23 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://artisan-kraiem.com",
-    siteName: "Artisan by Kraiem",
-    title: "Artisan by Kraiem - Handcrafted Traditional Products",
-    description: "Discover authentic handcrafted traditional products at Artisan by Kraiem. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items.",
+    url: "https://kachabiti.tn",
+    siteName: "Kachabiti",
+    title: "Kachabiti - Handcrafted Traditional Products",
+    description: "Discover authentic handcrafted traditional products at Kachabiti. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items.",
     images: [
       {
         url: "/assets/images/hero/hbarnous-rossini.jpg",
         width: 1200,
         height: 630,
-        alt: "Artisan by Kraiem - Handcrafted Traditional Products",
+        alt: "Kachabiti - Handcrafted Traditional Products",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Artisan by Kraiem - Handcrafted Traditional Products",
-    description: "Discover authentic handcrafted traditional products at Artisan by Kraiem. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items.",
+    title: "Kachabiti - Handcrafted Traditional Products",
+    description: "Discover authentic handcrafted traditional products at Kachabiti. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items.",
     images: ["/assets/images/hero/hbarnous-rossini.jpg"],
   },
   alternates: {
@@ -74,7 +74,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "Artisan by Kraiem",
+              name: "Kachabiti",
               url: "https://kachabiti.tn",
               logo: "https://kachabiti.tn/assets/images/logo.svg",
               description: "Premium handcrafted traditional products and authentic artisan goods",

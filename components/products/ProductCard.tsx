@@ -48,7 +48,7 @@ export default function ProductCard({
             <Link href={productUrl} className="block relative aspect-square overflow-hidden bg-gray-50">
                 <Image
                     src={product.image_url}
-                    alt={product.title}
+                    alt={product.title || "Product image"}
                     fill
                     className="object-cover group-hover:scale-105 transition"
                 />
