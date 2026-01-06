@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import supabase from '@/lib/supabaseClient';
-import defaultSupabase from '@/lib/supabaseClient';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY)
-    : defaultSupabase;
+import supabase from '@/lib/supabaseClient';
 // GET - Fetch all reels
 export async function GET(request: NextRequest) {
     try {
