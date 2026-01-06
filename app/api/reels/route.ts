@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import supabase from '@/lib/supabaseClient';
-// import defaultSupabase from '@/lib/supabaseClient';
-// import { createClient } from '@supabase/supabase-js';
-
 import supabase from '@/lib/supabaseClient';
-
 // GET - Fetch all reels
 export async function GET(request: NextRequest) {
     try {
