@@ -10,6 +10,7 @@ import ProductListCard from "@/components/products/ProductListCard";
 import { Skeleton, Card, message } from "antd";
 import { useCart } from "@/lib/cart-context";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
+import { isRTL } from "@/lib/language-utils";
 
 interface Product {
     id: string;
@@ -112,6 +113,13 @@ interface Color {
     display_name?: string;
 }
 
+interface Size {
+    id: string;
+    name: string;
+    display_name?: string;
+    code?: string;
+}
+
 // Helper function to get translated category name
 function getCategoryName(category: Category, locale: string): string {
     if (locale === 'ar' && category.name_ar) {
@@ -128,11 +136,13 @@ export default function ProductsPage() {
     const searchParams = useSearchParams();
     const locale = (params.locale as string) || 'en';
     const text = content[locale as keyof typeof content] || content.en;
+    const rtl = isRTL(locale);
 
     const [products, setProducts] = useState<Product[]>([]);
     const { addItem } = useCart();
     const [categories, setCategories] = useState<Category[]>([]);
     const [availableColors, setAvailableColors] = useState<Color[]>([]);
+    const [availableSizes, setAvailableSizes] = useState<Size[]>([]);
     const [loading, setLoading] = useState(true);
     const [productsLoading, setProductsLoading] = useState(false); // Separate loading for products
     const [wishlist, setWishlist] = useState<Set<string>>(new Set());
@@ -150,16 +160,33 @@ export default function ProductsPage() {
     const [totalCount, setTotalCount] = useState(0);
     const ITEMS_PER_PAGE = 20;
 
+    // Mobile filter drawer state
+    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+
+    // Prevent body scroll when filter drawer is open
+    useEffect(() => {
+        if (typeof document === "undefined") return;
+
+        if (isFilterDrawerOpen) {
+            const originalStyle = document.body.style.overflow;
+            document.body.style.overflow = "hidden";
+            return () => {
+                document.body.style.overflow = originalStyle;
+            };
+        }
+    }, [isFilterDrawerOpen]);
+
     // Get category from URL if present
     const urlCategory = searchParams.get('category');
     const promoOnly = searchParams.get('promo');
     const sortParam = searchParams.get('sort');
     const search = searchParams?.get('search') || "";
 
-    // Initialize: Fetch categories, colors and user favorites
+    // Initialize: Fetch categories, colors, sizes and user favorites
     useEffect(() => {
         fetchCategories();
         fetchColors();
+        fetchSizes();
         fetchUserAndFavorites();
     }, []);
 
@@ -225,6 +252,25 @@ export default function ProductsPage() {
             console.error('Error fetching colors:', error);
             // Fallback to empty array if colors table doesn't exist
             setAvailableColors([]);
+        }
+    }
+
+    async function fetchSizes() {
+        try {
+            const { data, error } = await supabase
+                .from('sizes')
+                .select('*')
+                .is('deleted_at', null)
+                .order('sort_order', { ascending: true });
+
+            if (error) throw error;
+            if (data) {
+                setAvailableSizes(data);
+            }
+        } catch (error) {
+            console.error('Error fetching sizes:', error);
+            // Fallback to empty array if sizes table doesn't exist
+            setAvailableSizes([]);
         }
     }
 
@@ -296,12 +342,43 @@ export default function ProductsPage() {
             if (selectedSizes.size > 0 || selectedColors.size > 0) {
                 let variantQuery = supabase
                     .from('product_variants')
-                    .select('product_id');
+                    .select('product_id')
+                    .is('deleted_at', null);
 
-                // Apply size filter
+                // Apply size filter - map size names to size IDs
                 if (selectedSizes.size > 0) {
-                    const sizesArray = Array.from(selectedSizes);
-                    variantQuery = variantQuery.in('size_id', sizesArray);
+                    const selectedSizeNames = Array.from(selectedSizes);
+                    // Map size names (like "S", "M", "L") to size IDs
+                    // Check code first, then name, then display_name
+                    const sizeIds = availableSizes
+                        .filter(size => {
+                            const sizeCode = size.code?.toUpperCase();
+                            const sizeName = size.name?.toUpperCase();
+                            const sizeDisplayName = size.display_name?.toUpperCase();
+                            return selectedSizeNames.some(selectedSize => {
+                                const upperSelected = selectedSize.toUpperCase();
+                                return sizeCode === upperSelected ||
+                                    sizeName === upperSelected ||
+                                    sizeDisplayName === upperSelected;
+                            });
+                        })
+                        .map(size => size.id);
+
+                    if (sizeIds.length > 0) {
+                        variantQuery = variantQuery.in('size_id', sizeIds);
+                    } else {
+                        // If no matching sizes found and sizes table exists, return empty result
+                        // Otherwise, if sizes table doesn't have matching sizes, skip size filtering
+                        if (availableSizes.length > 0) {
+                            // Sizes table exists but no matches, return empty
+                            setProducts([]);
+                            setTotalCount(0);
+                            setProductsLoading(false);
+                            setLoading(false);
+                            return;
+                        }
+                        // If sizes table is empty, continue without size filtering
+                    }
                 }
 
                 // Apply color filter
@@ -314,18 +391,22 @@ export default function ProductsPage() {
 
                 if (variantError) {
                     console.error('Error fetching variants:', variantError);
-                    setProducts([]);
-                    setTotalCount(0);
-                    setProductsLoading(false);
-                    setLoading(false);
-                    return;
-                }
-
-                if (matchingVariants && matchingVariants.length > 0) {
+                    // Don't completely fail - just log and continue without variant filtering
+                    // This allows products without variants to still show
+                    if (variantError.message?.includes('relation') || variantError.message?.includes('column')) {
+                        console.warn('Variant filtering skipped due to schema issue:', variantError.message);
+                    } else {
+                        setProducts([]);
+                        setTotalCount(0);
+                        setProductsLoading(false);
+                        setLoading(false);
+                        return;
+                    }
+                } else if (matchingVariants && matchingVariants.length > 0) {
                     const productIds = [...new Set(matchingVariants.map((v: { product_id: string }) => v.product_id))];
                     query = query.in('id', productIds);
-                } else {
-                    // No products match, return empty result
+                } else if (selectedSizes.size > 0 || selectedColors.size > 0) {
+                    // No products match the variant filters, return empty result
                     setProducts([]);
                     setTotalCount(0);
                     setProductsLoading(false);
@@ -472,163 +553,186 @@ export default function ProductsPage() {
         return <LoadingSpinner message={text.loadingProducts} />;
     }
 
+    // Filter content component (reused in desktop and mobile)
+    const FilterContent = () => (
+        <>
+            {/* Price Range */}
+            <div className="mb-8">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-900">{text.price}</span>
+                    <button className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
+                <input
+                    type="range"
+                    min="0"
+                    max="1000"
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#842E1B]"
+                />
+                <div className="flex items-center justify-between mt-2 text-sm text-gray-600">
+                    <span>{priceRange[0]}</span>
+                    <span>{priceRange[1]}</span>
+                </div>
+            </div>
+
+            {/* Size Filter */}
+            <div className="mb-8">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-900">{text.size}</span>
+                    <button className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                    {SIZES.map(size => (
+                        <button
+                            key={size}
+                            onClick={() => toggleSize(size)}
+                            className={`px-3 py-2 text-sm font-medium border rounded-lg transition ${selectedSizes.has(size)
+                                ? 'bg-[#842E1B] text-white border-[#842E1B]'
+                                : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                                }`}
+                        >
+                            {size}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Color Filter */}
+            {availableColors.length > 0 && (
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-gray-900">{text.color}</span>
+                        <button
+                            className="text-gray-400 hover:text-gray-600"
+                            onClick={() => setSelectedColors(new Set())}
+                            disabled={selectedColors.size === 0}
+                        >
+                            {selectedColors.size > 0 && (
+                                <span className="text-xs text-[#842E1B]">Clear</span>
+                            )}
+                        </button>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                        {availableColors.map(color => (
+                            <button
+                                key={color.id}
+                                onClick={() => toggleColor(color.id)}
+                                className={`relative w-10 h-10 rounded-full border-2 transition-all hover:scale-105 ${selectedColors.has(color.id)
+                                    ? 'border-[#842E1B] scale-110 ring-2 ring-[#842E1B] ring-offset-2'
+                                    : 'border-gray-300 hover:border-gray-400'
+                                    }`}
+                                style={{ backgroundColor: color.hex_code || '#CCCCCC' }}
+                                title={color.display_name || color.name}
+                                aria-label={`Filter by ${color.display_name || color.name}`}
+                            >
+                                {selectedColors.has(color.id) && (
+                                    <svg
+                                        className="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow-lg"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={3}
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                    {selectedColors.size > 0 && (
+                        <div className="mt-2 text-xs text-gray-600">
+                            {selectedColors.size} color{selectedColors.size > 1 ? 's' : ''} selected
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Category Filter */}
+            <div className="mb-8">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-900">{text.category}</span>
+                    <button className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {categories.map(category => (
+                        <label key={category.id} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={selectedCategoryIds.has(category.id)}
+                                onChange={() => toggleCategory(category.id)}
+                                className="w-4 h-4 text-[#842E1B] border-gray-300 rounded focus:ring-[#842E1B]"
+                            />
+                            <span className="text-sm text-gray-700">{getCategoryName(category, locale)}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            {/* Filter Button */}
+            <button
+                onClick={() => {
+                    // Filters are applied automatically via state
+                    setIsFilterDrawerOpen(false); // Close drawer on mobile
+                }}
+                className="w-full py-3 bg-[#842E1B] text-white rounded-lg hover:bg-[#6b2516] transition font-medium"
+            >
+                {text.applyFilters}
+            </button>
+        </>
+    );
+
     return (
         <>
             <StaticHeader />
             <div className="min-h-screen bg-white py-8">
                 <div className="max-w-7xl mx-auto px-4">
+                    {/* Mobile Filter Button */}
+                    <div className="lg:hidden mb-4 flex items-center justify-between">
+                        <p className="text-sm text-gray-600">
+                            {!productsLoading && text.showingResults.replace('{count}', products.length.toString())}
+                        </p>
+                        <button
+                            onClick={() => setIsFilterDrawerOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#842E1B] text-white rounded-lg hover:bg-[#6b2516] transition font-medium text-sm"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                            {text.filter}
+                        </button>
+                    </div>
+
                     <div className="grid lg:grid-cols-4 gap-8">
-                        {/* Left Sidebar - Filters */}
-                        <div className="lg:col-span-1">
+                        {/* Left Sidebar - Filters (Desktop only) */}
+                        <div className="hidden lg:block lg:col-span-1">
                             <div className="bg-white rounded-lg p-6 border border-gray-200 sticky top-4">
                                 <h2 className="text-xl font-bold text-gray-900 mb-6">{text.filter}</h2>
-
-                                {/* Price Range */}
-                                <div className="mb-8">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-sm font-medium text-gray-900">{text.price}</span>
-                                        <button className="text-gray-400 hover:text-gray-600">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="1000"
-                                        value={priceRange[1]}
-                                        onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#842E1B]"
-                                    />
-                                    <div className="flex items-center justify-between mt-2 text-sm text-gray-600">
-                                        <span>{priceRange[0]}</span>
-                                        <span>{priceRange[1]}</span>
-                                    </div>
-                                </div>
-
-                                {/* Size Filter */}
-                                <div className="mb-8">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-sm font-medium text-gray-900">{text.size}</span>
-                                        <button className="text-gray-400 hover:text-gray-600">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {SIZES.map(size => (
-                                            <button
-                                                key={size}
-                                                onClick={() => toggleSize(size)}
-                                                className={`px-3 py-2 text-sm font-medium border rounded-lg transition ${selectedSizes.has(size)
-                                                    ? 'bg-[#842E1B] text-white border-[#842E1B]'
-                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
-                                                    }`}
-                                            >
-                                                {size}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Color Filter */}
-                                {availableColors.length > 0 && (
-                                    <div className="mb-8">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <span className="text-sm font-medium text-gray-900">{text.color}</span>
-                                            <button
-                                                className="text-gray-400 hover:text-gray-600"
-                                                onClick={() => setSelectedColors(new Set())}
-                                                disabled={selectedColors.size === 0}
-                                            >
-                                                {selectedColors.size > 0 && (
-                                                    <span className="text-xs text-[#842E1B]">Clear</span>
-                                                )}
-                                            </button>
-                                        </div>
-                                        <div className="flex flex-wrap gap-3">
-                                            {availableColors.map(color => (
-                                                <button
-                                                    key={color.id}
-                                                    onClick={() => toggleColor(color.id)}
-                                                    className={`relative w-10 h-10 rounded-full border-2 transition-all hover:scale-105 ${selectedColors.has(color.id)
-                                                        ? 'border-[#842E1B] scale-110 ring-2 ring-[#842E1B] ring-offset-2'
-                                                        : 'border-gray-300 hover:border-gray-400'
-                                                        }`}
-                                                    style={{ backgroundColor: color.hex_code || '#CCCCCC' }}
-                                                    title={color.display_name || color.name}
-                                                    aria-label={`Filter by ${color.display_name || color.name}`}
-                                                >
-                                                    {selectedColors.has(color.id) && (
-                                                        <svg
-                                                            className="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow-lg"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={3}
-                                                                d="M5 13l4 4L19 7"
-                                                            />
-                                                        </svg>
-                                                    )}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        {selectedColors.size > 0 && (
-                                            <div className="mt-2 text-xs text-gray-600">
-                                                {selectedColors.size} color{selectedColors.size > 1 ? 's' : ''} selected
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Category Filter */}
-                                <div className="mb-8">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-sm font-medium text-gray-900">{text.category}</span>
-                                        <button className="text-gray-400 hover:text-gray-600">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                                        {categories.map(category => (
-                                            <label key={category.id} className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedCategoryIds.has(category.id)}
-                                                    onChange={() => toggleCategory(category.id)}
-                                                    className="w-4 h-4 text-[#842E1B] border-gray-300 rounded focus:ring-[#842E1B]"
-                                                />
-                                                <span className="text-sm text-gray-700">{getCategoryName(category, locale)}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Filter Button */}
-                                <button
-                                    onClick={() => {
-                                        // Filters are applied automatically via state
-                                    }}
-                                    className="w-full py-3 bg-[#842E1B] text-white rounded-lg hover:bg-[#6b2516] transition font-medium"
-                                >
-                                    {text.applyFilters}
-                                </button>
+                                <FilterContent />
                             </div>
                         </div>
 
                         {/* Right Side - Product Grid */}
                         <div className="lg:col-span-3">
-                            {/* Results Count */}
+                            {/* Results Count - Desktop only */}
                             {!productsLoading && (
-                                <div className="mb-6">
+                                <div className="mb-6 hidden lg:block">
                                     <p className="text-sm text-gray-600">
                                         {text.showingResults.replace('{count}', products.length.toString())}
                                     </p>
@@ -750,6 +854,39 @@ export default function ProductsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Filter Drawer */}
+            {isFilterDrawerOpen && (
+                <>
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+                        onClick={() => setIsFilterDrawerOpen(false)}
+                    />
+                    {/* Drawer */}
+                    <div
+                        className={`fixed inset-y-0 z-50 w-full max-w-sm bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto ${isFilterDrawerOpen ? 'translate-x-0' : (rtl ? 'translate-x-full' : '-translate-x-full')}`}
+                        style={{ [rtl ? 'right' : 'left']: 0 }}
+                        dir={rtl ? 'rtl' : 'ltr'}
+                    >
+                        <div className={`sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10 ${rtl ? 'flex-row-reverse' : ''}`}>
+                            <h2 className="text-xl font-bold text-gray-900">{text.filter}</h2>
+                            <button
+                                onClick={() => setIsFilterDrawerOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 transition p-2"
+                                aria-label="Close filter"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <FilterContent />
+                        </div>
+                    </div>
+                </>
+            )}
             <Footer />
         </>
     );
