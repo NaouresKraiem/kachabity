@@ -1,0 +1,133 @@
+- generic [ref=f17e1]:
+  - banner [ref=f17e2]:
+    - generic [ref=f17e4]:
+      - generic [ref=f17e5]: +216 55 558 648
+      - generic [ref=f17e7]:
+        - generic [ref=f17e8]: "تابعنا:"
+        - generic [ref=f17e9]:
+          - link "Follow us on facebook" [ref=f17e10] [cursor=pointer]:
+            - /url: https://www.facebook.com/profile.php?id=61562718525332
+          - link "Follow us on instagram" [ref=f17e13] [cursor=pointer]:
+            - /url: https://www.instagram.com/kachabitii/
+          - link "Follow us on tiktok" [ref=f17e16] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@kachabitii
+      - button "🇹🇳 العربية" [ref=f17e21]:
+        - generic [ref=f17e22]: 🇹🇳
+        - generic [ref=f17e23]: العربية
+    - generic [ref=f17e27]:
+      - img "logo" [ref=f17e29] [cursor=pointer]
+      - generic [ref=f17e32]:
+        - textbox "ابحث عن منتج ..." [ref=f17e33]:
+          - /placeholder: ابحث عن منتج   ...
+        - button [ref=f17e34]
+      - generic [ref=f17e37]:
+        - link "تسجيل الدخول" [ref=f17e38] [cursor=pointer]:
+          - /url: /ar/auth
+        - button "Shopping cart" [ref=f17e41] [cursor=pointer]:
+          - img "cart" [ref=f17e43]
+          - generic [ref=f17e44]: السلة
+    - generic [ref=f17e46]:
+      - navigation [ref=f17e47]:
+        - button "الفئات" [ref=f17e49]
+        - link "التخفيضات" [ref=f17e53] [cursor=pointer]:
+          - /url: /ar/products?promo=true
+        - link "من نحن" [ref=f17e54] [cursor=pointer]:
+          - /url: /ar/about
+        - link "اتصل بنا" [ref=f17e55] [cursor=pointer]:
+          - /url: /ar/contact
+      - generic [ref=f17e56] [cursor=pointer]:
+        - img "handmade" [ref=f17e57]
+        - generic [ref=f17e58]: 100% مصنوع يدوياً
+  - main [ref=f17e59]:
+    - generic [ref=f17e60]:
+      - paragraph [ref=f17e61]: سجّل الدخول أو أنشئ حساباً لحفظ المنتجات التي تعجبك.
+      - generic [ref=f17e62]:
+        - tablist [ref=f17e63]:
+          - tab "تسجيل الدخول" [ref=f17e64]
+          - tab "إنشاء حساب" [selected] [ref=f17e65]
+        - heading "إنشاء حساب" [level=1] [ref=f17e66]
+        - generic [ref=f17e67]:
+          - generic [ref=f17e68]:
+            - generic [ref=f17e69]: الاسم الكامل
+            - textbox [active] [ref=f17e70]
+            - paragraph [ref=f17e146]: أدخل اسمك
+          - generic [ref=f17e71]:
+            - generic [ref=f17e72]: البريد الإلكتروني
+            - textbox [ref=f17e73]
+            - paragraph [ref=f17e149]: أدخل بريداً إلكترونياً صحيحاً
+          - generic [ref=f17e74]:
+            - generic [ref=f17e75]: كلمة المرور
+            - textbox [ref=f17e76]
+            - paragraph [ref=f17e152]: يجب أن تتكون كلمة المرور من 8 أحرف على الأقل
+          - generic [ref=f17e77]:
+            - generic [ref=f17e78]: تأكيد كلمة المرور
+            - textbox [ref=f17e79]
+          - button "إنشاء الحساب" [ref=f17e80]
+  - contentinfo [ref=f17e81]:
+    - generic [ref=f17e82]:
+      - generic [ref=f17e83]:
+        - generic [ref=f17e84]:
+          - link [ref=f17e85] [cursor=pointer]:
+            - /url: /ar
+            - img "Kachabity" [ref=f17e86]
+            - img "Kachabity" [ref=f17e87]
+          - paragraph [ref=f17e88]: اكتشف المنتجات الحرفية التونسية الأصيلة والكنوز التقليدية.
+          - generic [ref=f17e89]:
+            - link "Facebook" [ref=f17e90] [cursor=pointer]:
+              - /url: https://www.facebook.com/profile.php?id=61562718525332
+            - link "Instagram" [ref=f17e93] [cursor=pointer]:
+              - /url: https://www.instagram.com/kachabitii/
+            - link "TikTok" [ref=f17e96] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@kachabitii
+        - generic [ref=f17e99]:
+          - generic [ref=f17e100]:
+            - heading "روابط سريعة" [level=3] [ref=f17e101]
+            - list [ref=f17e102]:
+              - listitem [ref=f17e103]:
+                - link "الفئات" [ref=f17e104] [cursor=pointer]:
+                  - /url: /ar/categories
+              - listitem [ref=f17e105]:
+                - link "التخفيضات" [ref=f17e106] [cursor=pointer]:
+                  - /url: /ar/products?promo=true
+              - listitem [ref=f17e107]:
+                - link "وصل حديثاً" [ref=f17e108] [cursor=pointer]:
+                  - /url: /ar/products?sort=new
+              - listitem [ref=f17e109]:
+                - link "الأكثر مبيعاً" [ref=f17e110] [cursor=pointer]:
+                  - /url: /ar/products?sort=popular
+          - generic [ref=f17e111]:
+            - heading "حول" [level=3] [ref=f17e112]
+            - list [ref=f17e113]:
+              - listitem [ref=f17e114]:
+                - link "من نحن" [ref=f17e115] [cursor=pointer]:
+                  - /url: /ar/about
+              - listitem [ref=f17e116]:
+                - link "اتصل بنا" [ref=f17e117] [cursor=pointer]:
+                  - /url: /ar/contact
+              - listitem [ref=f17e118]:
+                - link "الأسئلة الشائعة" [ref=f17e119] [cursor=pointer]:
+                  - /url: /ar#faqs
+          - generic [ref=f17e120]:
+            - heading "قانوني" [level=3] [ref=f17e121]
+            - list [ref=f17e122]:
+              - listitem [ref=f17e123]:
+                - link "الشروط والأحكام" [ref=f17e124] [cursor=pointer]:
+                  - /url: /ar/terms-and-conditions
+              - listitem [ref=f17e125]:
+                - link "سياسة الخصوصية" [ref=f17e126] [cursor=pointer]:
+                  - /url: /ar/privacy
+              - listitem [ref=f17e127]:
+                - link "سياسة الشحن" [ref=f17e128] [cursor=pointer]:
+                  - /url: /ar/shipping
+        - generic [ref=f17e131]:
+          - heading "اشترك في نشرتنا الإخبارية" [level=3] [ref=f17e132]
+          - paragraph [ref=f17e133]: احصل على آخر التحديثات حول المنتجات الجديدة والعروض الحصرية
+          - generic [ref=f17e134]:
+            - textbox "أدخل بريدك الإلكتروني" [ref=f17e135]
+            - button "اشترك" [ref=f17e136]
+      - generic [ref=f17e138]:
+        - paragraph [ref=f17e139]: © 2026 قشابِـيتي. جميع الحقوق محفوظة.
+        - link "+216 55 558 648" [ref=f17e141] [cursor=pointer]:
+          - /url: tel:+216 55 558 648
+  - button "Open Next.js Dev Tools" [ref=f17e160] [cursor=pointer]
+  - alert [ref=f17e145]

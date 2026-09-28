@@ -55,7 +55,7 @@ const getContent = (): Record<string, TermsContent> => ({
                 content: [
                     "If you are not satisfied with your purchase, you may return eligible products within 14 days of delivery for a refund or exchange.",
                     "Products must be unused, in their original packaging, and in the same condition that you received them. Handmade items may have special return conditions.",
-                    "To initiate a return, please contact our customer service team at Kachabity@gmail.com with your order number and reason for return."
+                    `To initiate a return, please call our customer service team at ${headerConfig.contact.phone} with your order number and reason for return.`
                 ]
             },
             intellectual: {
@@ -91,7 +91,6 @@ const getContent = (): Record<string, TermsContent> => ({
                 title: "Contact Us",
                 content: [
                     "If you have any questions about these Terms and Conditions, please contact us:",
-                    `Email: ${headerConfig.contact.email}`,
                     `Phone: ${headerConfig.contact.phone}`
                 ]
             }
@@ -133,7 +132,7 @@ const getContent = (): Record<string, TermsContent> => ({
                 content: [
                     "Si vous n'êtes pas satisfait de votre achat, vous pouvez retourner les produits éligibles dans les 14 jours suivant la livraison.",
                     "Les produits doivent être inutilisés, dans leur emballage d'origine et dans le même état que vous les avez reçus.",
-                    "Pour initier un retour, veuillez contacter notre service client à Kachabity@gmail.com."
+                    `Pour initier un retour, veuillez appeler notre service client au ${headerConfig.contact.phone}.`
                 ]
             },
             intellectual: {
@@ -169,7 +168,6 @@ const getContent = (): Record<string, TermsContent> => ({
                 title: "Nous Contacter",
                 content: [
                     "Si vous avez des questions concernant ces Termes et Conditions, veuillez nous contacter :",
-                    `Email : ${headerConfig.contact.email}`,
                     `Téléphone : ${headerConfig.contact.phone}`
                 ]
             }
@@ -211,7 +209,7 @@ const getContent = (): Record<string, TermsContent> => ({
                 content: [
                     "إذا لم تكن راضيًا عن عملية الشراء، يمكنك إرجاع المنتجات المؤهلة في غضون 14 يومًا من التسليم.",
                     "يجب أن تكون المنتجات غير مستخدمة وفي عبوتها الأصلية وبنفس الحالة التي استلمتها بها.",
-                    "لبدء الإرجاع، يرجى الاتصال بفريق خدمة العملاء على Kachabity@gmail.com."
+                    `لبدء الإرجاع، يرجى الاتصال بفريق خدمة العملاء على ${headerConfig.contact.phone}.`
                 ]
             },
             intellectual: {
@@ -247,7 +245,6 @@ const getContent = (): Record<string, TermsContent> => ({
                 title: "اتصل بنا",
                 content: [
                     "إذا كان لديك أي أسئلة حول هذه الشروط والأحكام، يرجى الاتصال بنا:",
-                    `البريد الإلكتروني: ${headerConfig.contact.email}`,
                     `الهاتف: ${headerConfig.contact.phone}`
                 ]
             }
@@ -307,7 +304,7 @@ export default function TermsAndConditions() {
                                 {text.ctaMessage}
                             </p>
                             <a
-                                href={`mailto:${headerConfig.contact.email}`}
+                                href={`tel:${headerConfig.contact.phone.replace(/\s/g, '')}`}
                                 className="inline-block px-8 py-3 bg-white text-[#7a3b2e] font-semibold rounded-lg hover:bg-gray-100 transition-colors"
                             >
                                 {text.ctaButton}

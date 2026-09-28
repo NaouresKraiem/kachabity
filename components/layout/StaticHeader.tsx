@@ -22,7 +22,10 @@ const translations = {
         categories: "Categories",
         discounts: "Discounts",
         aboutUs: "About Us",
-        contactUs: "Contact Us"
+        contactUs: "Contact Us",
+        logIn: "Log in",
+        myAccount: "My account",
+        logOut: "Log out"
     },
     fr: {
         followUs: "Suivez-nous :",
@@ -34,7 +37,10 @@ const translations = {
         categories: "Catégories",
         discounts: "Remises",
         aboutUs: "À propos",
-        contactUs: "Contactez-nous"
+        contactUs: "Contactez-nous",
+        logIn: "Se connecter",
+        myAccount: "Mon compte",
+        logOut: "Se déconnecter"
     },
     ar: {
         followUs: "تابعنا:",
@@ -46,7 +52,10 @@ const translations = {
         categories: "الفئات",
         discounts: "التخفيضات",
         aboutUs: "من نحن",
-        contactUs: "اتصل بنا"
+        contactUs: "اتصل بنا",
+        logIn: "تسجيل الدخول",
+        myAccount: "حسابي",
+        logOut: "تسجيل الخروج"
     }
 };
 
@@ -208,7 +217,6 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                 <div className={`max-w-7xl mx-auto flex justify-between items-center text-sm h-8 px-4`}>
                     <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-4' : 'space-x-4'}`}>
                         <span dir="ltr">{headerConfig.contact.phone}</span>
-                        <span dir="ltr">{headerConfig.contact.email}</span>
                     </div>
 
                     <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
@@ -385,8 +393,17 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                         </div>
                     </div>
 
-                    {/* Cart */}
-                    <div className="flex items-center space-x-4 shrink-0">
+                    {/* Account + Cart */}
+                    <div className="flex items-center gap-5 shrink-0">
+                        <Link
+                            href={user ? `/${locale}/settings` : `/${locale}/auth`}
+                            className="flex items-center gap-2 text-sm font-medium text-[#2b1a16] hover:text-[#7a3b2e] transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            {user ? t.myAccount : t.logIn}
+                        </Link>
                         <CartButton />
                     </div>
                 </div>
@@ -413,7 +430,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
 
                         {/* User Profile */}
                         {user ? (
-                            <div className="flex items-center space-x-2">
+                            <Link href={`/${locale}/settings`} className="flex items-center space-x-2">
                                 <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
                                     {user.user_metadata?.avatar_url ? (
                                         <Image
@@ -432,18 +449,18 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                                 <span className="text-white text-sm font-medium">
                                     {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
                                 </span>
-                            </div>
+                            </Link>
                         ) : (
-                            <div className="flex items-center space-x-2">
+                            <Link href={`/${locale}/auth`} className="flex items-center space-x-2">
                                 <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
                                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
                                 </div>
                                 <span className="text-white text-sm font-medium">
-                                    Guest
+                                    {t.logIn}
                                 </span>
-                            </div>
+                            </Link>
                         )}
                     </div>
 
@@ -469,7 +486,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                                                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                                 onClick={() => setIsUserMenuOpen(false)}
                                             >
-                                                Settings
+                                                {t.myAccount}
                                             </Link>
                                             <button
                                                 onClick={async () => {
@@ -479,7 +496,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                                                 }}
                                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                             >
-                                                Logout
+                                                {t.logOut}
                                             </button>
                                         </div>
                                     </div>
@@ -495,17 +512,6 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                        </a>
-
-                        {/* Mail Icon */}
-                        <a
-                            href={`mailto:${headerConfig.contact.email}`}
-                            className="p-1 hover:text-gray-300 transition-colors"
-                            aria-label="Email"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </a>
 

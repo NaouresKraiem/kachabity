@@ -2,8 +2,8 @@
 
 import { use } from "react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import supabase from "@/lib/supabaseClient";
@@ -12,6 +12,7 @@ import { getUserFavorites, removeFromFavorites, FavoriteWithProduct } from "@/li
 import ProductListCard from "@/components/products/ProductListCard";
 import { useCart } from "@/lib/cart-context";
 import { FormInput } from "@/components/forms";
+import { authHref, customerName, useCustomer } from "@/lib/customer-auth";
 
 type Locale = "en" | "fr" | "ar";
 
@@ -83,6 +84,15 @@ const content: Record<Locale, {
   noSavedItems: string;
   removeFromSaved: string;
   noOrders: string;
+  logout: string;
+  loading: string;
+  profileSaved: string;
+  passwordChanged: string;
+  wrongPassword: string;
+  passwordTooShort: string;
+  passwordMismatch: string;
+  itemRemoved: string;
+  somethingWrong: string;
 }> = {
   en: {
     pageTitle: "Settings",
@@ -91,7 +101,8 @@ const content: Record<Locale, {
       { id: "orders", label: "My Orders" },
       { id: "account", label: "Account Information" },
       { id: "security", label: "Security" },
-      { id: "saved", label: "Saved Items" }
+      { id: "saved", label: "Saved Items" },
+      { id: "logout", label: "Log out" }
     ],
     myOrders: "My Orders",
     orderDate: "Order Date",
@@ -117,7 +128,16 @@ const content: Record<Locale, {
     savedItems: "Saved Items",
     noSavedItems: "No saved items yet",
     removeFromSaved: "Remove",
-    noOrders: "No orders yet"
+    noOrders: "No orders yet",
+    logout: "Log out",
+    loading: "Loading…",
+    profileSaved: "Your details have been saved.",
+    passwordChanged: "Your password has been changed.",
+    wrongPassword: "Your current password is incorrect.",
+    passwordTooShort: "The new password must be at least 8 characters.",
+    passwordMismatch: "The new passwords do not match.",
+    itemRemoved: "Removed from saved items.",
+    somethingWrong: "Something went wrong. Try again."
   },
   fr: {
     pageTitle: "Paramètres",
@@ -126,7 +146,8 @@ const content: Record<Locale, {
       { id: "orders", label: "Mes commandes" },
       { id: "account", label: "Informations du compte" },
       { id: "security", label: "Sécurité" },
-      { id: "saved", label: "Articles enregistrés" }
+      { id: "saved", label: "Articles enregistrés" },
+      { id: "logout", label: "Se déconnecter" }
     ],
     myOrders: "Mes commandes",
     orderDate: "Date de commande",
@@ -152,7 +173,16 @@ const content: Record<Locale, {
     savedItems: "Articles enregistrés",
     noSavedItems: "Aucun article enregistré",
     removeFromSaved: "Retirer",
-    noOrders: "Aucune commande"
+    noOrders: "Aucune commande",
+    logout: "Se déconnecter",
+    loading: "Chargement…",
+    profileSaved: "Vos informations ont été enregistrées.",
+    passwordChanged: "Votre mot de passe a été modifié.",
+    wrongPassword: "Votre mot de passe actuel est incorrect.",
+    passwordTooShort: "Le nouveau mot de passe doit contenir au moins 8 caractères.",
+    passwordMismatch: "Les nouveaux mots de passe ne correspondent pas.",
+    itemRemoved: "Retiré des articles enregistrés.",
+    somethingWrong: "Une erreur est survenue. Réessayez."
   },
   ar: {
     pageTitle: "الإعدادات",
@@ -161,7 +191,8 @@ const content: Record<Locale, {
       { id: "orders", label: "طلباتي" },
       { id: "account", label: "معلومات الحساب" },
       { id: "security", label: "الأمان" },
-      { id: "saved", label: "العناصر المحفوظة" }
+      { id: "saved", label: "العناصر المحفوظة" },
+      { id: "logout", label: "تسجيل الخروج" }
     ],
     myOrders: "طلباتي",
     orderDate: "تاريخ الطلب",
@@ -187,7 +218,16 @@ const content: Record<Locale, {
     savedItems: "العناصر المحفوظة",
     noSavedItems: "لا توجد عناصر محفوظة بعد",
     removeFromSaved: "إزالة",
-    noOrders: "لا توجد طلبات بعد"
+    noOrders: "لا توجد طلبات بعد",
+    logout: "تسجيل الخروج",
+    loading: "جاري التحميل…",
+    profileSaved: "تم حفظ معلوماتك.",
+    passwordChanged: "تم تغيير كلمة المرور.",
+    wrongPassword: "كلمة المرور الحالية غير صحيحة.",
+    passwordTooShort: "يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل.",
+    passwordMismatch: "كلمتا المرور الجديدتان غير متطابقتين.",
+    itemRemoved: "تمت الإزالة من العناصر المحفوظة.",
+    somethingWrong: "حدث خطأ. حاول مجدداً."
   }
 };
 
@@ -196,14 +236,15 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
   const locale: Locale = ["en", "fr", "ar"].includes(rawLocale as string) ? (rawLocale as Locale) : "en";
   const text = content[locale];
   const router = useRouter();
-  const pathname = usePathname();
   const { addItem } = useCart();
+  const { user, loading: authLoading } = useCustomer();
+  // Set while logging out, so losing the session sends the customer home rather than to the login page.
+  const loggingOut = useRef(false);
 
   const [activeTab, setActiveTab] = useState("orders");
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [savedItems, setSavedItems] = useState<FavoriteWithProduct[]>([]);
-  const [loading, setLoading] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
 
@@ -303,43 +344,99 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
     if (success) {
       // Remove from local state
       setSavedItems(prev => prev.filter(item => item.product_id !== productId));
-      toast.success("Item removed from saved items");
+      toast.success(text.itemRemoved);
     } else {
       console.error("Error removing favorite:", error);
-      toast.error("Failed to remove item from saved. Please try again.");
+      toast.error(text.somethingWrong);
     }
   };
 
-  // Initialize page (no authentication required)
+  // Account pages need a signed-in customer; load their data once the session is known.
   useEffect(() => {
-    setLoading(false);
-    // Note: Orders and favorites require user authentication
-    // Without authentication, these features are disabled
-  }, []);
+    if (authLoading) return;
+    if (!user) {
+      if (loggingOut.current) return;
+      router.replace(authHref(locale, { redirect: `/${locale}/settings`, reason: "account" }));
+      return;
+    }
+    const meta = user.user_metadata || {};
+    const profile: UserProfile = {
+      id: user.id,
+      email: user.email || "",
+      full_name: customerName(user),
+      phone: meta.phone || "",
+      address: meta.address || "",
+      city: meta.city || "",
+      country: meta.country || "",
+    };
+    setUserProfile(profile);
+    profileForm.reset({
+      full_name: profile.full_name || "",
+      email: profile.email,
+      phone: profile.phone || "",
+      country: profile.country || "",
+      city: profile.city || "",
+      address: profile.address || "",
+    });
+    fetchOrders(user.id);
+    fetchFavorites(user.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user?.id]);
 
-  // Handle tab click
-  const handleTabClick = (tabId: string) => {
+  const handleTabClick = async (tabId: string) => {
     if (tabId === "logout") {
-      // Logout functionality removed - authentication is disabled
+      loggingOut.current = true;
+      await supabase.auth.signOut();
+      router.replace(`/${locale}`);
       return;
     }
     setActiveTab(tabId);
   };
 
-  // Handle password change (disabled - authentication removed)
+  // The current password is re-checked before it can be changed.
   const handlePasswordChange = async (data: PasswordFormData) => {
-    toast("Password change is disabled - authentication has been removed from this project.");
+    if (!userProfile) return;
+    if (data.newPassword.length < 8) return toast.error(text.passwordTooShort);
+    if (data.newPassword !== data.confirmPassword) return toast.error(text.passwordMismatch);
+
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: userProfile.email,
+      password: data.currentPassword,
+    });
+    if (verifyError) return toast.error(text.wrongPassword);
+
+    const { error } = await supabase.auth.updateUser({ password: data.newPassword });
+    if (error) {
+      console.error("Error changing password:", error);
+      return toast.error(text.somethingWrong);
+    }
+    passwordForm.reset();
+    toast.success(text.passwordChanged);
   };
 
-  // Handle profile update (disabled - authentication removed)
+  // Profile details live in the customer's auth metadata; the name is mirrored to
+  // public.users by a database trigger so reviews show it.
   const handleProfileUpdate = async (data: ProfileFormData) => {
-    toast("Profile update is disabled - authentication has been removed from this project.");
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        full_name: data.full_name.trim(),
+        phone: data.phone.trim(),
+        country: data.country.trim(),
+        city: data.city.trim(),
+        address: data.address.trim(),
+      },
+    });
+    if (error) {
+      console.error("Error updating profile:", error);
+      return toast.error(text.somethingWrong);
+    }
+    toast.success(text.profileSaved);
   };
 
-  if (loading) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center text-sm text-gray-600">
-        Loading...
+        {text.loading}
       </div>
     );
   }

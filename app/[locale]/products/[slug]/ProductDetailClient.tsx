@@ -10,12 +10,13 @@ import Link from "next/link";
 import supabase from "@/lib/supabaseClient";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import AddToCartButton from "@/components/cart/AddToCartButton";
-import { FormTextarea, FormInput } from "@/components/forms";
+import { FormTextarea } from "@/components/forms";
 import ImageLightbox from "@/components/ui/ImageLightbox";
 import { getProductName, getProductDescription } from "@/lib/utils/product-utils";
 import { loadProductDetail, type ProductDetailData } from "@/lib/product-detail";
 import toast from "react-hot-toast";
 import { headerConfig } from "@/lib/config";
+import { authHref, customerName, useCustomer } from "@/lib/customer-auth";
 
 interface ProductImage {
     id: string;
@@ -119,7 +120,6 @@ interface Review {
 }
 
 const commentSchema = z.object({
-    name: z.string().trim().min(1, "Name is required").max(80, "Name is too long"),
     comment: z.string().trim().min(5, "Comment is too short").max(2000, "Comment is too long"),
     rating: z.number().min(1).max(5).optional(),
 });
@@ -157,7 +157,11 @@ const content = {
         reportAbuse: "Report Abuse",
         submittingComment: "Submitting...",
         commentSuccess: "Comment submitted successfully!",
-        commentError: "Failed to submit comment. Please try again."
+        commentError: "Failed to submit comment. Please try again.",
+        reviewLoginPrompt: "Log in or create an account to write a review.",
+        logIn: "Log in",
+        createAccount: "Create an account",
+        postingAs: "Posting as"
     },
     fr: {
         home: "Accueil",
@@ -189,7 +193,11 @@ const content = {
         reportAbuse: "Signaler un abus",
         submittingComment: "Envoi en cours...",
         commentSuccess: "Commentaire soumis avec succès!",
-        commentError: "Échec de l'envoi du commentaire. Veuillez réessayer."
+        commentError: "Échec de l'envoi du commentaire. Veuillez réessayer.",
+        reviewLoginPrompt: "Connectez-vous ou créez un compte pour laisser un avis.",
+        logIn: "Se connecter",
+        createAccount: "Créer un compte",
+        postingAs: "Publié en tant que"
     },
     ar: {
         home: "الرئيسية",
@@ -221,7 +229,11 @@ const content = {
         reportAbuse: "الإبلاغ عن إساءة",
         submittingComment: "جاري الإرسال...",
         commentSuccess: "تم إرسال التعليق بنجاح!",
-        commentError: "فشل إرسال التعليق. يرجى المحاولة مرة أخرى."
+        commentError: "فشل إرسال التعليق. يرجى المحاولة مرة أخرى.",
+        reviewLoginPrompt: "سجّل الدخول أو أنشئ حساباً لكتابة تقييم.",
+        logIn: "تسجيل الدخول",
+        createAccount: "إنشاء حساب",
+        postingAs: "النشر باسم"
     }
 };
 
@@ -252,6 +264,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
     const [submittingComment, setSubmittingComment] = useState(false);
     const [selectedRating, setSelectedRating] = useState(5);
     const [visibleComments, setVisibleComments] = useState(3);
+    const { user: customer } = useCustomer();
     const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentFormData>({
         resolver: zodResolver(commentSchema)
     });
@@ -356,7 +369,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
     const reviewCount = reviews.length;
 
     const onSubmitComment = async (data: CommentFormData) => {
-        if (!product) return;
+        if (!product || !customer) return;
 
         // Zod validates name and comment; only guard rating here
         const rating = Number(selectedRating);
@@ -371,7 +384,8 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                 .from('reviews')
                 .insert({
                     product_id: product.id,
-                    user_name: (data.name || '').trim(),
+                    user_id: customer.id,
+                    user_name: customerName(customer),
                     rating,
                     comment: (data.comment || '').trim(),
                 });
@@ -674,20 +688,32 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
 
                                 </div>
 
-                                {/* Comment Form */}
+                                {/* Comment Form: reviews need an account */}
+                                {!customer ? (
+                                    <div className="mb-6 rounded-lg border border-[#e7d6cf] bg-[#fbf6f3] p-5">
+                                        <h3 className="font-semibold text-black mb-1">{text.writeComment}</h3>
+                                        <p className="text-sm text-gray-600 mb-4">{text.reviewLoginPrompt}</p>
+                                        <div className="flex flex-wrap gap-3">
+                                            <Link
+                                                href={authHref(locale, { redirect: `/${locale}/products/${slug}`, reason: "review" })}
+                                                className="px-6 py-2.5 bg-[#7a3b2e] text-white rounded-lg hover:bg-[#6b2516] transition font-medium"
+                                            >
+                                                {text.logIn}
+                                            </Link>
+                                            <Link
+                                                href={authHref(locale, { redirect: `/${locale}/products/${slug}`, reason: "review", mode: "signup" })}
+                                                className="px-6 py-2.5 border border-[#7a3b2e] text-[#7a3b2e] rounded-lg hover:bg-white transition font-medium"
+                                            >
+                                                {text.createAccount}
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ) : (
                                 <form onSubmit={handleSubmit(onSubmitComment)} className="mb-6">
-                                    <h3 className="font-semibold text-black mb-4">{text.writeComment}</h3>
-
-                                    {/* Name Input */}
-                                    <FormInput
-                                        label={text.yourName}
-                                        name="name"
-                                        placeholder={text.namePlaceholder}
-                                        register={register}
-                                        error={errors.name}
-                                        required
-                                        className="mb-4"
-                                    />
+                                    <h3 className="font-semibold text-black mb-1">{text.writeComment}</h3>
+                                    <p className="text-sm text-gray-500 mb-4">
+                                        {text.postingAs} <span className="font-medium text-gray-800">{customerName(customer)}</span>
+                                    </p>
 
                                     {/* Rating Selector */}
                                     <div className="mb-4">
@@ -732,6 +758,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                         {submittingComment ? text.submittingComment : text.send}
                                     </button>
                                 </form>
+                                )}
 
                                 {/* Comments List */}
                                 <div className="space-y-6">
@@ -1097,13 +1124,6 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                                         <h1 className="color-black font-semibold">Kachabity</h1>
                                                         <h3 className="text-[#A1A1A1]">The Seller Contact:</h3>
                                                         <div className=" flex flex-col gap-4">
-                                                            <div className="flex text-center gap-2">
-                                                                <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                    <path d="M2.55225 4.2504L8.33247 8.38004C9.47954 9.19955 11.0205 9.19955 12.1675 8.38004L17.9477 4.2504M1.13539 12.9013C0.621536 10.8319 0.621536 8.66815 1.13539 6.59875C1.80805 3.88984 3.95602 1.79534 6.68056 1.19162L7.13443 1.09105C9.1866 0.636317 11.3134 0.636318 13.3656 1.09105L13.8194 1.19162C16.544 1.79534 18.692 3.88984 19.3646 6.59876C19.8785 8.66815 19.8785 10.8319 19.3646 12.9012C18.692 15.6102 16.544 17.7047 13.8194 18.3084L13.3656 18.409C11.3134 18.8637 9.1866 18.8637 7.13443 18.409L6.68055 18.3084C3.95601 17.7047 1.80805 15.6102 1.13539 12.9013Z" stroke="#842E1B" strokeWidth="1.5" strokeLinecap="round" />
-                                                                </svg>
-                                                                <span> {headerConfig.contact.email}</span>
-
-                                                            </div>
                                                             <div className="flex text-center gap-2">
                                                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                                     <path d="M12.9153 18.6335C13.7969 18.7888 14.7031 18.7888 15.5847 18.6335C17.0016 18.3838 18.1429 17.4326 18.536 16.1736L18.6194 15.9065C18.706 15.629 18.75 15.3419 18.75 15.0534C18.75 13.7813 17.6123 12.75 16.2089 12.75H12.2911C10.8877 12.75 9.75 13.7813 9.75 15.0534C9.75 15.3419 9.79396 15.629 9.88063 15.9065L9.96402 16.1736C10.3571 17.4326 11.4984 18.3838 12.9153 18.6335ZM12.9153 18.6335C6.79195 17.4989 2.00108 12.708 0.866503 6.58468M0.866503 6.58468C0.711165 5.70315 0.711166 4.79686 0.866504 3.91532C1.11618 2.49842 2.06744 1.35713 3.32641 0.964017L3.59345 0.880631C3.87103 0.793959 4.15813 0.75 4.44661 0.75C5.71874 0.75 6.75001 1.88768 6.75 3.29106L6.75 7.20894C6.75001 8.61233 5.71874 9.75 4.44661 9.75C4.15813 9.75 3.87103 9.70604 3.59345 9.61937L3.32641 9.53598C2.06744 9.14287 1.11618 8.00159 0.866503 6.58468Z" stroke="#842E1B" strokeWidth="1.5" />

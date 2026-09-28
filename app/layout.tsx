@@ -84,7 +84,6 @@ export default async function RootLayout({
                 "@type": "ContactPoint",
                 telephone: "+216 55 558 648",
                 contactType: "customer service",
-                email: "Kachabity@gmail.com",
               },
               address: {
                 "@type": "PostalAddress",
@@ -92,10 +91,9 @@ export default async function RootLayout({
                 addressLocality: "Tunisia",
               },
               sameAs: [
-                "https://www.facebook.com/artisan-kraiem",
-                "https://www.instagram.com/artisan-kraiem",
-                "https://www.youtube.com/artisan-kraiem",
-                "https://www.twitter.com/artisan-kraiem",
+                "https://www.facebook.com/profile.php?id=61562718525332",
+                "https://www.instagram.com/kachabitii/",
+                "https://www.tiktok.com/@kachabitii",
               ],
             }),
           }}

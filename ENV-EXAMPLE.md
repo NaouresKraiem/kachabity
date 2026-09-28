@@ -24,14 +24,13 @@ CONTACT_TO_EMAIL=business@yourdomain.com
 # Site Configuration
 NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 NEXT_PUBLIC_PHONE=+216 55 558 648
-NEXT_PUBLIC_EMAIL=contact@yourdomain.com
 NEXT_PUBLIC_ADRESS=Your Address
 NEXT_PUBLIC_LOCATION=Your Location
 
 # Social Media Links
-NEXT_PUBLIC_FACEBOOK_URL=https://facebook.com/yourpage
-NEXT_PUBLIC_INSTAGRAM_URL=https://instagram.com/yourpage
-NEXT_PUBLIC_TIKTOK_URL=https://tiktok.com/@yourpage
+NEXT_PUBLIC_FACEBOOK_URL=https://www.facebook.com/profile.php?id=61562718525332
+NEXT_PUBLIC_INSTAGRAM_URL=https://www.instagram.com/kachabitii/
+NEXT_PUBLIC_TIKTOK_URL=https://www.tiktok.com/@kachabitii
 
 # Currency & Shipping
 NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD=100

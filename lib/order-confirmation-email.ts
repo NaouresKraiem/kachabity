@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { Order, OrderItem } from './orders';
+import { headerConfig } from './config';
 
 interface EmailData {
     order: Order;
@@ -226,8 +227,8 @@ function generateOrderConfirmationHTML(order: Order, orderItems: OrderItem[], cu
                 Questions about your order? We're here to help! 💬
             </p>
             <p style="margin-bottom: 20px;">
-                <a href="mailto:Kachabity@gmail.com" style="color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; background-color: rgba(255,255,255,0.2); padding: 10px 24px; border-radius: 25px; display: inline-block;">
-                    📧 Kachabity@gmail.com
+                <a href="tel:${headerConfig.contact.phone.replace(/\s/g, '')}" style="color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; background-color: rgba(255,255,255,0.2); padding: 10px 24px; border-radius: 25px; display: inline-block;">
+                    📞 ${headerConfig.contact.phone}
                 </a>
             </p>
             <p style="color: rgba(255,255,255,0.7); font-size: 13px; margin: 0;">

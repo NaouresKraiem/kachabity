@@ -1,0 +1,246 @@
+- generic [active] [ref=f12e1]:
+  - banner [ref=f12e2]:
+    - generic [ref=f12e4]:
+      - generic [ref=f12e5]: +216 55 558 648
+      - generic [ref=f12e7]:
+        - generic [ref=f12e8]: "Suivez-nous :"
+        - generic [ref=f12e9]:
+          - link "Follow us on facebook" [ref=f12e10] [cursor=pointer]:
+            - /url: https://www.facebook.com/profile.php?id=61562718525332
+          - link "Follow us on instagram" [ref=f12e13] [cursor=pointer]:
+            - /url: https://www.instagram.com/kachabitii/
+          - link "Follow us on tiktok" [ref=f12e16] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@kachabitii
+      - button "🇫🇷 Français" [ref=f12e21]:
+        - generic [ref=f12e22]: 🇫🇷
+        - generic [ref=f12e23]: Français
+    - generic [ref=f12e27]:
+      - img "logo" [ref=f12e29] [cursor=pointer]
+      - generic [ref=f12e32]:
+        - textbox "Rechercher un produit ..." [ref=f12e33]
+        - button [ref=f12e34]
+      - generic [ref=f12e37]:
+        - link "Mon compte" [ref=f12e324] [cursor=pointer]:
+          - /url: /fr/settings
+        - button "Shopping cart" [ref=f12e41] [cursor=pointer]:
+          - img "cart" [ref=f12e43]
+          - generic [ref=f12e44]: Panier
+    - generic [ref=f12e46]:
+      - navigation [ref=f12e47]:
+        - button "Catégories" [ref=f12e49]
+        - link "Remises" [ref=f12e53] [cursor=pointer]:
+          - /url: /fr/products?promo=true
+        - link "À propos" [ref=f12e54] [cursor=pointer]:
+          - /url: /fr/about
+        - link "Contactez-nous" [ref=f12e55] [cursor=pointer]:
+          - /url: /fr/contact
+      - generic [ref=f12e56] [cursor=pointer]:
+        - img "handmade" [ref=f12e57]
+        - generic [ref=f12e58]: 100% fait main
+  - generic [ref=f12e326]:
+    - navigation [ref=f12e327]:
+      - link "Accueil" [ref=f12e328] [cursor=pointer]:
+        - /url: /fr
+      - generic [ref=f12e329]: ">"
+      - link "Catégorie" [ref=f12e330] [cursor=pointer]:
+        - /url: /fr/products
+      - generic [ref=f12e331]: ">"
+      - generic [ref=f12e332]: Kachabia wazra tibar
+    - generic [ref=f12e333]:
+      - generic [ref=f12e334]:
+        - generic [ref=f12e335]:
+          - button [ref=f12e337]:
+            - img "القشابية وزرة تيبار" [ref=f12e338]
+          - button "القشابية وزرة تيبار Click to view" [ref=f12e340]:
+            - img "القشابية وزرة تيبار" [ref=f12e341]
+            - generic [ref=f12e342]: Click to view
+        - generic [ref=f12e347]:
+          - heading "Produits similaires" [level=2] [ref=f12e348]
+          - generic [ref=f12e349]:
+            - link [ref=f12e350] [cursor=pointer]:
+              - /url: /fr/products/kachabia-wazra-marron-3553
+              - img "Kachabia wazra marron 1" [ref=f12e353]
+              - generic [ref=f12e354]:
+                - heading "Kachabia wazra marron 1" [level=3] [ref=f12e355]
+                - paragraph [ref=f12e356]: 149 TND
+            - link [ref=f12e357] [cursor=pointer]:
+              - /url: /fr/products/kachabia-ennour-3742
+              - img "Kachabia Ennour" [ref=f12e360]
+              - generic [ref=f12e361]:
+                - heading "Kachabia Ennour" [level=3] [ref=f12e362]
+                - paragraph [ref=f12e363]: 189 TND
+            - link [ref=f12e364] [cursor=pointer]:
+              - /url: /fr/products/kachabia-wazra-blanche-4443
+              - img "Kachabia wazra blanche" [ref=f12e367]
+              - generic [ref=f12e368]:
+                - heading "Kachabia wazra blanche" [level=3] [ref=f12e369]
+                - paragraph [ref=f12e370]: 149 TND
+            - link [ref=f12e371] [cursor=pointer]:
+              - /url: /fr/products/kachabia-gris-wazra-blanche-4595
+              - img "Kachabia grise wazra blanche" [ref=f12e374]
+              - generic [ref=f12e375]:
+                - heading "Kachabia grise wazra blanche" [level=3] [ref=f12e376]
+                - paragraph [ref=f12e377]: 149 TND
+        - generic [ref=f12e378]:
+          - heading "Explorer les catégories connexes" [level=3] [ref=f12e379]
+          - generic [ref=f12e380]:
+            - link "Balgha" [ref=f12e381] [cursor=pointer]:
+              - /url: /fr/products?category=balgha
+            - link "Kachabia cachemire" [ref=f12e382] [cursor=pointer]:
+              - /url: /fr/products?category=kachabia-cachemire
+            - link "Kachabia demi-saison" [ref=f12e383] [cursor=pointer]:
+              - /url: /fr/products?category=kachabia-demi
+            - link "Blouza djerbienne" [ref=f12e384] [cursor=pointer]:
+              - /url: /fr/products?category=blouza-djerbienne
+            - link "Kadroun djerbien" [ref=f12e385] [cursor=pointer]:
+              - /url: /fr/products?category=kadroun-djerbien
+            - link "Enfants" [ref=f12e386] [cursor=pointer]:
+              - /url: /fr/products?category=enfants
+        - generic [ref=f12e387]:
+          - generic [ref=f12e389]:
+            - heading "Commentaires" [level=2] [ref=f12e390]
+            - generic [ref=f12e391]: "0"
+          - generic [ref=f12e392]:
+            - heading "Écrivez votre commentaire" [level=3] [ref=f12e393]
+            - paragraph [ref=f12e394]: Publié en tant que E2E Client
+            - generic [ref=f12e395]:
+              - generic [ref=f12e396]: Votre évaluation
+              - generic [ref=f12e397]:
+                - button [ref=f12e398]
+                - button [ref=f12e401]
+                - button [ref=f12e404]
+                - button [ref=f12e407]
+                - button [ref=f12e410]
+            - generic [ref=f12e413]:
+              - generic [ref=f12e414]: Commentaires*
+              - textbox "Partagez vos impressions sur ce produit..." [ref=f12e415]
+            - button "Envoyer" [ref=f12e416]
+          - paragraph [ref=f12e418]: No reviews yet. Be the first to review this product!
+      - generic [ref=f12e419]:
+        - heading "Kachabia wazra tibar" [level=1] [ref=f12e420]
+        - generic [ref=f12e421]:
+          - link "0.0 (0 avis)" [ref=f12e434] [cursor=pointer]:
+            - /url: "#reviews"
+          - generic [ref=f12e435]:
+            - generic [ref=f12e436]: "Statut:"
+            - generic [ref=f12e437]: En stock
+        - paragraph [ref=f12e442]: "La kachabia tunisienne en laine tibar est bien plus qu'un vêtement d'hiver : c'est une pièce authentique qui reflète l'identité tunisienne avec un esprit moderne adapté à l'homme d'aujourd'hui. Cette Kachabia Tunisie a été conçue avec soin pour allier luxe traditionnel et touche moderne, ce qui en fait un choix idéal pour tous ceux qui recherchent à la fois l'élégance et le confort. Fabriquée en laine naturelle de haute qualité, la kachabia offre une chaleur exceptionnelle pendant l'hiver, avec une sensation douce et confortable au porter. Le tissu conserve la chaleur sans être lourd ni gênant, ce qui la rend adaptée au quotidien comme aux longues sorties. La finition précise et la broderie tibar (Tibbar) ajoutent une touche raffinée et élégante qui reflète l'artisanat tunisien authentique. Cette broderie se distingue par sa simplicité étudiée, qui donne à la kachabia un luxe sans excès et la rend facile à associer à différentes tenues, classiques ou décontractées. Côté design, la kachabia allie la coupe traditionnelle bien connue à une fluidité moderne, pour une liberté de mouvement et une allure élégante à la fois. Vous pouvez la porter lors d'occasions spéciales comme les soirées et les réunions, ou même au quotidien pour une présence distinctive et raffinée. Kachabia homme hiver est aussi un choix idéal comme cadeau de valeur, car elle reflète un goût raffiné et porte un caractère culturel singulier. Que vous la portiez vous-même ou que vous l'offriez, c'est une pièce qui apporte une vraie valeur à toute garde-robe. Pourquoi choisir cette Kachabia en laine ? Parce qu'elle offre un équilibre parfait entre tradition tunisienne et style moderne. Une pièce durable, élégante et confortable qui répond aux exigences de l'homme contemporain."
+        - generic [ref=f12e443]:
+          - generic [ref=f12e444]: 189 TND
+          - text: "0"
+        - generic [ref=f12e445]:
+          - generic [ref=f12e446]: Quantité
+          - generic [ref=f12e447]:
+            - button "−" [ref=f12e448]
+            - generic [ref=f12e449]: "1"
+            - button "+" [ref=f12e450]
+        - generic [ref=f12e451]:
+          - generic [ref=f12e452]: Sélectionner la couleur
+          - generic [ref=f12e453]:
+            - button "Black" [ref=f12e455]
+            - button "Jaune" [ref=f12e457]
+        - generic [ref=f12e458]:
+          - generic [ref=f12e459]: Sélectionner la taille
+          - generic [ref=f12e460]:
+            - button "S" [ref=f12e461]
+            - button "M" [ref=f12e462]
+            - button "L" [ref=f12e463]
+            - button "XL" [ref=f12e464]
+            - button "2XL" [ref=f12e465]
+        - button "Ajouter au panier" [ref=f12e466]
+        - generic [ref=f12e469]:
+          - generic [ref=f12e470]:
+            - button "Détails du produit" [ref=f12e471]
+            - generic [ref=f12e475]:
+              - paragraph [ref=f12e476]: • 100% authentic handmade
+              - paragraph [ref=f12e477]: • Premium quality materials
+              - paragraph [ref=f12e478]: • Traditional craftsmanship
+          - generic [ref=f12e479]:
+            - button "Détails de livraison" [ref=f12e480]
+            - generic [ref=f12e484]:
+              - generic [ref=f12e485]:
+                - generic [ref=f12e486]: Livraison à domicile
+                - generic [ref=f12e487]: Frais de livraison:7 TND
+              - paragraph [ref=f12e488]: Free shipping on orders over 100 TND. Delivery within 1-3 business days.
+          - generic [ref=f12e489]:
+            - button "Détails du vendeur" [ref=f12e490]
+            - generic [ref=f12e494]:
+              - generic [ref=f12e495]:
+                - img "logo" [ref=f12e497]
+                - generic [ref=f12e498]:
+                  - heading "Kachabity" [level=1] [ref=f12e499]
+                  - heading "The Seller Contact:" [level=3] [ref=f12e500]
+                  - generic [ref=f12e501]:
+                    - generic [ref=f12e502]: +216 55 558 648
+                    - generic [ref=f12e506]: Your Address
+              - generic [ref=f12e511] [cursor=pointer]: Call Kachabity Now
+            - generic:
+              - img "Decorative flower"
+  - contentinfo [ref=f12e63]:
+    - generic [ref=f12e64]:
+      - generic [ref=f12e65]:
+        - generic [ref=f12e66]:
+          - link [ref=f12e67] [cursor=pointer]:
+            - /url: /fr
+            - img "Kachabity" [ref=f12e68]
+            - img "Kachabity" [ref=f12e69]
+          - paragraph [ref=f12e70]: Découvrez des produits artisanaux tunisiens authentiques et des trésors traditionnels.
+          - generic [ref=f12e71]:
+            - link "Facebook" [ref=f12e72] [cursor=pointer]:
+              - /url: https://www.facebook.com/profile.php?id=61562718525332
+            - link "Instagram" [ref=f12e75] [cursor=pointer]:
+              - /url: https://www.instagram.com/kachabitii/
+            - link "TikTok" [ref=f12e78] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@kachabitii
+        - generic [ref=f12e81]:
+          - generic [ref=f12e82]:
+            - heading "Liens rapides" [level=3] [ref=f12e83]
+            - list [ref=f12e84]:
+              - listitem [ref=f12e85]:
+                - link "Catégories" [ref=f12e86] [cursor=pointer]:
+                  - /url: /fr/categories
+              - listitem [ref=f12e87]:
+                - link "Remises" [ref=f12e88] [cursor=pointer]:
+                  - /url: /fr/products?promo=true
+              - listitem [ref=f12e89]:
+                - link "Nouveautés" [ref=f12e90] [cursor=pointer]:
+                  - /url: /fr/products?sort=new
+              - listitem [ref=f12e91]:
+                - link "Meilleures ventes" [ref=f12e92] [cursor=pointer]:
+                  - /url: /fr/products?sort=popular
+          - generic [ref=f12e93]:
+            - heading "À propos" [level=3] [ref=f12e94]
+            - list [ref=f12e95]:
+              - listitem [ref=f12e96]:
+                - link "À propos de nous" [ref=f12e97] [cursor=pointer]:
+                  - /url: /fr/about
+              - listitem [ref=f12e98]:
+                - link "Contact" [ref=f12e99] [cursor=pointer]:
+                  - /url: /fr/contact
+              - listitem [ref=f12e100]:
+                - link "FAQ" [ref=f12e101] [cursor=pointer]:
+                  - /url: /fr#faqs
+          - generic [ref=f12e102]:
+            - heading "Légal" [level=3] [ref=f12e103]
+            - list [ref=f12e104]:
+              - listitem [ref=f12e105]:
+                - link "Termes et conditions" [ref=f12e106] [cursor=pointer]:
+                  - /url: /fr/terms-and-conditions
+              - listitem [ref=f12e107]:
+                - link "Politique de confidentialité" [ref=f12e108] [cursor=pointer]:
+                  - /url: /fr/privacy
+              - listitem [ref=f12e109]:
+                - link "Politique d'expédition" [ref=f12e110] [cursor=pointer]:
+                  - /url: /fr/shipping
+        - generic [ref=f12e113]:
+          - heading "Abonnez-vous à notre newsletter" [level=3] [ref=f12e114]
+          - paragraph [ref=f12e115]: Recevez les dernières mises à jour sur les nouveaux produits et offres exclusives
+          - generic [ref=f12e116]:
+            - textbox "Entrez votre e-mail" [ref=f12e117]
+            - button "S'abonner" [ref=f12e118]
+      - generic [ref=f12e120]:
+        - paragraph [ref=f12e121]: © 2026 Kachabity. Tous droits réservés.
+        - link "+216 55 558 648" [ref=f12e123] [cursor=pointer]:
+          - /url: tel:+216 55 558 648
+  - button "Open Next.js Dev Tools" [ref=f12e319] [cursor=pointer]
+  - alert [ref=f12e295]: Kachabia wazra tibar | Kachabity

@@ -1,0 +1,100 @@
+- generic [active] [ref=f13e1]:
+  - main [ref=f13e2]:
+    - generic [ref=f13e4]:
+      - generic [ref=f13e5]:
+        - heading "Kachabia, burnous et dengri, faits en Tunisie" [level=1] [ref=f13e6]
+        - paragraph [ref=f13e7]: Des pièces en laine tissées par des artisans tunisiens et livrées chez vous. Vous payez à la réception de votre commande.
+        - generic [ref=f13e8]:
+          - link "Voir la collection" [ref=f13e9] [cursor=pointer]:
+            - /url: /fr/products?category=kachabia-tunisienne
+          - link "Tous les produits" [ref=f13e10] [cursor=pointer]:
+            - /url: /fr/products
+        - list [ref=f13e11]:
+          - listitem [ref=f13e12]: Paiement à la livraison
+          - listitem [ref=f13e16]: Livraison offerte dès 500 TND
+      - generic [ref=f13e21]:
+        - link "Kachabia wazra tibar Kachabia wazra tibar 189 TND" [ref=f13e22] [cursor=pointer]:
+          - /url: /fr/products/kachabia-wazra-tibar-7018
+          - img "Kachabia wazra tibar" [ref=f13e23]
+          - generic [ref=f13e24]:
+            - generic [ref=f13e25]: Kachabia wazra tibar
+            - generic [ref=f13e26]: 189 TND
+        - link "Dengri tunisien authentique pour homme Dengri tunisien authentique pour homme 119 TND" [ref=f13e27] [cursor=pointer]:
+          - /url: /fr/products/dengri-tunisien-homme-240
+          - img "Dengri tunisien authentique pour homme" [ref=f13e28]
+          - generic [ref=f13e29]:
+            - generic [ref=f13e30]: Dengri tunisien authentique pour homme
+            - generic [ref=f13e31]: 119 TND
+        - link "Burnous tunisien en laine authentique Burnous tunisien en laine authentique 380 TND" [ref=f13e32] [cursor=pointer]:
+          - /url: /fr/products/burnous-tunisien-laine-232
+          - img "Burnous tunisien en laine authentique" [ref=f13e33]
+          - generic [ref=f13e34]:
+            - generic [ref=f13e35]: Burnous tunisien en laine authentique
+            - generic [ref=f13e36]: 380 TND
+    - paragraph [ref=f13e41]: Loading...
+  - contentinfo [ref=f13e42]:
+    - generic [ref=f13e43]:
+      - generic [ref=f13e44]:
+        - generic [ref=f13e45]:
+          - link [ref=f13e46] [cursor=pointer]:
+            - /url: /fr
+            - img "Kachabity" [ref=f13e47]
+            - img "Kachabity" [ref=f13e48]
+          - paragraph [ref=f13e49]: Découvrez des produits artisanaux tunisiens authentiques et des trésors traditionnels.
+          - generic [ref=f13e50]:
+            - link "Facebook" [ref=f13e51] [cursor=pointer]:
+              - /url: https://www.facebook.com/profile.php?id=61562718525332
+            - link "Instagram" [ref=f13e54] [cursor=pointer]:
+              - /url: https://www.instagram.com/kachabitii/
+            - link "TikTok" [ref=f13e57] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@kachabitii
+        - generic [ref=f13e60]:
+          - generic [ref=f13e61]:
+            - heading "Liens rapides" [level=3] [ref=f13e62]
+            - list [ref=f13e63]:
+              - listitem [ref=f13e64]:
+                - link "Catégories" [ref=f13e65] [cursor=pointer]:
+                  - /url: /fr/categories
+              - listitem [ref=f13e66]:
+                - link "Remises" [ref=f13e67] [cursor=pointer]:
+                  - /url: /fr/products?promo=true
+              - listitem [ref=f13e68]:
+                - link "Nouveautés" [ref=f13e69] [cursor=pointer]:
+                  - /url: /fr/products?sort=new
+              - listitem [ref=f13e70]:
+                - link "Meilleures ventes" [ref=f13e71] [cursor=pointer]:
+                  - /url: /fr/products?sort=popular
+          - generic [ref=f13e72]:
+            - heading "À propos" [level=3] [ref=f13e73]
+            - list [ref=f13e74]:
+              - listitem [ref=f13e75]:
+                - link "À propos de nous" [ref=f13e76] [cursor=pointer]:
+                  - /url: /fr/about
+              - listitem [ref=f13e77]:
+                - link "Contact" [ref=f13e78] [cursor=pointer]:
+                  - /url: /fr/contact
+              - listitem [ref=f13e79]:
+                - link "FAQ" [ref=f13e80] [cursor=pointer]:
+                  - /url: /fr#faqs
+          - generic [ref=f13e81]:
+            - heading "Légal" [level=3] [ref=f13e82]
+            - list [ref=f13e83]:
+              - listitem [ref=f13e84]:
+                - link "Termes et conditions" [ref=f13e85] [cursor=pointer]:
+                  - /url: /fr/terms-and-conditions
+              - listitem [ref=f13e86]:
+                - link "Politique de confidentialité" [ref=f13e87] [cursor=pointer]:
+                  - /url: /fr/privacy
+              - listitem [ref=f13e88]:
+                - link "Politique d'expédition" [ref=f13e89] [cursor=pointer]:
+                  - /url: /fr/shipping
+        - generic [ref=f13e92]:
+          - heading "Abonnez-vous à notre newsletter" [level=3] [ref=f13e93]
+          - paragraph [ref=f13e94]: Recevez les dernières mises à jour sur les nouveaux produits et offres exclusives
+          - generic [ref=f13e95]:
+            - textbox "Entrez votre e-mail" [ref=f13e96]
+            - button "S'abonner" [ref=f13e97]
+      - generic [ref=f13e99]:
+        - paragraph [ref=f13e100]: © 2026 Kachabity. Tous droits réservés.
+        - link "+216 55 558 648" [ref=f13e102] [cursor=pointer]:
+          - /url: tel:+216 55 558 648

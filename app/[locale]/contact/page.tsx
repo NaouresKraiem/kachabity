@@ -22,7 +22,6 @@ const content: Record<Locale, {
     contactUs: string;
     location: string;
     phoneLabel: string;
-    emailLabel: string;
     success: string;
     error: string;
     home: string;
@@ -45,7 +44,6 @@ const content: Record<Locale, {
         contactUs: "Also Connect With Social Media To Anytime",
         location: "Location",
         phoneLabel: "Phone",
-        emailLabel: "Email",
         success: "Thanks! Your message has been sent.",
         error: "Something went wrong. Please try again.",
         home: "Home",
@@ -68,7 +66,6 @@ const content: Record<Locale, {
         contactUs: "Nous serions ravis d'avoir de vos nouvelles",
         location: "Adresse",
         phoneLabel: "Téléphone",
-        emailLabel: "Email",
         success: "Merci ! Votre message a été envoyé.",
         error: "Une erreur est survenue. Veuillez réessayer.",
         home: "Accueil",
@@ -91,7 +88,6 @@ const content: Record<Locale, {
         contactUs: "يسعدنا سماعك",
         location: "العنوان",
         phoneLabel: "الهاتف",
-        emailLabel: "البريد الإلكتروني",
         success: "شكرًا! تم إرسال رسالتك.",
         error: "حدث خطأ. يرجى المحاولة مرة أخرى.",
         home: "الرئيسية",
@@ -234,7 +230,7 @@ export default function ContactPage({ params }: { params: Promise<{ locale: Loca
                         <h2 className="text-black text-[32px]">{text.weLoveToHear}</h2>
                         <h3 className="text-center text-sm text-neutral-600">{text.contactUs}</h3>
                     </div>
-                    <div className="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="rounded-[15]  p-6 bg-[#F9FBFC]">
 
                             <div
@@ -265,21 +261,6 @@ export default function ContactPage({ params }: { params: Promise<{ locale: Loca
                             </div>
                             <div className="text-black font-semibold">{text.phoneLabel}</div>
                             <p className="text-sm text-neutral-600 mt-2">{headerConfig.contact.phone}</p>
-                        </div>
-                        <div className="rounded-xl bg-[#F9FBFC] p-6">
-                            <div
-                                className="w-14 h-14 mb-[9] rounded-full bg-[#7a3b2e]  flex items-center justify-center transition-colors group"
-                            >
-                                <Image
-                                    src={'/assets/images/contact/email.png'}
-                                    alt={headerConfig.contact.email}
-                                    height={17}
-                                    width={17}
-                                />
-                            </div>
-
-                            <div className="text-black font-semibold">{text.emailLabel}</div>
-                            <p className="text-sm text-neutral-600 mt-2">{headerConfig.contact.email}</p>
                         </div>
                     </div>
                 </div>

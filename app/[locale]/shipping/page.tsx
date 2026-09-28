@@ -57,7 +57,7 @@ const getContent = (): Record<string, ShippingContent> => ({
                 title: "5. Order Tracking",
                 content: [
                     "Once your order ships, we send a confirmation email or SMS with tracking information (when supported by the carrier).",
-                    "If tracking is unavailable, our support team can provide delivery updates via email at " + headerConfig.contact.email + " or phone at " + headerConfig.contact.phone + "."
+                    "If tracking is unavailable, our support team can provide delivery updates by phone at " + headerConfig.contact.phone + "."
                 ]
             },
             deliveryIssues: {
@@ -122,7 +122,7 @@ const getContent = (): Record<string, ShippingContent> => ({
                 title: "5. Suivi de Commande",
                 content: [
                     "Une fois la commande expédiée, un e-mail ou un SMS de confirmation avec un lien de suivi est envoyé (si le transporteur le permet).",
-                    "Si le suivi n'est pas disponible, notre équipe support peut vous informer par e-mail à " + headerConfig.contact.email + " ou par téléphone au " + headerConfig.contact.phone + "."
+                    "Si le suivi n'est pas disponible, notre équipe support peut vous informer par téléphone au " + headerConfig.contact.phone + "."
                 ]
             },
             deliveryIssues: {
@@ -187,7 +187,7 @@ const getContent = (): Record<string, ShippingContent> => ({
                 title: "5. متابعة الطلب",
                 content: [
                     "عند شحن الطلب، نرسل رسالة تأكيد عبر البريد الإلكتروني أو SMS مرفقة بمعلومات التتبع (عند توفرها من شركة الشحن).",
-                    "إذا كان التتبع غير متاح، يمكن لفريق الدعم تزويدك بالتحديثات عبر البريد الإلكتروني " + headerConfig.contact.email + " أو الهاتف " + headerConfig.contact.phone + "."
+                    "إذا كان التتبع غير متاح، يمكن لفريق الدعم تزويدك بالتحديثات عبر الهاتف " + headerConfig.contact.phone + "."
                 ]
             },
             deliveryIssues: {

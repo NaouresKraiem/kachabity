@@ -2,6 +2,7 @@
 
 import { useLanguage } from "@/lib/language-context";
 import Link from "next/link";
+import { headerConfig } from "@/lib/config";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -153,8 +154,8 @@ function OrderConfirmationContent() {
                         <p className="text-sm text-gray-500">
                             {text.questions}
                         </p>
-                        <a href="mailto:Kachabity@gmail.com" className="text-[#842E1B] hover:text-[#6b2516] font-medium">
-                            Kachabity@gmail.com
+                        <a href={`tel:${headerConfig.contact.phone.replace(/\s/g, '')}`} dir="ltr" className="text-[#842E1B] hover:text-[#6b2516] font-medium">
+                            {headerConfig.contact.phone}
                         </a>
                     </div>
                 </div>

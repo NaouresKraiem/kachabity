@@ -1,0 +1,141 @@
+- generic [ref=f14e1]:
+  - banner [ref=f14e2]:
+    - generic [ref=f14e4]:
+      - generic [ref=f14e5]: +216 55 558 648
+      - generic [ref=f14e7]:
+        - generic [ref=f14e8]: "Suivez-nous :"
+        - generic [ref=f14e9]:
+          - link "Follow us on facebook" [ref=f14e10] [cursor=pointer]:
+            - /url: https://www.facebook.com/profile.php?id=61562718525332
+          - link "Follow us on instagram" [ref=f14e13] [cursor=pointer]:
+            - /url: https://www.instagram.com/kachabitii/
+          - link "Follow us on tiktok" [ref=f14e16] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@kachabitii
+      - button "🇫🇷 Français" [ref=f14e21]:
+        - generic [ref=f14e22]: 🇫🇷
+        - generic [ref=f14e23]: Français
+    - generic [ref=f14e27]:
+      - img "logo" [ref=f14e29] [cursor=pointer]
+      - generic [ref=f14e32]:
+        - textbox "Rechercher un produit ..." [ref=f14e33]
+        - button [ref=f14e34]
+      - generic [ref=f14e37]:
+        - link "Mon compte" [ref=f14e149] [cursor=pointer]:
+          - /url: /fr/settings
+        - button "Shopping cart" [ref=f14e41] [cursor=pointer]:
+          - img "cart" [ref=f14e43]
+          - generic [ref=f14e44]: Panier
+    - generic [ref=f14e46]:
+      - navigation [ref=f14e47]:
+        - button "Catégories" [ref=f14e49]
+        - link "Remises" [ref=f14e53] [cursor=pointer]:
+          - /url: /fr/products?promo=true
+        - link "À propos" [ref=f14e54] [cursor=pointer]:
+          - /url: /fr/about
+        - link "Contactez-nous" [ref=f14e55] [cursor=pointer]:
+          - /url: /fr/contact
+      - generic [ref=f14e56] [cursor=pointer]:
+        - img "handmade" [ref=f14e57]
+        - generic [ref=f14e58]: 100% fait main
+  - main [ref=f14e60]:
+    - main [ref=f14e61]:
+      - generic [ref=f14e62]:
+        - heading "Paramètres" [level=1] [ref=f14e63]
+        - paragraph [ref=f14e64]: Gérez les paramètres et préférences de votre compte
+        - generic [ref=f14e65]:
+          - complementary [ref=f14e66]:
+            - list [ref=f14e68]:
+              - listitem [ref=f14e69]:
+                - button "Mes commandes" [ref=f14e70] [cursor=pointer]
+              - listitem [ref=f14e71]:
+                - button "Informations du compte" [ref=f14e72] [cursor=pointer]
+              - listitem [ref=f14e73]:
+                - button "Sécurité" [ref=f14e74] [cursor=pointer]
+              - listitem [ref=f14e75]:
+                - button "Articles enregistrés" [ref=f14e76] [cursor=pointer]
+              - listitem [ref=f14e77]:
+                - button "Se déconnecter" [ref=f14e78] [cursor=pointer]
+          - generic [ref=f14e196]:
+            - generic [ref=f14e197]: Paramètres de sécurité
+            - generic [ref=f14e198]:
+              - generic [ref=f14e199]:
+                - generic [ref=f14e200]: Mot de passe actuel
+                - textbox [ref=f14e201]: not-my-password
+              - generic [ref=f14e202]:
+                - generic [ref=f14e203]: Nouveau mot de passe
+                - textbox [ref=f14e204]: Another-pass-2026
+              - generic [ref=f14e205]:
+                - generic [ref=f14e206]: Confirmer le nouveau mot de passe
+                - textbox [ref=f14e207]: Another-pass-2026
+              - button "Changer le mot de passe" [active] [ref=f14e209]
+          - img "bg-checkout" [ref=f14e178]
+          - img "bg-checkout" [ref=f14e180]
+  - contentinfo [ref=f14e84]:
+    - generic [ref=f14e85]:
+      - generic [ref=f14e86]:
+        - generic [ref=f14e87]:
+          - link [ref=f14e88] [cursor=pointer]:
+            - /url: /fr
+            - img "Kachabity" [ref=f14e89]
+            - img "Kachabity" [ref=f14e90]
+          - paragraph [ref=f14e91]: Découvrez des produits artisanaux tunisiens authentiques et des trésors traditionnels.
+          - generic [ref=f14e92]:
+            - link "Facebook" [ref=f14e93] [cursor=pointer]:
+              - /url: https://www.facebook.com/profile.php?id=61562718525332
+            - link "Instagram" [ref=f14e96] [cursor=pointer]:
+              - /url: https://www.instagram.com/kachabitii/
+            - link "TikTok" [ref=f14e99] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@kachabitii
+        - generic [ref=f14e102]:
+          - generic [ref=f14e103]:
+            - heading "Liens rapides" [level=3] [ref=f14e104]
+            - list [ref=f14e105]:
+              - listitem [ref=f14e106]:
+                - link "Catégories" [ref=f14e107] [cursor=pointer]:
+                  - /url: /fr/categories
+              - listitem [ref=f14e108]:
+                - link "Remises" [ref=f14e109] [cursor=pointer]:
+                  - /url: /fr/products?promo=true
+              - listitem [ref=f14e110]:
+                - link "Nouveautés" [ref=f14e111] [cursor=pointer]:
+                  - /url: /fr/products?sort=new
+              - listitem [ref=f14e112]:
+                - link "Meilleures ventes" [ref=f14e113] [cursor=pointer]:
+                  - /url: /fr/products?sort=popular
+          - generic [ref=f14e114]:
+            - heading "À propos" [level=3] [ref=f14e115]
+            - list [ref=f14e116]:
+              - listitem [ref=f14e117]:
+                - link "À propos de nous" [ref=f14e118] [cursor=pointer]:
+                  - /url: /fr/about
+              - listitem [ref=f14e119]:
+                - link "Contact" [ref=f14e120] [cursor=pointer]:
+                  - /url: /fr/contact
+              - listitem [ref=f14e121]:
+                - link "FAQ" [ref=f14e122] [cursor=pointer]:
+                  - /url: /fr#faqs
+          - generic [ref=f14e123]:
+            - heading "Légal" [level=3] [ref=f14e124]
+            - list [ref=f14e125]:
+              - listitem [ref=f14e126]:
+                - link "Termes et conditions" [ref=f14e127] [cursor=pointer]:
+                  - /url: /fr/terms-and-conditions
+              - listitem [ref=f14e128]:
+                - link "Politique de confidentialité" [ref=f14e129] [cursor=pointer]:
+                  - /url: /fr/privacy
+              - listitem [ref=f14e130]:
+                - link "Politique d'expédition" [ref=f14e131] [cursor=pointer]:
+                  - /url: /fr/shipping
+        - generic [ref=f14e134]:
+          - heading "Abonnez-vous à notre newsletter" [level=3] [ref=f14e135]
+          - paragraph [ref=f14e136]: Recevez les dernières mises à jour sur les nouveaux produits et offres exclusives
+          - generic [ref=f14e137]:
+            - textbox "Entrez votre e-mail" [ref=f14e138]
+            - button "S'abonner" [ref=f14e139]
+      - generic [ref=f14e141]:
+        - paragraph [ref=f14e142]: © 2026 Kachabity. Tous droits réservés.
+        - link "+216 55 558 648" [ref=f14e144] [cursor=pointer]:
+          - /url: tel:+216 55 558 648
+  - status [ref=f14e215]: Votre mot de passe actuel est incorrect.
+  - button "Open Next.js Dev Tools" [ref=f14e192] [cursor=pointer]
+  - alert [ref=f14e148]

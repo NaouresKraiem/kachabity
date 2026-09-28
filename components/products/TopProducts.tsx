@@ -6,7 +6,7 @@ import supabase from "@/lib/supabaseClient";
 import { useCart } from "@/lib/cart-context";
 import ProductListCard, { ProductListItem } from "./ProductListCard";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
-import toast from "react-hot-toast";
+import { goToLogin } from "@/lib/customer-auth";
 import type { ProductImage as SupabaseProductImage } from "@/lib/product-images";
 
 const translations = {
@@ -182,8 +182,7 @@ export default function TopProducts({ locale = 'en', initialProducts }: TopProdu
     const handleToggleFavorite = async (productId: string) => {
         // If user not logged in, show message
         if (!userId) {
-            toast.error(t.loginToSave);
-
+            goToLogin(locale, "favorites");
             return;
         }
 

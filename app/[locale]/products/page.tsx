@@ -5,12 +5,12 @@ import { useSearchParams, useParams } from "next/navigation";
 import supabase from "@/lib/supabaseClient";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProductListCard from "@/components/products/ProductListCard";
-import toast from "react-hot-toast";
 import { EMBEDDED_DISCOUNTS, embeddedDiscountPercent, type ProductDiscount } from "@/lib/product-discounts";
 import { getDescendantCategoryIds } from "@/lib/utils/product-utils";
 import { getCategories } from "@/lib/categories-cache";
 import { useCart } from "@/lib/cart-context";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
+import { goToLogin } from "@/lib/customer-auth";
 import { isRTL } from "@/lib/language-utils";
 
 interface Product {
@@ -474,7 +474,7 @@ export default function ProductsPage() {
     const toggleWishlist = async (productId: string) => {
         // If user not logged in, show message or redirect
         if (!userId) {
-            toast.error(text.pleaseLogin);
+            goToLogin(locale, "favorites");
             return;
         }
 

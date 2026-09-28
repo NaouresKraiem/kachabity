@@ -115,13 +115,13 @@ export default async function LocaleLayout({
                             "logo": "https://your-ecommerce-site.com/logo.png",
                             "contactPoint": {
                                 "@type": "ContactPoint",
-                                "telephone": "+216-20-000-000",
+                                "telephone": "+216-55-558-648",
                                 "contactType": "Customer Service"
                             },
                             "sameAs": [
-                                "https://www.facebook.com/artisanbykraiem",
-                                "https://www.instagram.com/artisanbykraiem",
-                                "https://www.twitter.com/artisanbykraiem"
+                                "https://www.facebook.com/profile.php?id=61562718525332",
+                                "https://www.instagram.com/kachabitii/",
+                                "https://www.tiktok.com/@kachabitii"
                             ],
                             "address": {
                                 "@type": "PostalAddress",
