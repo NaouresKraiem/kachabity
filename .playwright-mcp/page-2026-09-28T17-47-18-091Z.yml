@@ -1,0 +1,376 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e2]:
+    - generic [ref=f3e4]:
+      - generic [ref=f3e5]:
+        - link "Follow us on facebook" [ref=f3e6] [cursor=pointer]:
+          - /url: https://facebook.com/yourpage
+        - link "Follow us on instagram" [ref=f3e9] [cursor=pointer]:
+          - /url: https://instagram.com/yourpage
+        - link "Follow us on tiktok" [ref=f3e12] [cursor=pointer]:
+          - /url: https://tiktok.com/@yourpage
+      - generic [ref=f3e15]:
+        - button "Toggle dark mode" [ref=f3e16]
+        - button [ref=f3e20]
+    - generic [ref=f3e26]:
+      - generic [ref=f3e27]:
+        - button "Toggle menu" [ref=f3e28]
+        - generic [ref=f3e31]: Guest
+      - generic [ref=f3e36]:
+        - link "Phone" [ref=f3e37] [cursor=pointer]:
+          - /url: tel:+21655558648
+        - link "Email" [ref=f3e40] [cursor=pointer]:
+          - /url: mailto:contact@yourdomain.com
+        - button "Search" [ref=f3e43]
+  - main [ref=f3e46]:
+    - generic [ref=f3e48]:
+      - generic [ref=f3e49]:
+        - heading "قشابية، برنوس ودنقري، صُنعت في تونس" [level=1] [ref=f3e50]
+        - paragraph [ref=f3e51]: قطع من الصوف ينسجها حرفيون تونسيون وتصلك إلى باب منزلك. تدفع عند استلام طلبك.
+        - generic [ref=f3e52]:
+          - link "تسوّق المجموعة" [ref=f3e53] [cursor=pointer]:
+            - /url: /ar/products?category=kachabia-tunisienne
+          - link "كل المنتجات" [ref=f3e54] [cursor=pointer]:
+            - /url: /ar/products
+        - list [ref=f3e55]:
+          - listitem [ref=f3e56]: الدفع عند الاستلام
+          - listitem [ref=f3e60]: توصيل مجاني ابتداءً من 500 TND
+      - generic [ref=f3e65]:
+        - link "القشابية الشخمة Pro Max 2 القشابية الشخمة Pro Max 2 149 TND" [ref=f3e66] [cursor=pointer]:
+          - /url: /ar/products/kachabia-chakhma-pro-max-2-7066
+          - img "القشابية الشخمة Pro Max 2" [ref=f3e67]
+          - generic [ref=f3e68]:
+            - generic [ref=f3e69]: القشابية الشخمة Pro Max 2
+            - generic [ref=f3e70]: 149 TND
+        - link "القشابية وزرة تيبار القشابية وزرة تيبار 189 TND" [ref=f3e71] [cursor=pointer]:
+          - /url: /ar/products/kachabia-wazra-tibar-7018
+          - img "القشابية وزرة تيبار" [ref=f3e72]
+          - generic [ref=f3e73]:
+            - generic [ref=f3e74]: القشابية وزرة تيبار
+            - generic [ref=f3e75]: 189 TND
+        - link "القشابية تونسية ڨري فاتح وزرة مارون القشابية تونسية ڨري فاتح وزرة مارون 149 TND" [ref=f3e76] [cursor=pointer]:
+          - /url: /ar/products/kachabia-gris-clair-wazra-marron-6812
+          - img "القشابية تونسية ڨري فاتح وزرة مارون" [ref=f3e77]
+          - generic [ref=f3e78]:
+            - generic [ref=f3e79]: القشابية تونسية ڨري فاتح وزرة مارون
+            - generic [ref=f3e80]: 149 TND
+    - generic [ref=f3e82]:
+      - generic:
+        - img "Decorative flower"
+      - generic [ref=f3e84]:
+        - heading "الفئات المميزة" [level=2] [ref=f3e85]
+        - paragraph [ref=f3e86]: تصفح بعض فئاتنا الأكثر شعبية
+    - generic [ref=f3e109]:
+      - generic [ref=f3e110]:
+        - generic [ref=f3e111]:
+          - heading "وصل حديثاً" [level=2] [ref=f3e112]
+          - paragraph [ref=f3e113]: آخر القطع التي أضفناها، مصوّرة في متجرنا.
+        - link "عرض كل المنتجات" [ref=f3e114] [cursor=pointer]:
+          - /url: /ar/products
+      - generic [ref=f3e115]:
+        - link "القشابية الشخمة Pro Max 2 قشابية صوف القشابية الشخمة Pro Max 2 149 TND" [ref=f3e117] [cursor=pointer]:
+          - /url: /ar/products/kachabia-chakhma-pro-max-2-7066
+          - img "القشابية الشخمة Pro Max 2" [ref=f3e119]
+          - generic [ref=f3e120]:
+            - paragraph [ref=f3e121]: قشابية صوف
+            - heading "القشابية الشخمة Pro Max 2" [level=3] [ref=f3e122]
+            - paragraph [ref=f3e123]:
+              - generic [ref=f3e124]: 149 TND
+        - link "القشابية وزرة تيبار قشابية صوف القشابية وزرة تيبار 189 TND" [ref=f3e125] [cursor=pointer]:
+          - /url: /ar/products/kachabia-wazra-tibar-7018
+          - img "القشابية وزرة تيبار" [ref=f3e127]
+          - generic [ref=f3e128]:
+            - paragraph [ref=f3e129]: قشابية صوف
+            - heading "القشابية وزرة تيبار" [level=3] [ref=f3e130]
+            - paragraph [ref=f3e131]:
+              - generic [ref=f3e132]: 189 TND
+        - link "القشابية تونسية ڨري فاتح وزرة مارون قشابية صوف القشابية تونسية ڨري فاتح وزرة مارون 149 TND" [ref=f3e133] [cursor=pointer]:
+          - /url: /ar/products/kachabia-gris-clair-wazra-marron-6812
+          - img "القشابية تونسية ڨري فاتح وزرة مارون" [ref=f3e135]
+          - generic [ref=f3e136]:
+            - paragraph [ref=f3e137]: قشابية صوف
+            - heading "القشابية تونسية ڨري فاتح وزرة مارون" [level=3] [ref=f3e138]
+            - paragraph [ref=f3e139]:
+              - generic [ref=f3e140]: 149 TND
+        - link "القشابية الشخمة Pro Max قشابية صوف القشابية الشخمة Pro Max 149 TND" [ref=f3e141] [cursor=pointer]:
+          - /url: /ar/products/kachabia-chakhma-pro-max-6795
+          - img "القشابية الشخمة Pro Max" [ref=f3e143]
+          - generic [ref=f3e144]:
+            - paragraph [ref=f3e145]: قشابية صوف
+            - heading "القشابية الشخمة Pro Max" [level=3] [ref=f3e146]
+            - paragraph [ref=f3e147]:
+              - generic [ref=f3e148]: 149 TND
+        - link "دنقري تونسي simple -13% دنقري تونسي دنقري تونسي simple 69 TND 79 TND" [ref=f3e149] [cursor=pointer]:
+          - /url: /ar/products/dengri-tunisien-simple-6583
+          - generic [ref=f3e150]:
+            - img "دنقري تونسي simple" [ref=f3e151]
+            - generic [ref=f3e152]: "-13%"
+          - generic [ref=f3e153]:
+            - paragraph [ref=f3e154]: دنقري تونسي
+            - heading "دنقري تونسي simple" [level=3] [ref=f3e155]
+            - paragraph [ref=f3e156]:
+              - generic [ref=f3e157]: 69 TND
+              - generic [ref=f3e158]: 79 TND
+        - link "بلغة تونسية luxe بلغة بلغة تونسية luxe 40 TND" [ref=f3e159] [cursor=pointer]:
+          - /url: /ar/products/balgha-tunisienne-luxe-6433
+          - img "بلغة تونسية luxe" [ref=f3e161]
+          - generic [ref=f3e162]:
+            - paragraph [ref=f3e163]: بلغة
+            - heading "بلغة تونسية luxe" [level=3] [ref=f3e164]
+            - paragraph [ref=f3e165]:
+              - generic [ref=f3e166]: 40 TND
+        - link "Pack antichar luxe عروضنا Pack antichar luxe 229 TND" [ref=f3e167] [cursor=pointer]:
+          - /url: /ar/products/pack-anticher-luxe-6415
+          - img "Pack antichar luxe" [ref=f3e169]
+          - generic [ref=f3e170]:
+            - paragraph [ref=f3e171]: عروضنا
+            - heading "Pack antichar luxe" [level=3] [ref=f3e172]
+            - paragraph [ref=f3e173]:
+              - generic [ref=f3e174]: 229 TND
+        - link "Pack بلوزة و مظلة تونسية اطفال عروضنا Pack بلوزة و مظلة تونسية اطفال 55 TND" [ref=f3e175] [cursor=pointer]:
+          - /url: /ar/products/pack-blouza-mdhalla-enfant-6400
+          - img "Pack بلوزة و مظلة تونسية اطفال" [ref=f3e177]
+          - generic [ref=f3e178]:
+            - paragraph [ref=f3e179]: عروضنا
+            - heading "Pack بلوزة و مظلة تونسية اطفال" [level=3] [ref=f3e180]
+            - paragraph [ref=f3e181]:
+              - generic [ref=f3e182]: 55 TND
+        - link "Pack بلوزة و مظلة تونسية عروضنا Pack بلوزة و مظلة تونسية 92 TND" [ref=f3e183] [cursor=pointer]:
+          - /url: /ar/products/pack-blouza-mdhalla-6398
+          - img "Pack بلوزة و مظلة تونسية" [ref=f3e185]
+          - generic [ref=f3e186]:
+            - paragraph [ref=f3e187]: عروضنا
+            - heading "Pack بلوزة و مظلة تونسية" [level=3] [ref=f3e188]
+            - paragraph [ref=f3e189]:
+              - generic [ref=f3e190]: 92 TND
+    - generic [ref=f3e193]:
+      - heading "المنتجات الأكثر مبيعاً" [level=2] [ref=f3e194]
+      - paragraph [ref=f3e195]: تصفح بعض منتجاتنا الأكثر شعبية
+      - img "Decorative" [ref=f3e196]
+    - generic [ref=f3e244]:
+      - generic [ref=f3e245]:
+        - heading "قشابية تونسية" [level=2] [ref=f3e246]
+        - paragraph [ref=f3e247]: "24 قطعة في هذه المجموعة، الأكبر في متجرنا. اختر الطراز:"
+        - list [ref=f3e248]:
+          - listitem [ref=f3e249]:
+            - link "قشابية طويلة" [ref=f3e250] [cursor=pointer]:
+              - /url: /ar/products?category=kachabia-longue
+          - listitem [ref=f3e251]:
+            - link "قشابية demi" [ref=f3e252] [cursor=pointer]:
+              - /url: /ar/products?category=kachabia-demi
+        - link "تسوّق المجموعة كاملة" [ref=f3e253] [cursor=pointer]:
+          - /url: /ar/products?category=kachabia-tunisienne
+      - list [ref=f3e255]:
+        - listitem [ref=f3e256]:
+          - link "القشابية الشخمة Pro Max 2 قشابية صوف القشابية الشخمة Pro Max 2 149 TND" [ref=f3e257] [cursor=pointer]:
+            - /url: /ar/products/kachabia-chakhma-pro-max-2-7066
+            - img "القشابية الشخمة Pro Max 2" [ref=f3e259]
+            - generic [ref=f3e260]:
+              - paragraph [ref=f3e261]: قشابية صوف
+              - heading "القشابية الشخمة Pro Max 2" [level=3] [ref=f3e262]
+              - paragraph [ref=f3e263]:
+                - generic [ref=f3e264]: 149 TND
+        - listitem [ref=f3e265]:
+          - link "القشابية وزرة تيبار قشابية صوف القشابية وزرة تيبار 189 TND" [ref=f3e266] [cursor=pointer]:
+            - /url: /ar/products/kachabia-wazra-tibar-7018
+            - img "القشابية وزرة تيبار" [ref=f3e268]
+            - generic [ref=f3e269]:
+              - paragraph [ref=f3e270]: قشابية صوف
+              - heading "القشابية وزرة تيبار" [level=3] [ref=f3e271]
+              - paragraph [ref=f3e272]:
+                - generic [ref=f3e273]: 189 TND
+        - listitem [ref=f3e274]:
+          - link "القشابية تونسية ڨري فاتح وزرة مارون قشابية صوف القشابية تونسية ڨري فاتح وزرة مارون 149 TND" [ref=f3e275] [cursor=pointer]:
+            - /url: /ar/products/kachabia-gris-clair-wazra-marron-6812
+            - img "القشابية تونسية ڨري فاتح وزرة مارون" [ref=f3e277]
+            - generic [ref=f3e278]:
+              - paragraph [ref=f3e279]: قشابية صوف
+              - heading "القشابية تونسية ڨري فاتح وزرة مارون" [level=3] [ref=f3e280]
+              - paragraph [ref=f3e281]:
+                - generic [ref=f3e282]: 149 TND
+        - listitem [ref=f3e283]:
+          - link "القشابية الشخمة Pro Max قشابية صوف القشابية الشخمة Pro Max 149 TND" [ref=f3e284] [cursor=pointer]:
+            - /url: /ar/products/kachabia-chakhma-pro-max-6795
+            - img "القشابية الشخمة Pro Max" [ref=f3e286]
+            - generic [ref=f3e287]:
+              - paragraph [ref=f3e288]: قشابية صوف
+              - heading "القشابية الشخمة Pro Max" [level=3] [ref=f3e289]
+              - paragraph [ref=f3e290]:
+                - generic [ref=f3e291]: 149 TND
+        - listitem [ref=f3e292]:
+          - link "القشابية الصوف تونسية الزمنية raye قشابية صوف القشابية الصوف تونسية الزمنية raye 280 TND" [ref=f3e293] [cursor=pointer]:
+            - /url: /ar/products/kachabia-zemnia-rayee-4952
+            - img "القشابية الصوف تونسية الزمنية raye" [ref=f3e295]
+            - generic [ref=f3e296]:
+              - paragraph [ref=f3e297]: قشابية صوف
+              - heading "القشابية الصوف تونسية الزمنية raye" [level=3] [ref=f3e298]
+              - paragraph [ref=f3e299]:
+                - generic [ref=f3e300]: 280 TND
+        - listitem [ref=f3e301]:
+          - link "قشابية تونسية رجالية Demi moucheté -25% قشابية demi قشابية تونسية رجالية Demi moucheté 59 TND 79 TND" [ref=f3e302] [cursor=pointer]:
+            - /url: /ar/products/kachabia-demi-mouchete-4755
+            - generic [ref=f3e303]:
+              - img "قشابية تونسية رجالية Demi moucheté" [ref=f3e304]
+              - generic [ref=f3e305]: "-25%"
+            - generic [ref=f3e306]:
+              - paragraph [ref=f3e307]: قشابية demi
+              - heading "قشابية تونسية رجالية Demi moucheté" [level=3] [ref=f3e308]
+              - paragraph [ref=f3e309]:
+                - generic [ref=f3e310]: 59 TND
+                - generic [ref=f3e311]: 79 TND
+        - listitem [ref=f3e312]:
+          - link "قشابية ڨري وزرة Demi -14% قشابية demi قشابية ڨري وزرة Demi 119 TND 139 TND" [ref=f3e313] [cursor=pointer]:
+            - /url: /ar/products/kachabia-gris-wazra-demi-4672
+            - generic [ref=f3e314]:
+              - img "قشابية ڨري وزرة Demi" [ref=f3e315]
+              - generic [ref=f3e316]: "-14%"
+            - generic [ref=f3e317]:
+              - paragraph [ref=f3e318]: قشابية demi
+              - heading "قشابية ڨري وزرة Demi" [level=3] [ref=f3e319]
+              - paragraph [ref=f3e320]:
+                - generic [ref=f3e321]: 119 TND
+                - generic [ref=f3e322]: 139 TND
+        - listitem [ref=f3e323]:
+          - link "قشابية النور Demi -14% قشابية demi قشابية النور Demi 119 TND 139 TND" [ref=f3e324] [cursor=pointer]:
+            - /url: /ar/products/kachabia-ennour-demi-4661
+            - generic [ref=f3e325]:
+              - img "قشابية النور Demi" [ref=f3e326]
+              - generic [ref=f3e327]: "-14%"
+            - generic [ref=f3e328]:
+              - paragraph [ref=f3e329]: قشابية demi
+              - heading "قشابية النور Demi" [level=3] [ref=f3e330]
+              - paragraph [ref=f3e331]:
+                - generic [ref=f3e332]: 119 TND
+                - generic [ref=f3e333]: 139 TND
+        - listitem [ref=f3e334]:
+          - link "القشابية ڨري وزرة بيضاء قشابية صوف القشابية ڨري وزرة بيضاء 149 TND" [ref=f3e335] [cursor=pointer]:
+            - /url: /ar/products/kachabia-gris-wazra-blanche-4595
+            - img "القشابية ڨري وزرة بيضاء" [ref=f3e337]
+            - generic [ref=f3e338]:
+              - paragraph [ref=f3e339]: قشابية صوف
+              - heading "القشابية ڨري وزرة بيضاء" [level=3] [ref=f3e340]
+              - paragraph [ref=f3e341]:
+                - generic [ref=f3e342]: 149 TND
+        - listitem [ref=f3e343]:
+          - link "القشابية تونسية ڨري وزرة مارون قشابية صوف القشابية تونسية ڨري وزرة مارون 149 TND" [ref=f3e344] [cursor=pointer]:
+            - /url: /ar/products/kachabia-gris-wazra-marron-4563
+            - img "القشابية تونسية ڨري وزرة مارون" [ref=f3e346]
+            - generic [ref=f3e347]:
+              - paragraph [ref=f3e348]: قشابية صوف
+              - heading "القشابية تونسية ڨري وزرة مارون" [level=3] [ref=f3e349]
+              - paragraph [ref=f3e350]:
+                - generic [ref=f3e351]: 149 TND
+    - generic [ref=f3e354]:
+      - heading "كيف تطلب" [level=2] [ref=f3e355]
+      - generic [ref=f3e356]:
+        - list [ref=f3e357]:
+          - listitem [ref=f3e358]:
+            - text: "1"
+            - heading "اختر قطعتك" [level=3] [ref=f3e359]
+            - paragraph [ref=f3e360]: اختر الموديل واللون والمقاس من صفحة المنتج.
+          - listitem [ref=f3e361]:
+            - text: "2"
+            - heading "أكّد طلبك" [level=3] [ref=f3e362]
+            - paragraph [ref=f3e363]: أدخل عنوانك عند إتمام الطلب. لا يستغرق الأمر سوى دقيقتين.
+          - listitem [ref=f3e364]:
+            - text: "3"
+            - heading "نوصل إليك" [level=3] [ref=f3e365]
+            - paragraph [ref=f3e366]: التوصيل مجاني للطلبات ابتداءً من 500 TND.
+          - listitem [ref=f3e367]:
+            - text: "4"
+            - heading "ادفع عند الاستلام" [level=3] [ref=f3e368]
+            - paragraph [ref=f3e369]: تدفع نقداً عند وصول الطرد إليك.
+        - generic [ref=f3e370]:
+          - paragraph [ref=f3e371]: لست متأكداً من المقاس؟
+          - paragraph [ref=f3e372]: اتصل بنا وسنساعدك على الاختيار قبل الطلب.
+          - link "+216 55 558 648" [ref=f3e373] [cursor=pointer]:
+            - /url: tel:+21655558648
+    - generic [ref=f3e375]:
+      - heading "الأسئلة المتكررة" [level=2] [ref=f3e377]
+      - generic [ref=f3e378]:
+        - generic [ref=f3e379]:
+          - button "ماهي منصة قشابِـيتي؟" [ref=f3e380]
+          - paragraph [ref=f3e387]: قشابِـيتي هي أول وأكبر منصة إلكترونية للمنتجات الحرفية التونسية التقليدية. نقدم مجموعة واسعة من المنتجات الحرفية الأصيلة بما في ذلك الملابس التقليدية والإكسسوارات وديكور المنزل، كلها مصنوعة يدوياً من قبل حرفيين مهرة في جميع أنحاء تونس. مهمتنا هي الحفاظ على الحرف التقليدية وتعزيزها مع جعلها في متناول العملاء في جميع أنحاء العالم.
+        - generic [ref=f3e388]:
+          - button "كيف أسجل طلبية؟" [ref=f3e389]
+          - paragraph [ref=f3e396]: تسجيل الطلبية سهل! ببساطة تصفح منتجاتنا، أضف العناصر إلى سلة التسوق، وانتقل إلى الدفع. ستحتاج إلى تقديم معلومات الشحن وتفاصيل الدفع. بمجرد تأكيد طلبك، ستتلقى رسالة تأكيد بالبريد الإلكتروني مع تفاصيل طلبك.
+        - generic [ref=f3e397]:
+          - button "ما هي خيارات الشحن المتاحة؟" [ref=f3e398]
+          - paragraph [ref=f3e405]: نوفر الشحن داخل تونس ودولياً. تختلف تكاليف الشحن وأوقات التسليم حسب موقعك. يمكنك عرض معلومات الشحن التفصيلية أثناء الدفع. بالنسبة للطلبات داخل تونس، يستغرق التسليم القياسي عادة 3-5 أيام عمل.
+        - generic [ref=f3e406]:
+          - button "كيف يمكنني تتبع طلبيتي؟" [ref=f3e407]
+          - paragraph [ref=f3e414]: بمجرد شحن طلبك، ستتلقى رقم تتبع عبر البريد الإلكتروني. يمكنك استخدام رقم التتبع هذا لمراقبة تقدم طردك على موقعنا الإلكتروني أو موقع شركة الشحن.
+        - generic [ref=f3e415]:
+          - button "ما هي سياسة الإرجاع الخاصة بكم؟" [ref=f3e416]
+          - paragraph [ref=f3e423]: نقبل الإرجاع خلال 14 يوماً من التسليم للعناصر في حالتها الأصلية. يرجى الاتصال بفريق خدمة العملاء لدينا لبدء عملية الإرجاع. يجب أن تكون العناصر غير مستعملة وغير مغسولة وفي عبوتها الأصلية. قد لا تكون العناصر المخصصة أو الشخصية مؤهلة للإرجاع.
+        - generic [ref=f3e424]:
+          - button "هل منتجاتكم 100% مصنوعة يدوياً؟" [ref=f3e425]
+          - paragraph [ref=f3e432]: نعم! جميع منتجاتنا مصنوعة يدوياً 100% من قبل حرفيين مهرة. نعمل مباشرة مع الحرفيين في جميع أنحاء تونس لضمان الأصالة والجودة. كل قطعة فريدة ومصنوعة بتقنيات تقليدية تم نقلها عبر الأجيال.
+  - contentinfo [ref=f3e433]:
+    - generic [ref=f3e434]:
+      - generic [ref=f3e435]:
+        - generic [ref=f3e436]:
+          - link [ref=f3e437] [cursor=pointer]:
+            - /url: /ar
+            - img "Kachabity" [ref=f3e438]
+            - img "Kachabity" [ref=f3e439]
+          - paragraph [ref=f3e440]: اكتشف المنتجات الحرفية التونسية الأصيلة والكنوز التقليدية.
+          - generic [ref=f3e441]:
+            - link "Facebook" [ref=f3e442] [cursor=pointer]:
+              - /url: https://facebook.com/yourpage
+            - link "Instagram" [ref=f3e445] [cursor=pointer]:
+              - /url: https://instagram.com/yourpage
+            - link "TikTok" [ref=f3e448] [cursor=pointer]:
+              - /url: https://tiktok.com/@yourpage
+        - generic [ref=f3e451]:
+          - generic [ref=f3e452]:
+            - heading "روابط سريعة" [level=3] [ref=f3e453]
+            - list [ref=f3e454]:
+              - listitem [ref=f3e455]:
+                - link "الفئات" [ref=f3e456] [cursor=pointer]:
+                  - /url: /ar/categories
+              - listitem [ref=f3e457]:
+                - link "التخفيضات" [ref=f3e458] [cursor=pointer]:
+                  - /url: /ar/products?promo=true
+              - listitem [ref=f3e459]:
+                - link "وصل حديثاً" [ref=f3e460] [cursor=pointer]:
+                  - /url: /ar/products?sort=new
+              - listitem [ref=f3e461]:
+                - link "الأكثر مبيعاً" [ref=f3e462] [cursor=pointer]:
+                  - /url: /ar/products?sort=popular
+          - generic [ref=f3e463]:
+            - heading "حول" [level=3] [ref=f3e464]
+            - list [ref=f3e465]:
+              - listitem [ref=f3e466]:
+                - link "من نحن" [ref=f3e467] [cursor=pointer]:
+                  - /url: /ar/about
+              - listitem [ref=f3e468]:
+                - link "اتصل بنا" [ref=f3e469] [cursor=pointer]:
+                  - /url: /ar/contact
+              - listitem [ref=f3e470]:
+                - link "الأسئلة الشائعة" [ref=f3e471] [cursor=pointer]:
+                  - /url: /ar#faqs
+          - generic [ref=f3e472]:
+            - heading "قانوني" [level=3] [ref=f3e473]
+            - list [ref=f3e474]:
+              - listitem [ref=f3e475]:
+                - link "الشروط والأحكام" [ref=f3e476] [cursor=pointer]:
+                  - /url: /ar/terms-and-conditions
+              - listitem [ref=f3e477]:
+                - link "سياسة الخصوصية" [ref=f3e478] [cursor=pointer]:
+                  - /url: /ar/privacy
+              - listitem [ref=f3e479]:
+                - link "سياسة الشحن" [ref=f3e480] [cursor=pointer]:
+                  - /url: /ar/shipping
+        - generic [ref=f3e483]:
+          - heading "اشترك في نشرتنا الإخبارية" [level=3] [ref=f3e484]
+          - paragraph [ref=f3e485]: احصل على آخر التحديثات حول المنتجات الجديدة والعروض الحصرية
+          - generic [ref=f3e486]:
+            - textbox "أدخل بريدك الإلكتروني" [ref=f3e487]
+            - button "اشترك" [ref=f3e488]
+      - generic [ref=f3e490]:
+        - paragraph [ref=f3e491]: © 2026 قشابِـيتي. جميع الحقوق محفوظة.
+        - generic [ref=f3e492]:
+          - link "+216 55 558 648" [ref=f3e493] [cursor=pointer]:
+            - /url: tel:+216 55 558 648
+          - link "contact@yourdomain.com" [ref=f3e497] [cursor=pointer]:
+            - /url: mailto:contact@yourdomain.com

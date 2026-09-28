@@ -622,22 +622,24 @@ export const openApiSpec = {
                 },
             },
         },
-        '/api/send-order-email': {
+        '/api/orders': {
             post: {
                 tags: ['Operations'],
-                summary: 'Send order confirmation email',
+                summary: 'Place an order (checkout)',
+                description: 'Prices are re-checked against the catalog; the confirmation email is sent server-side.',
                 requestBody: {
                     required: true,
                     content: {
                         'application/json': {
-                            schema: { $ref: '#/components/schemas/SendOrderEmailRequest' },
+                            schema: { $ref: '#/components/schemas/CreateOrderRequest' },
                         },
                     },
                 },
                 responses: {
-                    200: messageResponse('Email dispatched'),
-                    400: errorResponse(400, 'Missing payload'),
-                    500: errorResponse(500, 'Failed to send email'),
+                    201: messageResponse('Order created'),
+                    400: errorResponse(400, 'Invalid order data'),
+                    409: errorResponse(409, 'Prices or totals are out of date (code: PRICES_CHANGED, TOTALS_CHANGED, PRODUCT_UNAVAILABLE)'),
+                    500: errorResponse(500, 'Unable to create order'),
                 },
             },
         },
@@ -852,13 +854,35 @@ export const openApiSpec = {
                     email: { type: 'string', format: 'email' },
                 },
             },
-            SendOrderEmailRequest: {
+            CreateOrderRequest: {
                 type: 'object',
-                required: ['order', 'orderItems', 'customerName'],
+                required: ['customerFirstName', 'customerLastName', 'customerPhone', 'items', 'subtotal', 'shippingCost', 'total'],
                 properties: {
-                    order: { type: 'object' },
-                    orderItems: { type: 'array', items: { type: 'object' } },
-                    customerName: { type: 'string' },
+                    customerEmail: { type: 'string', format: 'email' },
+                    customerFirstName: { type: 'string' },
+                    customerLastName: { type: 'string' },
+                    customerPhone: { type: 'string' },
+                    shippingAddress: { type: 'string' },
+                    shippingCity: { type: 'string' },
+                    shippingState: { type: 'string' },
+                    shippingZip: { type: 'string' },
+                    shippingCountry: { type: 'string' },
+                    items: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            required: ['id', 'price', 'quantity'],
+                            properties: {
+                                id: { type: 'string', format: 'uuid' },
+                                price: { type: 'number' },
+                                quantity: { type: 'integer', minimum: 1 },
+                            },
+                        },
+                    },
+                    subtotal: { type: 'number' },
+                    shippingCost: { type: 'number' },
+                    total: { type: 'number' },
+                    orderNotes: { type: 'string' },
                 },
             },
         },

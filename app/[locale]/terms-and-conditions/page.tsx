@@ -1,8 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import TermsSection from "@/components/sections/TermsSection";
 import { headerConfig } from "@/lib/config";
 
@@ -269,7 +267,6 @@ export default function TermsAndConditions() {
 
     return (
         <>
-            <StaticHeader />
 
             <div className="min-h-screen bg-gray-50">
                 {/* Hero Section */}
@@ -320,7 +317,6 @@ export default function TermsAndConditions() {
                 </div>
             </div>
 
-            <Footer />
         </>
     );
 }

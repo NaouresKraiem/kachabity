@@ -66,6 +66,7 @@ interface ProductRow {
     updated_at: string;
     categories?: { name: string } | null;
     product_variants?: ProductVariant[];
+    variant_count?: number;
     product_images?: ProductImage[]; // Images from product_images table
 }
 
@@ -73,7 +74,7 @@ export default function AdminProductsPage() {
     const router = useRouter();
     const [products, setProducts] = useState<ProductRow[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // first fetch starts on mount: show the table spinner right away
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "archived">("all");
     const [categoryFilter, setCategoryFilter] = useState<string | undefined>();
@@ -84,7 +85,7 @@ export default function AdminProductsPage() {
         setLoading(true);
         try {
             // Use ?admin=true to get all products (including inactive)
-            const response = await fetch("/api/products?admin=true");
+            const response = await fetch("/api/products?admin=true&view=summary");
 
             // Check if response is OK and is JSON
             if (!response.ok) {
@@ -351,10 +352,10 @@ export default function AdminProductsPage() {
         },
         {
             title: "Variants",
-            dataIndex: "product_variants",
+            dataIndex: "variant_count",
             key: "variants",
-            render: (variants: ProductVariant[] = []) => (
-                <span>{variants.length} variant{variants.length !== 1 ? "s" : ""}</span>
+            render: (count: number = 0) => (
+                <span>{count} variant{count !== 1 ? "s" : ""}</span>
             ),
         },
         {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidateCatalog } from '@/lib/catalog-cache';
 import defaultSupabase from '@/lib/supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
@@ -20,6 +21,26 @@ export async function GET(request: NextRequest) {
         const id = searchParams.get('id');
         const isAdmin = searchParams.get('admin') === 'true';
         const slug = searchParams.get('slug');
+
+        // Lightweight list for admin tables and pickers: no variants/variant images
+        // (~50 KB instead of ~1 MB for the full catalog), just a variant count.
+        if (searchParams.get('view') === 'summary') {
+            let summary = supabase
+                .from('products')
+                .select('id, name, name_ar, name_fr, slug, status, base_price, category_id, deleted_at, created_at, categories(name, slug), product_images(id, image_url, alt_text, is_main, position), product_variants!product_variants_product_id_fkey(count)')
+                .is('product_images.variant_id', null)
+                .order('created_at', { ascending: false });
+            if (!isAdmin) summary = summary.eq('status', 'active').is('deleted_at', null);
+            const { data, error } = await summary;
+            if (error) throw error;
+            return NextResponse.json({
+                success: true,
+                data: (data ?? []).map(({ product_variants, ...p }: { product_variants?: { count: number }[] }) => ({
+                    ...p,
+                    variant_count: product_variants?.[0]?.count ?? 0,
+                })),
+            });
+        }
 
         // Build query
         let query = supabase
@@ -155,6 +176,10 @@ export async function POST(request: NextRequest) {
             name: name,
             slug: slug,
             description: body.description || null,
+            name_ar: body.name_ar || null,
+            name_fr: body.name_fr || null,
+            description_ar: body.description_ar || null,
+            description_fr: body.description_fr || null,
             category_id: body.category_id || null,
             base_price: basePrice,
             status: body.status || 'active'
@@ -301,8 +326,6 @@ export async function POST(request: NextRequest) {
 
         // Fetch the product with variants and images
         // We fetch variants separately to avoid the "multiple relationships found" error
-        // Add a small delay to ensure data consistency
-        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Fetch images explicitly to ensure they are returned
         const { data: productImages, error: imagesFetchError } = await supabase
@@ -319,6 +342,7 @@ export async function POST(request: NextRequest) {
         if (fetchError) {
             console.error('Error fetching created product:', fetchError);
             // Return product without relations if fetch fails
+            invalidateCatalog(); // refresh cached storefront data
             return NextResponse.json({ success: true, data: product }, { status: 201 });
         }
 
@@ -353,6 +377,8 @@ export async function POST(request: NextRequest) {
                 images: variantImagesById[v.id] || [],
             }))
         };
+
+        invalidateCatalog(); // refresh cached storefront data
 
         return NextResponse.json({ success: true, data: productWithVariants }, { status: 201 });
     } catch (error: any) {
@@ -401,6 +427,9 @@ export async function PUT(request: NextRequest) {
                 .replace(/(^-|-$)/g, '');
         }
         if (body.description !== undefined) updateData.description = body.description || null;
+        for (const field of ['name_ar', 'name_fr', 'description_ar', 'description_fr']) {
+            if (body[field] !== undefined) updateData[field] = body[field] || null;
+        }
         if (body.category_id !== undefined) updateData.category_id = body.category_id || null;
         if (body.base_price !== undefined) updateData.base_price = parseFloat(body.base_price);
         if (body.status !== undefined) updateData.status = body.status;
@@ -581,8 +610,6 @@ export async function PUT(request: NextRequest) {
 
         // Fetch the product with variants and images
         // We fetch variants separately to avoid the "multiple relationships found" error
-        // Add a small delay to ensure data consistency
-        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Fetch images explicitly to ensure they are returned
         const { data: productImages, error: imagesFetchError } = await supabase
@@ -598,6 +625,7 @@ export async function PUT(request: NextRequest) {
 
         if (fetchError) {
             console.error('Error fetching updated product:', fetchError);
+            invalidateCatalog(); // refresh cached storefront data
             return NextResponse.json({ success: true, data: product });
         }
 
@@ -614,6 +642,8 @@ export async function PUT(request: NextRequest) {
             ...fetchedProduct,
             product_variants: variantsData || []
         };
+
+        invalidateCatalog(); // refresh cached storefront data
 
         return NextResponse.json({ success: true, data: productWithVariants });
     } catch (error: any) {
@@ -653,6 +683,8 @@ export async function DELETE(request: NextRequest) {
 
             if (deleteError) throw deleteError;
         }
+
+        invalidateCatalog(); // refresh cached storefront data
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

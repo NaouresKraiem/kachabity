@@ -1,9 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import { getProductName } from "@/lib/utils/product-utils";
 import Link from "next/link";
 import PromoCountdownTimer from "../timers/PromoCountdownTimer";
 import StockProgress from "../ui/StockProgress";
+
+// Sold/in-stock counts are hidden from shoppers for now; set to true to show them again.
+const SHOW_STOCK_PROGRESS = false;
 import AddToCartButton from "../cart/AddToCartButton";
 import type { PromoProduct } from "@/types/product";
 
@@ -32,7 +36,7 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                     <Link href={productUrl}>
                         <Image
                             src={product?.image_url || '/assets/images/logo.svg'}
-                            alt={product.title || product.name || "Product image"}
+                            alt={getProductName(product, locale) || "Product image"}
                             fill
                             className="p-0.5 object-cover hover:scale-105 transition-transform duration-300 overflow-hidden rounded-[15px] border"
                         />
@@ -41,7 +45,7 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                     {product.discount_percent && product.discount_percent > 0 && (
                         <div className="absolute top-3 left-3 bg-[#FCF4F2] px-3 py-1 rounded-[9px] border border-[#842E1B] shadow-md">
                             <span className="text-sm font-medium text-[#842E1B]">
-                                -{product.discount_percent}% Discount
+                                -{Math.round(product.discount_percent ?? 0)}% Discount
                             </span>
                         </div>
                     )}
@@ -53,7 +57,7 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                         {/* Title */}
                         <Link href={productUrl}>
                             <h3 className="text-[16px] font-medium text-[#842E1B] hover:text-[#842E1B] transition leading-tight">
-                                {product.title || product.name}
+                                {getProductName(product, locale)}
                             </h3>
                         </Link>
 
@@ -70,7 +74,9 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                         </div>
 
                         {/* Stock Progress */}
-                        <StockProgress sold={product.sold_count} inStock={product.stock} />
+                        {SHOW_STOCK_PROGRESS && (
+                            <StockProgress sold={product.sold_count ?? 0} inStock={product.stock ?? 0} />
+                        )}
                     </div>
 
                     {/* Countdown and Button */}
@@ -84,7 +90,9 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                         <AddToCartButton
                             product={{
                                 id: product.id,
-                                name: product.title || product.name,
+                                name: product.name,
+                                name_ar: product.name_ar,
+                                name_fr: product.name_fr,
                                 price: Math.round(discountedPrice),
                                 image: product.image_url || "",
                                 rating: product.rating || 4,

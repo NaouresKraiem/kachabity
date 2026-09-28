@@ -6,17 +6,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
 import { createOrder } from "@/lib/orders";
-import { calculateShipping } from "@/lib/shipping";
+import { calculateShipping, getCountryCode } from "@/lib/shipping";
 import { getCountryTaxRate } from "@/lib/get-site-settings";
 import { checkoutSchema, type CheckoutFormData } from "@/lib/schemas/checkout-schema";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import CartItem from "@/components/cart/CartItem";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import supabase from "@/lib/supabaseClient";
-import { message } from "antd";
+import toast from "react-hot-toast";
 import { isRTL } from "@/lib/language-utils";
 
 const content = {
@@ -78,6 +76,8 @@ const content = {
         orderConfirmedSuccess: "Order Confirmed Successfully!",
         checkEmailForDetails: "Check your email for order details",
         failedToCreateOrder: "Failed to create order. Please try again.",
+        pricesChanged: "Some items in your cart changed price or are no longer available. Please review your cart.",
+        totalChanged: "Your order total was updated. Please review it and confirm again.",
         errorOccurred: "An error occurred. Please try again."
     },
     fr: {
@@ -138,6 +138,8 @@ const content = {
         orderConfirmedSuccess: "Commande confirmée avec succès!",
         checkEmailForDetails: "Vérifiez votre e-mail pour les détails de la commande",
         failedToCreateOrder: "Échec de la création de la commande. Veuillez réessayer.",
+        pricesChanged: "Certains articles de votre panier ont changé de prix ou ne sont plus disponibles. Veuillez vérifier votre panier.",
+        totalChanged: "Le total de votre commande a été mis à jour. Veuillez le vérifier et confirmer à nouveau.",
         errorOccurred: "Une erreur s'est produite. Veuillez réessayer."
     },
     ar: {
@@ -198,6 +200,8 @@ const content = {
         orderConfirmedSuccess: "تم تأكيد الطلب بنجاح!",
         checkEmailForDetails: "تحقق من بريدك الإلكتروني للحصول على تفاصيل الطلب",
         failedToCreateOrder: "فشل إنشاء الطلب. يرجى المحاولة مرة أخرى.",
+        pricesChanged: "تغيّر سعر بعض المنتجات في سلتك أو لم تعد متوفرة. يرجى مراجعة سلتك.",
+        totalChanged: "تم تحديث إجمالي طلبك. يرجى مراجعته والتأكيد مرة أخرى.",
         errorOccurred: "حدث خطأ. يرجى المحاولة مرة أخرى."
     }
 };
@@ -363,7 +367,7 @@ export default function CheckoutPage() {
 
     const onSubmit = async (formData: CheckoutFormData) => {
         if (!acceptPolicy) {
-            message.error(text.acknowledgePolicy);
+            toast.error(text.acknowledgePolicy);
             return;
         }
 
@@ -388,55 +392,19 @@ export default function CheckoutPage() {
                 orderNotes: formData.orderNotes?.trim() || ""
             };
 
-            const { order, error } = await createOrder(orderData);
+            const { order, error, code } = await createOrder(orderData);
 
             if (error || !order) {
-                message.error("Failed to create order. Please try again.");
+                toast.error(
+                    code === 'TOTALS_CHANGED' ? text.totalChanged
+                        : code === 'PRICES_CHANGED' || code === 'PRODUCT_UNAVAILABLE' ? text.pricesChanged
+                            : text.failedToCreateOrder
+                );
                 setIsProcessing(false);
                 return;
             }
 
-            // Send order confirmation email via API
-            try {
-                // Convert cart items to order items format
-                const orderItemsForEmail = items.map(item => ({
-                    id: item.id,
-                    order_id: order.id,
-                    product_id: item.id,
-                    product_name: item.name,
-                    product_name_ar: item.name_ar,
-                    product_name_fr: item.name_fr,
-                    product_image: item.image,
-                    quantity: item.quantity,
-                    price: item.price,
-                    subtotal: item.price * item.quantity
-                }));
-
-                const emailResponse = await fetch('/api/send-order-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        order: order,
-                        orderItems: orderItemsForEmail,
-                        customerName: `${formData.firstName} ${formData.lastName}`
-                    })
-                });
-
-                if (!emailResponse.ok) {
-                    const errorData = await emailResponse.json();
-                    console.error("Failed to send confirmation email:", {
-                        status: emailResponse.status,
-                        statusText: emailResponse.statusText,
-                        error: errorData
-                    });
-                    // Don't block the order process if email fails
-                }
-            } catch (emailError) {
-                console.error("Error sending confirmation email:", emailError);
-                // Don't block the order process if email fails
-            }
+            // The confirmation email is sent by POST /api/orders.
 
             // Save cart items and order summary for confirmation page
             const itemsToSave = [...items];
@@ -466,20 +434,10 @@ export default function CheckoutPage() {
             setOrderConfirmed(true);
             setCurrentStep(3);
         } catch (error) {
-            message.error("An error occurred. Please try again.");
+            toast.error("An error occurred. Please try again.");
             setIsProcessing(false);
         }
     };
-    function getCountryCode(countryName: string): string {
-        const mapping: Record<string, string> = {
-            'Tunisia': 'TN',
-            'Algeria': 'DZ',
-            'Morocco': 'MA',
-            'Libya': 'LY',
-            'Egypt': 'EG'
-        };
-        return mapping[countryName] || 'TN';
-    }
     // Calculate shipping cost and tax rate dynamically based on country
     useEffect(() => {
         async function fetchShippingAndTax() {
@@ -533,7 +491,6 @@ export default function CheckoutPage() {
 
     return (
         <>
-            <StaticHeader />
 
             <div className="min-h-screen bg-[#FFFFFF] py-12" dir={rtl ? 'rtl' : 'ltr'}>
                 <div className=" mx-auto px-4">
@@ -1100,7 +1057,6 @@ export default function CheckoutPage() {
                 </div>
             </div>
 
-            <Footer />
         </>
     );
 }

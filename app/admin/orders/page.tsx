@@ -42,7 +42,7 @@ interface OrderRow {
 export default function AdminOrdersPage() {
     const router = useRouter();
     const [orders, setOrders] = useState<OrderRow[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // first fetch starts on mount: show the table spinner right away
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");

@@ -2,8 +2,6 @@
 
 import { Suspense } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import Image from "next/image";
 import { headerConfig } from "@/lib/config";
 
@@ -41,7 +39,6 @@ export default function NotFound() {
     return (
         <>
             <Suspense fallback={<div className="h-20" />}>
-                <StaticHeader />
             </Suspense>
 
             <div className="min-h-screen bg-white flex items-center justify-center px-4 py-16">
@@ -103,7 +100,6 @@ export default function NotFound() {
                 </div>
             </div>
 
-            <Footer />
         </>
     );
 }

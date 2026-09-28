@@ -1,9 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { getSiteSettings, type SiteSettings } from './get-site-settings';
+import supabase from '@/lib/supabaseClient';
+import { clearSettingsCache, getSiteSettings, type SiteSettings } from './get-site-settings';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface ShippingRate {
     id: string;
@@ -16,6 +13,21 @@ export interface ShippingRate {
     estimated_days_max: number;
     is_active: boolean;
     display_order: number;
+}
+
+/**
+ * Map a checkout country name to the code used by shipping_rates and
+ * country_tax_rates. Unknown countries fall back to Tunisia.
+ */
+export function getCountryCode(countryName: string): string {
+    const mapping: Record<string, string> = {
+        'Tunisia': 'TN',
+        'Algeria': 'DZ',
+        'Morocco': 'MA',
+        'Libya': 'LY',
+        'Egypt': 'EG'
+    };
+    return mapping[countryName] || 'TN';
 }
 
 /**
@@ -138,7 +150,7 @@ export async function getAllShippingRates(): Promise<{ rates: ShippingRate[] | n
         return { rates: data, error: null };
     } catch (error) {
         console.error('Error in getAllShippingRates:', error);
-        return { rates: null, error };
+        return { rates: null, error: error instanceof Error ? error : new Error(String(error)) };
     }
 }
 
@@ -170,7 +182,7 @@ export async function updateFreeShippingThreshold(newThreshold: number): Promise
         }
 
         // Clear cache so new value is fetched
-        cachedSettings = null;
+        clearSettingsCache();
 
         return { success: true, error: null };
     } catch (error) {

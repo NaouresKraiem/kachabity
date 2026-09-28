@@ -29,6 +29,8 @@ function getCategoryName(category: Category, locale: string): string {
 
 interface ProductGridProps {
     locale?: string;
+    /** Server-loaded categories (cached); when given, the section renders in the first HTML. */
+    initialCategories?: Category[];
 }
 
 const translations = {
@@ -49,8 +51,8 @@ const translations = {
     }
 };
 
-export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
-    const [categories, setCategories] = useState<Category[]>([]);
+export default function ProductGrid({ locale = 'en', initialCategories }: ProductGridProps) {
+    const [categories, setCategories] = useState<Category[]>(initialCategories ?? []);
     const [mounted, setMounted] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -99,8 +101,8 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
             }
         }
 
-        fetchCategories();
-    }, []);
+        if (!initialCategories) fetchCategories();
+    }, [initialCategories]);
 
     // Check scroll position to enable/disable buttons
     const checkScrollPosition = () => {
@@ -131,7 +133,7 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
     const handlePrev = () => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
-            const scrollAmount = 224; // Card width (208px) + gap (16px)
+            const scrollAmount = 240; // Card width (224px) + gap (16px)
             container.scrollBy({
                 left: -scrollAmount,
                 behavior: 'smooth'
@@ -142,7 +144,7 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
     const handleNext = () => {
         if (scrollContainerRef.current) {
             const container = scrollContainerRef.current;
-            const scrollAmount = 224; // Card width (208px) + gap (16px)
+            const scrollAmount = 240; // Card width (224px) + gap (16px)
             container.scrollBy({
                 left: scrollAmount,
                 behavior: 'smooth'
@@ -181,12 +183,12 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
                         className="overflow-x-auto scrollbar-hide"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        {!mounted || categories.length === 0 ? (
+                        {categories.length === 0 ? (
                             <div className="flex gap-4 pb-4">
                                 {/* Loading skeleton */}
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <div key={i} className="w-52 flex flex-col items-center">
-                                        <div className="w-52 h-52 rounded-2xl bg-gray-200 animate-pulse mb-3" />
+                                    <div key={i} className="w-56 flex flex-col items-center">
+                                        <div className="w-56 h-68 rounded-2xl bg-gray-200 animate-pulse mb-3" />
                                         <div className="w-32 h-4 bg-gray-200 animate-pulse rounded" />
                                     </div>
                                 ))}
@@ -199,16 +201,17 @@ export default function ProductGrid({ locale = 'en' }: ProductGridProps) {
                                         href={`/${locale}/products?category=${category.slug}`}
                                         className="group"
                                     >
-                                        <div className="w-52 flex flex-col items-center">
-                                            <div className="relative w-52 h-52 rounded-2xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
+                                        <div className="w-56 flex flex-col items-center">
+                                            <div className="relative w-56 h-68 rounded-2xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
                                                 <Image
                                                     src={category.image_url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300"}
                                                     alt={getCategoryName(category, locale) || "Category image"}
                                                     fill
-                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    sizes="224px"
+                                                    className="object-cover object-top group-hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
-                                            <h3 className="text-center font-medium text-[#2b1a16] text-sm group-hover:text-[#7a3b2e] transition">
+                                            <h3 className="text-center font-medium text-[#2b1a16] text-base group-hover:text-[#7a3b2e] transition">
                                                 {getCategoryName(category, locale)}
                                             </h3>
                                         </div>

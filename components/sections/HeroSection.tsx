@@ -235,22 +235,25 @@ export default function HeroSection({ heroData, smallCardsData }: HeroSectionPro
                             {/* Background Image - Use background_image_url if available, otherwise use image_url */}
                             <div className="absolute inset-0"
                             >
-                                <Image
-                                    src={currentSlideData?.background_image_url || currentSlideData?.image_url || "/assets/images/hero-bg.jpg"}
-                                    alt="Background"
-                                    fill
-                                    className="object-cover"
-                                    priority
-                                />
+                                {(currentSlideData?.background_image_url || currentSlideData?.image_url) && (
+                                    <Image
+                                        src={(currentSlideData.background_image_url || currentSlideData.image_url)!}
+                                        alt="Background"
+                                        fill
+                                        className="object-cover"
+                                        priority
+                                    />
+                                )}
                                 {/* Overlay for better text readability */}
                                 <div className="absolute inset-0 bg-linear-to-r from-[#F4D3C6]/95 via-[#F4D3C6]/60 to-transparent"></div>
                             </div>
 
-                            {!mounted || !currentSlideData ? (
+                            {/* Carousel slides are hero_sections rows with sort_order >= 3. */}
+                            {!mounted ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="text-gray-400">{t.loading}</div>
                                 </div>
-                            ) : (
+                            ) : !currentSlideData ? null : (
                                 <div className="absolute inset-0 flex items-center p-8 pb-0">
                                     <div className="flex-1 z-10">
                                         <div className="text-sm text-[#000000] font-medium mb-2">

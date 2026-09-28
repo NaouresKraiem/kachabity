@@ -14,7 +14,7 @@ export default function ServiceHighlightCard({
     iconAlt
 }: ServiceHighlightCardProps) {
     return (
-        <div className="bg-[#842E1B] rounded-[8px] text-white p-8 text-center w-[386px] h-[216px]">
+        <div className="bg-[#842E1B] rounded-[8px] text-white p-8 text-center w-full max-w-[386px] min-h-[216px] mx-auto">
             <div className="flex justify-center mb-4">
                 <Image
                     src={icon}

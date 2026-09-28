@@ -19,6 +19,7 @@ import {
     Upload,
 } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
+import CategoryExtraFields from "@/components/admin/CategoryExtraFields";
 import {
     SaveOutlined,
     ArrowLeftOutlined,
@@ -64,6 +65,9 @@ export default function CreateCategoryPage() {
                 sort_order: values.sort_order || 0,
                 is_featured: values.is_featured || false,
                 image_url: imageUrl,
+                name_ar: values.name_ar || null,
+                name_fr: values.name_fr || null,
+                parent_id: values.parent_id || null,
             };
 
             const response = await fetch("/api/categories", {
@@ -141,6 +145,8 @@ export default function CreateCategoryPage() {
                             </Form.Item>
                         </Col>
                     </Row>
+
+                    <CategoryExtraFields />
 
                     <Form.Item label="Category Image">
                         <Upload

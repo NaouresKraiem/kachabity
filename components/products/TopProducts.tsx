@@ -6,7 +6,7 @@ import supabase from "@/lib/supabaseClient";
 import { useCart } from "@/lib/cart-context";
 import ProductListCard, { ProductListItem } from "./ProductListCard";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
-import { message } from "antd";
+import toast from "react-hot-toast";
 import type { ProductImage as SupabaseProductImage } from "@/lib/product-images";
 
 const translations = {
@@ -54,6 +54,8 @@ type TopProduct = ProductListItem & ProductRow & {
 
 interface TopProductsProps {
     locale?: string;
+    /** Server-loaded products (cached); when given, the section renders in the first HTML. */
+    initialProducts?: TopProduct[];
 }
 
 function calculateReviewStats(reviews?: ProductReview[]) {
@@ -78,8 +80,8 @@ function calculateReviewStats(reviews?: ProductReview[]) {
     };
 }
 
-export default function TopProducts({ locale = 'en' }: TopProductsProps) {
-    const [products, setProducts] = useState<TopProduct[]>([]);
+export default function TopProducts({ locale = 'en', initialProducts }: TopProductsProps) {
+    const [products, setProducts] = useState<TopProduct[]>(initialProducts ?? []);
     const [categoryMap, setCategoryMap] = useState<Map<string, string>>(new Map());
     const [mounted, setMounted] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -127,8 +129,8 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
             }
         }
 
-        fetchProducts();
-    }, []);
+        if (!initialProducts) fetchProducts();
+    }, [initialProducts]);
 
     const checkScrollPosition = () => {
         if (scrollContainerRef.current) {
@@ -180,7 +182,7 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
     const handleToggleFavorite = async (productId: string) => {
         // If user not logged in, show message
         if (!userId) {
-            message.error(t.loginToSave);
+            toast.error(t.loginToSave);
 
             return;
         }
@@ -242,13 +244,13 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
                         className="overflow-x-auto scrollbar-hide"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        {!mounted || products.length === 0 ? (
+                        {products.length === 0 ? (
                             <div className="flex gap-6 pb-4">
                                 {/* Loading skeleton */}
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
                                     <div key={i} className="w-64 shrink-0">
                                         <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-                                            <div className="relative h-64 bg-gray-200 animate-pulse" />
+                                            <div className="relative h-80 bg-gray-200 animate-pulse" />
                                             <div className="p-4 space-y-2">
                                                 <div className="h-4 bg-gray-200 animate-pulse rounded w-3/4" />
                                                 <div className="h-3 bg-gray-200 animate-pulse rounded w-1/2" />
@@ -268,6 +270,7 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
                                         isFavorite={favorites.has(product.id)}
                                         onToggleFavorite={handleToggleFavorite}
                                         categorySlug={product.categorySlug}
+                                        size="large"
                                         onAddToCart={(p) => {
                                             // Get product image from product_images or fallback
                                             const productImage = p.product_images && p.product_images.length > 0
@@ -282,6 +285,8 @@ export default function TopProducts({ locale = 'en' }: TopProductsProps) {
                                             addItem({
                                                 id: p.id,
                                                 name: p.name,
+                                                name_ar: p.name_ar,
+                                                name_fr: p.name_fr,
                                                 price: Math.round(price),
                                                 image: productImage,
                                                 rating: p.rating || 0,

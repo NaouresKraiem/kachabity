@@ -58,81 +58,34 @@ export interface OrderItem {
 }
 
 /**
- * Generate a unique order number
+ * Create a new order via POST /api/orders.
+ *
+ * Orders are written server-side because RLS does not let shoppers insert
+ * orders directly. The access token (when signed in) lets the server link the
+ * order to the user after verifying it.
  */
-function generateOrderNumber(): string {
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
-    return `ORD-${timestamp}-${random}`;
-}
-
-/**
- * Create a new order in the database
- * 
- * This function:
- * 1. Creates order in orders table
- * 2. Creates order items in order_items table
- * 3. Marks cart as "converted" for analytics
- * 4. Clears the cart (ready for next purchase)
- */
-export async function createOrder(orderData: OrderData): Promise<{ order: Order | null; error: Error | null }> {
+export async function createOrder(orderData: OrderData): Promise<{ order: Order | null; error: Error | null; code?: string }> {
     try {
-        const orderNumber = generateOrderNumber();
+        const { data: { session } } = await supabase.auth.getSession();
+        // The server derives the user from the token, never from the payload.
+        const payload = { ...orderData, userId: undefined, cartId: undefined };
 
-        // Insert order
-        const { data: order, error: orderError } = await supabase
-            .from("orders")
-            .insert({
-                order_number: orderNumber,
-                user_id: orderData.userId || null,
-                customer_email: orderData.customerEmail || null,
-                customer_first_name: orderData.customerFirstName,
-                customer_last_name: orderData.customerLastName,
-                customer_phone: orderData.customerPhone,
-                shipping_address: orderData.shippingAddress || null,
-                shipping_city: orderData.shippingCity || null,
-                shipping_state: orderData.shippingState || null,
-                shipping_zip: orderData.shippingZip || null,
-                shipping_country: orderData.shippingCountry || null,
-                subtotal: orderData.subtotal,
-                shipping_cost: orderData.shippingCost,
-                total: orderData.total,
-                order_notes: orderData.orderNotes || null,
-                status: "pending",
-                payment_status: "pending"
-            })
-            .select()
-            .single();
+        const response = await fetch("/api/orders", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            },
+            body: JSON.stringify(payload),
+        });
+        const result = await response.json();
 
-        if (orderError) {
-            throw orderError;
+        if (!response.ok || !result.success) {
+            // code (e.g. PRICES_CHANGED) lets the checkout show a specific message.
+            return { order: null, error: new Error(result.error || "Failed to create order"), code: result.code };
         }
 
-        // Insert order items
-        const orderItems = orderData.items.map(item => ({
-            order_id: order.id,
-            product_id: item.id,
-            product_name: item.name,
-            product_name_ar: item.name_ar,
-            product_name_fr: item.name_fr,
-            product_image: item.image,
-            quantity: item.quantity,
-            price: item.price,
-            subtotal: item.price * item.quantity
-        }));
-
-        const { error: itemsError } = await supabase
-            .from("order_items")
-            .insert(orderItems);
-
-        if (itemsError) {
-            throw itemsError;
-        }
-
-        // Note: Cart clearing is handled by the CartContext in the checkout component
-
-
-        return { order, error: null };
+        return { order: result.data as Order, error: null };
     } catch (error) {
         console.error("Error creating order:", error);
         return { order: null, error: error as Error };

@@ -51,3 +51,60 @@ body {
   scrollbar-width: none;
   scroll-behavior: smooth;
 }
+
+/* Landing page: palette taken from undyed and dyed wool */
+:root {
+  --wool-brown: #3b2a21;
+  --wool-undyed: #e9e1d3;
+  --wool-camel: #a9824f;
+  --wool-maroon: #7a3b2e;
+  --wool-ink: #2b1a16;
+}
+
+/* Stripe band modelled on the woven bands of a kachabia hem */
+.woven-band {
+  height: 14px;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 4px),
+    linear-gradient(
+      180deg,
+      var(--wool-brown) 0 3px,
+      var(--wool-undyed) 3px 5px,
+      var(--wool-maroon) 5px 9px,
+      var(--wool-undyed) 9px 11px,
+      var(--wool-camel) 11px 14px
+    );
+}
+
+@keyframes landing-reveal {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes landing-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.landing-reveal {
+  animation: landing-reveal 900ms cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+
+.landing-fade {
+  animation: landing-fade 700ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-reveal,
+  .landing-fade {
+    animation: none;
+  }
+}

@@ -31,11 +31,22 @@ interface Promotion {
     active: boolean;
 }
 
-export default function SaleBanner() {
+/**
+ * Picks the banner to show: currently running promotions, preferring timed ones
+ * (with an end date) over permanent ones; highest discount first (input order).
+ */
+function pickPromotion(promotions: Promotion[]): Promotion | null {
+    const now = new Date();
+    const running = promotions.filter((p) =>
+        (!p.ends_at || new Date(p.ends_at) >= now) && (!p.starts_at || new Date(p.starts_at) <= now));
+    return running.find((p) => p.ends_at && new Date(p.ends_at) > now) ?? running.find((p) => !p.ends_at) ?? null;
+}
+
+export default function SaleBanner({ initialPromotions }: { initialPromotions?: Promotion[] }) {
     const params = useParams();
     const locale = (params?.locale as string) || 'en';
     const t = translations[locale as keyof typeof translations] || translations.en;
-    const [promotion, setPromotion] = useState<Promotion | null>(null);
+    const [promotion, setPromotion] = useState<Promotion | null>(() => (initialPromotions ? pickPromotion(initialPromotions) : null));
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -43,80 +54,30 @@ export default function SaleBanner() {
     }, []);
 
     useEffect(() => {
+        if (initialPromotions) return;
         async function fetchPromotion() {
-            try {
-                const now = new Date().toISOString();
-
-                // Fetch active promotions
-                const { data, error } = await supabase
-                    .from('promotions')
-                    .select('*')
-                    .eq('active', true)
-                    .order('discount_percent', { ascending: false });
-
-                if (error) {
-                    console.error('Error fetching promotion:', error);
-                    return;
-                }
-
-                if (data && data.length > 0) {
-                    // Filter promotions that are currently valid
-                    const validPromotions = data.filter((promo: Promotion) => {
-                        // No end date = always valid
-                        if (!promo.ends_at) return true;
-
-                        // Has end date = check if not expired
-                        return new Date(promo.ends_at) >= new Date(now);
-                    });
-
-                    // Also filter by start date if provided
-                    const activePromotions = validPromotions.filter((promo: Promotion) => {
-                        // No start date = started immediately
-                        if (!promo.starts_at) return true;
-
-                        // Has start date = check if already started
-                        return new Date(promo.starts_at) <= new Date(now);
-                    });
-
-                    // Prioritize: First show timed promotions (with end date), then ongoing ones
-                    const timedPromotions = activePromotions.filter((promo: Promotion) =>
-                        promo.ends_at && new Date(promo.ends_at) > new Date(now)
-                    );
-
-                    const ongoingPromotions = activePromotions.filter((promo: Promotion) => !promo.ends_at);
-
-                    // Show timed promotion if available, otherwise show ongoing
-                    if (timedPromotions.length > 0) {
-                        setPromotion(timedPromotions[0]);
-                    } else if (ongoingPromotions.length > 0) {
-                        setPromotion(ongoingPromotions[0]);
-                    }
-                }
-            } catch (error) {
+            const { data, error } = await supabase
+                .from('promotions')
+                .select('*')
+                .eq('active', true)
+                .order('discount_percent', { ascending: false });
+            if (error) {
                 console.error('Error fetching promotion:', error);
+                return;
             }
+            setPromotion(pickPromotion(data || []));
         }
-
         fetchPromotion();
-    }, []);
+    }, [initialPromotions]);
 
-    if (!mounted) {
-        return null;
-    }
-
-    // If no timed promotion exists, don't show anything
+    // If no promotion is running, don't show anything
     if (!promotion) {
         return null;
     }
 
-    const hasEndDate = promotion.ends_at && new Date(promotion.ends_at) > new Date();
+    // Banners without an end date are permanent (as the admin form describes) and show no countdown.
+    const hasEndDate = Boolean(promotion.ends_at && new Date(promotion.ends_at) > new Date());
 
-    // If promotion has no end date, don't show anything
-    if (!hasEndDate) {
-        return null;
-    }
-
-    // Show countdown banner for timed promotions
     return (
         <section className="w-full py-1 px-2 bg-[#ECE5DD] h-[400px]">
             <div className="max-w-7xl mx-auto">
@@ -136,10 +97,12 @@ export default function SaleBanner() {
                             </p>
                         )}
 
-                        {/* Countdown timer (always shown here since hasEndDate is true) */}
-                        <div className="mb-8 flex justify-center lg:justify-center">
-                            <CountdownTimer targetDate={new Date(promotion.ends_at!)} />
-                        </div>
+                        {/* The countdown depends on the current time, so it renders only in the browser. */}
+                        {hasEndDate && mounted && (
+                            <div className="mb-8 flex justify-center lg:justify-center">
+                                <CountdownTimer targetDate={new Date(promotion.ends_at!)} />
+                            </div>
+                        )}
 
                         <Link
                             href={`/${locale}/products`}

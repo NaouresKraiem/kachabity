@@ -5,8 +5,6 @@ import { useLanguage } from "@/lib/language-context";
 import { calculateShipping } from "@/lib/shipping";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import CartItem from "@/components/cart/CartItem";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Image from "next/image";
@@ -97,7 +95,6 @@ export default function CartPage() {
     if (items.length === 0) {
         return (
             <>
-                <StaticHeader />
                 <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                     <div className="text-center">
                         <svg
@@ -123,14 +120,12 @@ export default function CartPage() {
                         </Link>
                     </div>
                 </div>
-                <Footer />
             </>
         );
     }
 
     return (
         <>
-            <StaticHeader />
             <div className="min-h-screen bg-[#FFFFFF] py-12">
                 <div className="max-w-7xl mx-auto px-4">
 
@@ -203,7 +198,6 @@ export default function CartPage() {
             <div className="absolute top-70 right-10 ">
                 <Image src="/assets/images/checkout/backgroundDots.svg" alt="bg-checkout" width={100} height={100} className="w-full h-full object-cover" />
             </div>
-            <Footer />
         </>
     );
 }

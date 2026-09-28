@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidateCatalog } from '@/lib/catalog-cache';
 import defaultSupabase from '@/lib/supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest) {
     try {
         const { data, error } = await supabase
             .from('categories')
-            .select('id, name, slug, sort_order, is_featured, image_url')
+            .select('id, name, name_ar, name_fr, slug, sort_order, is_featured, image_url, parent_id')
+            .is('deleted_at', null)
             .order('sort_order', { ascending: true })
             .order('name', { ascending: true });
 
@@ -26,14 +28,9 @@ export async function GET(request: NextRequest) {
             throw error;
         }
 
-        // Filter out soft-deleted categories
-        const filteredData = (data || []).filter((cat: any) => {
-            return cat.deleted_at === null || cat.deleted_at === undefined;
-        });
-
         return NextResponse.json({
             success: true,
-            data: filteredData
+            data: data || []
         });
     } catch (error: any) {
         console.error('Error fetching categories:', error);
@@ -68,6 +65,9 @@ export async function POST(request: NextRequest) {
             sort_order: body.sort_order || 0,
             is_featured: body.is_featured || false,
             image_url: body.image_url || null,
+            name_ar: body.name_ar || null,
+            name_fr: body.name_fr || null,
+            parent_id: body.parent_id || null,
         };
 
         const { data, error } = await supabase
@@ -77,6 +77,8 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) throw error;
+
+        invalidateCatalog(); // refresh cached storefront data
 
         return NextResponse.json({ success: true, data }, { status: 201 });
     } catch (error: any) {
@@ -106,6 +108,14 @@ export async function PUT(request: NextRequest) {
         if (body.sort_order !== undefined) updateData.sort_order = body.sort_order;
         if (body.is_featured !== undefined) updateData.is_featured = body.is_featured;
         if (body.image_url !== undefined) updateData.image_url = body.image_url;
+        if (body.name_ar !== undefined) updateData.name_ar = body.name_ar || null;
+        if (body.name_fr !== undefined) updateData.name_fr = body.name_fr || null;
+        if (body.parent_id !== undefined) {
+            if (body.parent_id && body.parent_id === body.id) {
+                return NextResponse.json({ success: false, error: 'A category cannot be its own parent' }, { status: 400 });
+            }
+            updateData.parent_id = body.parent_id || null;
+        }
 
         const { data, error } = await supabase
             .from('categories')
@@ -115,6 +125,8 @@ export async function PUT(request: NextRequest) {
             .single();
 
         if (error) throw error;
+
+        invalidateCatalog(); // refresh cached storefront data
 
         return NextResponse.json({ success: true, data });
     } catch (error: any) {
@@ -154,6 +166,8 @@ export async function DELETE(request: NextRequest) {
 
             if (deleteError) throw deleteError;
         }
+
+        invalidateCatalog(); // refresh cached storefront data
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

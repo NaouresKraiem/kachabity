@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import '@ant-design/v5-patch-for-react-19';
 import { LanguageProvider } from '@/lib/language-context';
 import { CartProvider } from '@/lib/cart-context';
 import CartDrawer from '@/components/cart/CartDrawer';
+import StaticHeader from '@/components/layout/StaticHeader';
+import Footer from '@/components/footer/Footer';
+import { Suspense } from 'react';
 import Script from "next/script";
 
 // Language-specific metadata
@@ -93,7 +95,13 @@ export default async function LocaleLayout({
     return (
         <LanguageProvider locale={locale}>
             <CartProvider>
+                {/* Header and footer live here so they stay mounted across navigations
+                    (no refetching categories/session or re-rendering them on every page). */}
+                <Suspense>
+                    <StaticHeader />
+                </Suspense>
                 {children}
+                <Footer />
                 <CartDrawer />
                 <Script
                     id="json-ld-organization"

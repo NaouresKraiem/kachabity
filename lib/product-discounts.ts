@@ -117,7 +117,7 @@ export async function getActiveProductDiscounts(productIds: string[]): Promise<M
         const validDiscounts = data.filter(isDiscountValid);
         
         // Get most recent discount per product
-        validDiscounts.forEach((discount) => {
+        validDiscounts.forEach((discount: ProductDiscount) => {
             const existing = discountMap.get(discount.product_id);
             if (!existing || new Date(discount.created_at || 0) > new Date(existing.created_at || 0)) {
                 discountMap.set(discount.product_id, discount);
@@ -128,3 +128,17 @@ export async function getActiveProductDiscounts(productIds: string[]): Promise<M
     return discountMap;
 }
 
+
+/**
+ * Discount percent for a product row fetched with an embedded
+ * `product_discounts(discount_percent, starts_at, ends_at, active, created_at)` relation,
+ * so listings get prices in one query instead of a second discount lookup.
+ */
+export function embeddedDiscountPercent(row: { product_discounts?: ProductDiscount[] | null }): number {
+    const valid = (row.product_discounts ?? []).filter(isDiscountValid)
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    return valid.length ? Number(valid[0].discount_percent) : 0;
+}
+
+/** Select fragment for embedding discounts; pair with embeddedDiscountPercent(). */
+export const EMBEDDED_DISCOUNTS = 'product_discounts(id, product_id, discount_percent, starts_at, ends_at, active, created_at)';

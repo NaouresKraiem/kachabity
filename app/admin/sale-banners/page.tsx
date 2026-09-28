@@ -408,26 +408,25 @@ export default function SaleBannersPage() {
                         />
                     </Form.Item>
 
-                    <Form.Item
-                        label="Discount Percentage"
-                        name="discount_percent"
-                        rules={[
-                            {
-                                validator: (_, value) => {
-                                    if (value < 0 || value > 100) return Promise.reject("Must be between 0-100%");
-                                    return Promise.resolve();
-                                }
-                            },
-                        ]}
-                    >
+                    <Form.Item label="Discount Percentage">
                         <Space.Compact style={{ width: "100%" }}>
-                            <InputNumber
-                                style={{ width: "100%" }}
-                                placeholder="e.g., 50"
-                                min={0}
-                                max={100}
-                                size="large"
-                            />
+                            {/* noStyle binds the value to InputNumber; the outer item only renders the label */}
+                            <Form.Item name="discount_percent" noStyle rules={[
+                                {
+                                    validator: (_, value) => {
+                                        if (value < 0 || value > 100) return Promise.reject("Must be between 0-100%");
+                                        return Promise.resolve();
+                                    }
+                                },
+                            ]}>
+                                <InputNumber
+                                    style={{ width: "100%" }}
+                                    placeholder="e.g., 50"
+                                    min={0}
+                                    max={100}
+                                    size="large"
+                                />
+                            </Form.Item>
                             <span style={{ padding: "8px 16px", border: "1px solid #d9d9d9", borderLeft: "none", display: "flex", alignItems: "center" }}>%</span>
                         </Space.Compact>
                     </Form.Item>

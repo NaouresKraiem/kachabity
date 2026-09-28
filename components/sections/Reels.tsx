@@ -72,22 +72,13 @@ const detectVideoPlatform = (url: string): { platform: 'youtube' | 'tiktok' | 'f
     return { platform: 'other', embedUrl: null };
 };
 
-export default function Reels() {
+export default function Reels({ initialReels }: { initialReels?: Reel[] }) {
     const params = useParams();
     const locale = (params?.locale as string) || 'en';
     const t = translations[locale as keyof typeof translations] || translations.en;
-    const [reels, setReels] = useState<Reel[]>([]);
-    const [mounted, setMounted] = useState(false);
+    const [reels, setReels] = useState<Reel[]>(initialReels ?? []);
     const [selectedVideo, setSelectedVideo] = useState<{ embedUrl: string, platform: string } | null>(null);
     const sliderRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     useEffect(() => {
         async function fetchReels() {
@@ -102,8 +93,8 @@ export default function Reels() {
             }
         }
 
-        fetchReels();
-    }, []);
+        if (!initialReels) fetchReels();
+    }, [initialReels]);
 
     const handleVideoClick = (url: string | null) => {
         if (!url) return;
@@ -128,7 +119,7 @@ export default function Reels() {
         }
     };
 
-    if (!mounted || reels.length === 0) {
+    if (reels.length === 0) {
         return null;
     }
 

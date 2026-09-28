@@ -99,6 +99,8 @@ export interface Product {
 export interface PromoProduct {
     id: string;
     name: string;
+    name_ar?: string;
+    name_fr?: string;
     title?: string; // Alias for name (for backward compatibility)
     slug: string;
     base_price: number;

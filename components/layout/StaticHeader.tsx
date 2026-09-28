@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { headerConfig } from '@/lib/config';
 import { useLanguageSafe } from '@/lib/language-context';
+import { getCategories } from '@/lib/categories-cache';
 import { isRTL } from '@/lib/language-utils';
 import CartButton from '../cart/CartButton';
 import supabase from '@/lib/supabaseClient';
@@ -58,6 +59,24 @@ interface Category {
     image_url?: string;
     sort_order: number;
     is_featured?: boolean;
+    parent_id?: string | null;
+    depth?: number;
+}
+
+// Featured top-level categories, each followed by its sub-categories (depth-first).
+function flattenCategoryTree(all: Category[]): Category[] {
+    const out: Category[] = [];
+    const visit = (parentId: string, depth: number) => {
+        for (const c of all.filter((x) => x.parent_id === parentId)) {
+            out.push({ ...c, depth });
+            visit(c.id, depth + 1);
+        }
+    };
+    for (const top of all.filter((c) => c.is_featured && !c.parent_id)) {
+        out.push({ ...top, depth: 0 });
+        visit(top.id, 1);
+    }
+    return out;
 }
 
 // Helper function to get translated category name
@@ -144,32 +163,10 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
     useEffect(() => {
         async function fetchCategories() {
             try {
-                // Try to fetch with translation fields first
-                let { data, error } = await supabase
-                    .from('categories')
-                    .select('id, name, name_ar, name_fr, slug, image_url, sort_order, is_featured')
-                    .eq('is_featured', true)
-                    .order('sort_order', { ascending: true });
-
-                // If error, try without translation fields (fallback for databases without these columns)
-                if (error) {
-                    const fallbackResult = await supabase
-                        .from('categories')
-                        .select('id, name, slug, image_url, sort_order, is_featured')
-                        .eq('is_featured', true)
-                        .order('sort_order', { ascending: true });
-
-                    if (fallbackResult.error) {
-                        throw fallbackResult.error;
-                    }
-                    data = fallbackResult.data;
-                    error = null;
-                }
-
-                if (error) throw error;
+                const data = await getCategories();
 
                 if (data) {
-                    setCategories(data);
+                    setCategories(flattenCategoryTree(data));
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);
@@ -200,7 +197,8 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
         } else {
             params.delete("search");
         }
-        router.push(`products?${params.toString()}`);
+        // Absolute, locale-prefixed path: a relative 'products' breaks on nested routes.
+        router.push(`/${locale}/products?${params.toString()}`);
     };
 
     return (
@@ -578,6 +576,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                                                         key={category.id}
                                                         href={`/${locale}/products?category=${category.slug}`}
                                                         className="block py-2 text-gray-300 hover:text-white transition"
+                                                        style={{ paddingInlineStart: (category.depth ?? 0) * 16 }}
                                                         onClick={() => setIsMobileMenuOpen(false)}
                                                     >
                                                         {getCategoryName(category, locale)}
@@ -695,6 +694,7 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                                                                 key={category.id}
                                                                 href={`/${locale}/products?category=${category.slug}`}
                                                                 className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#7a3b2e] transition ${rtl ? 'text-right' : 'text-left'}`}
+                                                                style={{ paddingInlineStart: 16 + (category.depth ?? 0) * 16 }}
                                                             >
                                                                 {getCategoryName(category, locale)}
                                                             </Link>

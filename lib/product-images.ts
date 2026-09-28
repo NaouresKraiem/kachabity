@@ -116,8 +116,8 @@ export async function getVariantPrimaryImage(
  * Helper to get image URL from product (with fallback)
  */
 export function getProductImageUrl(product: {
-    product_images?: ProductImage[];
-    images?: ProductImage[];
+    product_images?: Array<Pick<ProductImage, 'image_url' | 'is_main'>>;
+    images?: Array<Pick<ProductImage, 'image_url' | 'is_main'>>;
     image_url?: string; // Legacy fallback
 }): string | null {
     // Try product_images first (new schema)

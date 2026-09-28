@@ -1,6 +1,5 @@
 "use client";
 
-import { Progress } from 'antd';
 
 interface StockProgressProps {
     sold: number;
@@ -24,13 +23,9 @@ export default function StockProgress({ sold, inStock }: StockProgressProps) {
                     In Stock: <span className="text-custom12  text-[#2b1a16]">{inStock}</span>
                 </span>
             </div>
-            <Progress
-                percent={percent}
-                strokeColor={barColor}
-                railColor="#E3E3E3"
-                showInfo={false}
-                strokeLinecap="round"
-            />
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[#E3E3E3]" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
+                <div className="h-full rounded-full transition-all" style={{ width: `${percent}%`, backgroundColor: barColor }} />
+            </div>
         </div>
     );
 }

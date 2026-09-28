@@ -46,7 +46,7 @@ interface SizeRow {
 export default function AdminVariantsPage() {
     const [colors, setColors] = useState<ColorRow[]>([]);
     const [sizes, setSizes] = useState<SizeRow[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // first fetch starts on mount: show the table spinner right away
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedColorKeys, setSelectedColorKeys] = useState<string[]>([]);
     const [selectedSizeKeys, setSelectedSizeKeys] = useState<string[]>([]);

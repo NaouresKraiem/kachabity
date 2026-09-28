@@ -5,7 +5,6 @@ import { useCart } from "@/lib/cart-context";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 import { isRTL } from "@/lib/language-utils";
-import { Divider } from "antd";
 import CartItem from "./CartItem";
 
 const content = {
@@ -111,7 +110,7 @@ console.log(items);
                                             variant="compact"
                                             reviewsText={text.reviews}
                                         />
-                                        <Divider />
+                                        <hr className="my-4 border-gray-100" />
                                     </React.Fragment>
                                 ))}
                             </div>

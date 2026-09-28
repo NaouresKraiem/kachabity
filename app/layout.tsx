@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Handlee } from "next/font/google";
 import "./globals.css";
-import '@ant-design/v5-patch-for-react-19';
-import { ConfigProvider } from 'antd';
 import { Toaster } from 'react-hot-toast';
+import { headers } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] });
 const hando = Handlee({
@@ -13,6 +12,7 @@ const hando = Handlee({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://kachabiti.tn"),
   title: "Kachabiti - Handcrafted Traditional Products | Premium Quality",
   description: "Discover authentic handcrafted traditional products at Kachabiti. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items. 100% authentic craftsmanship.",
   keywords: "handcrafted, traditional products, HBarnous ROSSINI, Serviette de table, artisan, handmade, premium quality, Tunisia, traditional wear, home accessories",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     description: "Discover authentic handcrafted traditional products at Kachabiti. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items.",
     images: [
       {
-        url: "/assets/images/hero/hbarnous-rossini.jpg",
+        url: "/assets/images/logoKachabity.jpg",
         width: 1200,
         height: 630,
         alt: "Kachabiti - Handcrafted Traditional Products",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kachabiti - Handcrafted Traditional Products",
     description: "Discover authentic handcrafted traditional products at Kachabiti. Premium quality HBarnous ROSSINI, Serviette de table, and unique handmade items.",
-    images: ["/assets/images/hero/hbarnous-rossini.jpg"],
+    images: ["/assets/images/logoKachabity.jpg"],
   },
   alternates: {
     canonical: "https://artisan-kraiem.com",
@@ -60,13 +60,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Set by middleware.ts for localized routes; admin and API docs are English.
+  const lang = (await headers()).get("x-locale") ?? "en";
   return (
-    <html suppressHydrationWarning>
+    <html lang={lang} suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -100,7 +102,6 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} ${hando.variable}`} suppressHydrationWarning>
-        <ConfigProvider>
           {children}
           <Toaster
             position="top-right"
@@ -120,7 +121,6 @@ export default function RootLayout({
               },
             }}
           />
-        </ConfigProvider>
       </body>
     </html>
   );

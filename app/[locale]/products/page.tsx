@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useParams } from "next/navigation";
 import supabase from "@/lib/supabaseClient";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProductListCard from "@/components/products/ProductListCard";
-import { Skeleton, Card, message } from "antd";
+import toast from "react-hot-toast";
+import { EMBEDDED_DISCOUNTS, embeddedDiscountPercent, type ProductDiscount } from "@/lib/product-discounts";
+import { getDescendantCategoryIds } from "@/lib/utils/product-utils";
+import { getCategories } from "@/lib/categories-cache";
 import { useCart } from "@/lib/cart-context";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 import { isRTL } from "@/lib/language-utils";
@@ -141,6 +142,7 @@ export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const { addItem } = useCart();
     const [categories, setCategories] = useState<Category[]>([]);
+    const [categoriesLoaded, setCategoriesLoaded] = useState(false);
     const [availableColors, setAvailableColors] = useState<Color[]>([]);
     const [availableSizes, setAvailableSizes] = useState<Size[]>([]);
     const [loading, setLoading] = useState(true);
@@ -220,12 +222,7 @@ export default function ProductsPage() {
 
     async function fetchCategories() {
         try {
-            const { data, error } = await supabase
-                .from('categories')
-                .select('*')
-                .order('sort_order', { ascending: true });
-
-            if (error) throw error;
+            const data = await getCategories();
             if (data) {
                 setCategories(data);
                 // Create a map of category_id -> slug for easy lookup
@@ -234,6 +231,8 @@ export default function ProductsPage() {
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
+        } finally {
+            setCategoriesLoaded(true);
         }
     }
 
@@ -309,7 +308,8 @@ export default function ProductsPage() {
                         alt_text,
                         is_main,
                         position
-                    )
+                    ),
+                    ${EMBEDDED_DISCOUNTS}
                 `, { count: 'exact' })
                 .is('deleted_at', null)
                 .eq('status', 'active')
@@ -334,7 +334,10 @@ export default function ProductsPage() {
 
             // Apply category filter
             if (selectedCategoryIds.size > 0) {
-                query = query.in('category_id', Array.from(selectedCategoryIds));
+                // A selected category also matches products in its sub-categories.
+                const ids = new Set<string>();
+                selectedCategoryIds.forEach((id) => getDescendantCategoryIds(id, categories).forEach((d) => ids.add(d)));
+                query = query.in('category_id', Array.from(ids));
             }
 
             // Apply size and color filters together
@@ -423,8 +426,7 @@ export default function ProductsPage() {
                 query = query.order('created_at', { ascending: false });
             } else if (sortParam === 'popular') {
                 query = query
-                    .order('review_count', { ascending: false, nullsFirst: true })
-                    .order('rating', { ascending: false, nullsFirst: true })
+                    .order('sold_count', { ascending: false })
                     .order('created_at', { ascending: false });
             } else {
                 query = query.order('created_at', { ascending: false });
@@ -440,7 +442,11 @@ export default function ProductsPage() {
 
             if (error) throw error;
             if (data) {
-                setProducts(data);
+                // Discounts come embedded in the same query (no second round trip).
+                setProducts(data.map((p: { id: string; product_discounts?: ProductDiscount[] }) => ({
+                    ...p,
+                    discount_percent: embeddedDiscountPercent(p),
+                })));
                 setTotalCount(count || 0);
             }
         } catch (error) {
@@ -453,14 +459,14 @@ export default function ProductsPage() {
 
     // Fetch products initially and when filters change
     useEffect(() => {
-        // Only fetch if categories have been loaded
-        if (categories.length > 0) {
+        // Wait for categories (URL category filters need them), but not for there to be any.
+        if (categoriesLoaded) {
             // Reset to page 1 when filters change
             setCurrentPage(1);
             fetchProducts();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [priceRange, selectedSizes, selectedColors, selectedCategoryIds, categories.length, sortParam]);
+    }, [priceRange, selectedSizes, selectedColors, selectedCategoryIds, categoriesLoaded, sortParam, search]);
 
 
 
@@ -468,7 +474,7 @@ export default function ProductsPage() {
     const toggleWishlist = async (productId: string) => {
         // If user not logged in, show message or redirect
         if (!userId) {
-            message.error(text.pleaseLogin);
+            toast.error(text.pleaseLogin);
             return;
         }
 
@@ -700,7 +706,6 @@ export default function ProductsPage() {
 
     return (
         <>
-            <StaticHeader />
             <div className="min-h-screen bg-white py-8">
                 <div className="max-w-7xl mx-auto px-4">
                     {/* Mobile Filter Button */}
@@ -743,23 +748,14 @@ export default function ProductsPage() {
                             {productsLoading ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
-                                        <Card
-                                            key={index}
-                                            hoverable
-                                            cover={
-                                                <Skeleton.Image
-                                                    active
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '280px',
-                                                        aspectRatio: '1/1'
-                                                    }}
-                                                />
-                                            }
-                                            className="overflow-hidden"
-                                        >
-                                            <Skeleton active paragraph={{ rows: 3 }} />
-                                        </Card>
+                                        <div key={index} className="animate-pulse overflow-hidden rounded-lg border border-gray-100 bg-white">
+                                            <div className="aspect-square w-full bg-gray-200" />
+                                            <div className="space-y-2 p-4">
+                                                <div className="h-4 w-3/4 rounded bg-gray-200" />
+                                                <div className="h-3 w-1/2 rounded bg-gray-200" />
+                                                <div className="h-3 w-1/3 rounded bg-gray-200" />
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             ) : products.length === 0 ? (
@@ -793,6 +789,8 @@ export default function ProductsPage() {
                                                 addItem({
                                                     id: p.id,
                                                     name: p.name,
+                                                    name_ar: p.name_ar,
+                                                    name_fr: p.name_fr,
                                                     price: Math.round(price),
                                                     image: productImage,
                                                     reviewCount: p.review_count || 0
@@ -887,7 +885,6 @@ export default function ProductsPage() {
                     </div>
                 </>
             )}
-            <Footer />
         </>
     );
 }

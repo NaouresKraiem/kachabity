@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { message } from "antd";
+import toast from "react-hot-toast";
 import supabase from "@/lib/supabaseClient";
 import { Order as OrderType } from "@/lib/orders";
 import { getUserFavorites, removeFromFavorites, FavoriteWithProduct } from "@/lib/favorites";
@@ -303,10 +303,10 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
     if (success) {
       // Remove from local state
       setSavedItems(prev => prev.filter(item => item.product_id !== productId));
-      message.success("Item removed from saved items");
+      toast.success("Item removed from saved items");
     } else {
       console.error("Error removing favorite:", error);
-      message.error("Failed to remove item from saved. Please try again.");
+      toast.error("Failed to remove item from saved. Please try again.");
     }
   };
 
@@ -328,12 +328,12 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
 
   // Handle password change (disabled - authentication removed)
   const handlePasswordChange = async (data: PasswordFormData) => {
-    message.warning("Password change is disabled - authentication has been removed from this project.");
+    toast("Password change is disabled - authentication has been removed from this project.");
   };
 
   // Handle profile update (disabled - authentication removed)
   const handleProfileUpdate = async (data: ProfileFormData) => {
-    message.warning("Profile update is disabled - authentication has been removed from this project.");
+    toast("Profile update is disabled - authentication has been removed from this project.");
   };
 
   if (loading) {
@@ -628,7 +628,7 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
                             name_fr: item.product.name_fr,
                             slug: item.product.slug,
                             image_url: item.product.image_url || "/assets/images/logoKachabity.jpg",
-                            base_price: item.product.base_price,
+                            base_price: item.product.base_price ?? item.product.price_cents,
                             currency: item.product.currency,
                             rating: item.product.rating || 0,
                             review_count: item.product.review_count || 0,
@@ -652,6 +652,8 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
                             addItem({
                               id: product.id,
                               name: product.name,
+                              name_ar: product.name_ar,
+                              name_fr: product.name_fr,
                               price: Math.round(price),
                               image: productImage,
                               rating: product.rating,

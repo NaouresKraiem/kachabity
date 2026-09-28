@@ -18,6 +18,7 @@ import {
     Row,
     Col
 } from "antd";
+import ProductTranslationFields from "@/components/admin/ProductTranslationFields";
 import {
     SaveOutlined,
     ArrowLeftOutlined,
@@ -214,6 +215,10 @@ export default function CreateProductPage() {
                 name: values.name,
                 slug: values.slug,
                 description: values.description || null,
+                name_ar: values.name_ar || null,
+                name_fr: values.name_fr || null,
+                description_ar: values.description_ar || null,
+                description_fr: values.description_fr || null,
                 category_id: values.category_id || null,
                 base_price: parseFloat(values.base_price),
                 status: values.status || "active",
@@ -425,6 +430,8 @@ export default function CreateProductPage() {
                         />
                     </Form.Item>
 
+                    <ProductTranslationFields />
+
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
@@ -472,22 +479,21 @@ export default function CreateProductPage() {
                     <Title level={4}>Pricing & Stock</Title>
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
-                            <Form.Item
-                                label="Base Price"
-                                name="base_price"
-                                rules={[
-                                    { required: true, message: "Please enter base price" },
-                                    { type: "number", min: 0, message: "Price must be positive" },
-                                ]}
-                            >
+                            <Form.Item label="Base Price" required>
                                 <Space.Compact style={{ width: "100%" }}>
-                                    <InputNumber
-                                        style={{ width: "100%" }}
-                                        placeholder="0.00"
-                                        min={0}
-                                        step={0.01}
-                                        precision={2}
-                                    />
+                                    {/* noStyle binds the value to InputNumber; the outer item only renders the label */}
+                                    <Form.Item name="base_price" noStyle rules={[
+                                        { required: true, message: "Please enter base price" },
+                                        { type: "number", min: 0, message: "Price must be positive" },
+                                    ]}>
+                                        <InputNumber
+                                            style={{ width: "100%" }}
+                                            placeholder="0.00"
+                                            min={0}
+                                            step={0.01}
+                                            precision={2}
+                                        />
+                                    </Form.Item>
                                     <Input
                                         style={{ width: 60 }}
                                         value="DT"

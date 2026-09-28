@@ -41,6 +41,23 @@ export function getCategoryName(category: any, locale: string): string {
 }
 
 /**
+ * IDs of a category and all of its descendants (categories are nested via parent_id).
+ * A category page lists products from the whole subtree.
+ */
+export function getDescendantCategoryIds(
+    categoryId: string,
+    categories: Array<{ id: string; parent_id?: string | null }>
+): string[] {
+    const ids = [categoryId];
+    for (let i = 0; i < ids.length; i++) {
+        for (const c of categories) {
+            if (c.parent_id === ids[i] && !ids.includes(c.id)) ids.push(c.id);
+        }
+    }
+    return ids;
+}
+
+/**
  * Get main image URL from product
  */
 export function getProductImageUrl(product: any): string | null {

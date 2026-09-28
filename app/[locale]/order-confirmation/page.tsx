@@ -4,8 +4,6 @@ import { useLanguage } from "@/lib/language-context";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 
 const content = {
     en: {
@@ -171,11 +169,9 @@ export default function OrderConfirmationPage() {
 
     return (
         <>
-            <StaticHeader />
             <Suspense fallback={<div>{text.loading}</div>}>
                 <OrderConfirmationContent />
             </Suspense>
-            <Footer />
         </>
     );
 }

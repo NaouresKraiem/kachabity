@@ -1,0 +1,100 @@
+[     111ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[     154ms] [LOG] [Fast Refresh] done in 143ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[     375ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14537
+[     511ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[     511ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[     517ms] [WARNING] Image with src "http://localhost:3000/assets/images/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     533ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[     533ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[     592ms] [WARNING] Image with src "http://localhost:3000/assets/images/highlight.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     655ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[     656ms] [WARNING] Image with src "http://localhost:3000/assets/images/icons/support.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     660ms] [WARNING] Image with src "http://localhost:3000/assets/images/icons/chat.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     715ms] [LOG] [Fast Refresh] done in 170ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[     925ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-09-image-20260916-182007-257-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     925ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2025-12-image-20260908-112558-915-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     925ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-07-1000008958.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     925ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-07-1000008944.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     926ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000007365.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     926ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006960.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     926ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-144426-367-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     926ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-144156-703-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     926ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-143822-615-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     926ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006815.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     959ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000007365.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     969ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-04-1000005878.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     969ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-04-1000005878.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     978ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-03-enf.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     978ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-03-enf.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     991ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006896.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[     992ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006896.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   23105ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   23510ms] [LOG] [Fast Refresh] done in 505ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   41419ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   41451ms] [LOG] [Fast Refresh] done in 132ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   41631ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   41641ms] [LOG] [Fast Refresh] done in 109ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   73729ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-09-image-20260916-182007-257-scaled.webp" was detected as the Largest Contentful Paint (LCP). Please add the "priority" property if this image is above the fold.
+Read more: https://nextjs.org/docs/api-reference/next/image#priority @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[  119855ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  119939ms] [LOG] [Fast Refresh] done in 183ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  127884ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  127903ms] [LOG] [Fast Refresh] done in 120ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  137211ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  137230ms] [LOG] [Fast Refresh] done in 118ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  154197ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  154232ms] [LOG] [Fast Refresh] done in 136ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  216132ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  216205ms] [LOG] [Fast Refresh] done in 173ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  230254ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  230324ms] [LOG] [Fast Refresh] done in 171ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  261428ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  261570ms] [LOG] [Fast Refresh] done in 150ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  355601ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  355758ms] [LOG] [Fast Refresh] done in 236ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  355860ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  356100ms] [LOG] [Fast Refresh] done in 340ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  356415ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[  356415ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[  356440ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[  356440ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[  356447ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'length')
+    at ProductShowcase (about://React/Server/file:///home/wassim/kachabity/.next/server/chunks/ssr/%5Broot-of-the-server%5D__b45e9d70._.js?125:895:18)
+    at resolveErrorDev (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4308:48)
+    at processFullStringRow (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4556:29)
+    at processFullBinaryRow (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4515:9)
+    at processBinaryChunk (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4624:98)
+    at progress (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4792:25) The above error occurred in the <ProductShowcase> component. It was handled by the <ErrorBoundary> error boundary. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:1247
+[  356448ms] [ERROR] Error caught by boundary: TypeError: Cannot read properties of undefined (reading 'length')
+    at ProductShowcase (about://React/Server/file:///home/wassim/kachabity/.next/server/chunks/ssr/%5Broot-of-the-server%5D__b45e9d70._.js?125:895:18)
+    at resolveErrorDev (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4308:48)
+    at processFullStringRow (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4556:29)
+    at processFullBinaryRow (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4515:9)
+    at processBinaryChunk (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4624:98)
+    at progress (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4792:25) {componentStack: 
+    at ProductShowcase [Server] (<anonymous>)
+   …e_modules_next_dist_client_cf1d9188._.js:9906:11)} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2417
+[  360663ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  360700ms] [LOG] [Fast Refresh] done in 137ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[  363359ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[  363404ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'length')
+    at ProductShowcase (about://React/Server/file:///home/wassim/kachabity/.next/server/chunks/ssr/%5Broot-of-the-server%5D__b45e9d70._.js?125:895:18)
+    at resolveErrorDev (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4308:48)
+    at processFullStringRow (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4556:29)
+    at processFullBinaryRow (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4515:9)
+    at processBinaryChunk (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4624:98)
+    at progress (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4792:25) The above error occurred in the <ProductShowcase> component. It was handled by the <ErrorBoundary> error boundary. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:1247
+[  363407ms] [ERROR] Error caught by boundary: TypeError: Cannot read properties of undefined (reading 'length')
+    at ProductShowcase (about://React/Server/file:///home/wassim/kachabity/.next/server/chunks/ssr/%5Broot-of-the-server%5D__b45e9d70._.js?125:895:18)
+    at resolveErrorDev (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4308:48)
+    at processFullStringRow (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4556:29)
+    at processFullBinaryRow (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4515:9)
+    at processBinaryChunk (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4624:98)
+    at progress (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:4792:25) {componentStack: 
+    at ProductShowcase [Server] (<anonymous>)
+   …e_modules_next_dist_client_cf1d9188._.js:9906:11)} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2417
+[  363444ms] [LOG] [Fast Refresh] done in 141ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816

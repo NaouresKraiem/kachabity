@@ -1,18 +1,14 @@
-import StaticHeader from "../layout/StaticHeader";
-import Footer from "../footer/Footer";
-
 interface LoadingSpinnerProps {
     message?: string;
     fullPage?: boolean;
-    showHeaderFooter?: boolean;
 }
 
+// The header and footer come from app/[locale]/layout.tsx, so this renders only the spinner.
 export default function LoadingSpinner({
     message = "Loading...",
     fullPage = true,
-    showHeaderFooter = true
 }: LoadingSpinnerProps) {
-    const spinner = (
+    return (
         <div className={`${fullPage ? 'min-h-screen' : 'min-h-[400px]'} bg-[#F7F7F7] flex items-center justify-center`}>
             <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#7a3b2e]"></div>
@@ -20,16 +16,4 @@ export default function LoadingSpinner({
             </div>
         </div>
     );
-
-    if (showHeaderFooter) {
-        return (
-            <>
-                <StaticHeader />
-                {spinner}
-                <Footer />
-            </>
-        );
-    }
-
-    return spinner;
 }

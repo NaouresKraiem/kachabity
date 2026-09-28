@@ -5,8 +5,6 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import supabase from "@/lib/supabaseClient";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface Category {
@@ -93,7 +91,7 @@ export default function CategoriesPage() {
                 let { data, error, count } = await supabase
                     .from('categories')
                     .select('id, name, name_ar, name_fr, slug, image_url, sort_order, is_featured', { count: 'exact' })
-                    .eq('is_featured', true)
+                    .is('parent_id', null) // top-level only; sub-categories are shown on their parent's page
                     .order('sort_order', { ascending: true })
                     .range(from, to);
 
@@ -102,7 +100,7 @@ export default function CategoriesPage() {
                     const fallbackResult = await supabase
                         .from('categories')
                         .select('id, name, slug, image_url, sort_order, is_featured', { count: 'exact' })
-                        .eq('is_featured', true)
+                        .is('parent_id', null)
                         .order('sort_order', { ascending: true })
                         .range(from, to);
 
@@ -147,7 +145,6 @@ export default function CategoriesPage() {
 
     return (
         <>
-            <StaticHeader />
             <div className="min-h-screen bg-white py-12">
                 <div className="max-w-7xl mx-auto px-4">
                     {/* Header */}
@@ -263,7 +260,6 @@ export default function CategoriesPage() {
                     )}
                 </div>
             </div>
-            <Footer />
         </>
     );
 }

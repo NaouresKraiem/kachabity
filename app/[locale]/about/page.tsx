@@ -1,8 +1,6 @@
 "use client";
 
 import { use } from "react";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import { headerConfig } from "@/lib/config";
 import Image from "next/image";
 
@@ -177,7 +175,6 @@ export default function AboutPage({ params }: { params: Promise<{ locale: Locale
 
     return (
         <main className="min-h-screen bg-white">
-            <StaticHeader locale={locale} />
 
             {/* Hero Section */}
             <section className="bg-[#FAF1EE] border-b border-neutral-200">
@@ -289,7 +286,6 @@ export default function AboutPage({ params }: { params: Promise<{ locale: Locale
                 </div>
             </section>
 
-            <Footer />
         </main>
     );
 }

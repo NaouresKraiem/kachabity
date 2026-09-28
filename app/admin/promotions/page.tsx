@@ -76,7 +76,7 @@ export default function PromotionsPage() {
     // Fetch products
     const fetchProducts = async () => {
         try {
-            const response = await fetch("/api/products?admin=true");
+            const response = await fetch("/api/products?admin=true&view=summary");
             const result = await response.json();
             if (result.success) {
                 setProducts(result.data || []);
@@ -316,28 +316,27 @@ export default function PromotionsPage() {
                         </Select>
                     </Form.Item>
 
-                    <Form.Item
-                        label="Discount Percentage"
-                        name="discount_percent"
-                        rules={[
-                            { required: true, message: "Please enter discount percentage" },
-                            {
-                                validator: (_, value) => {
-                                    if (!value) return Promise.reject("Please enter discount percentage");
-                                    if (value < 1 || value > 100) return Promise.reject("Must be between 1-100%");
-                                    return Promise.resolve();
-                                }
-                            },
-                        ]}
-                    >
+                    <Form.Item label="Discount Percentage" required>
                         <Space.Compact style={{ width: "100%" }}>
-                            <InputNumber
-                                style={{ width: "100%" }}
-                                placeholder="e.g., 20"
-                                min={1}
-                                max={100}
-                                size="large"
-                            />
+                            {/* noStyle binds the value to InputNumber; the outer item only renders the label */}
+                            <Form.Item name="discount_percent" noStyle rules={[
+                                { required: true, message: "Please enter discount percentage" },
+                                {
+                                    validator: (_, value) => {
+                                        if (!value) return Promise.reject("Please enter discount percentage");
+                                        if (value < 1 || value > 100) return Promise.reject("Must be between 1-100%");
+                                        return Promise.resolve();
+                                    }
+                                },
+                            ]}>
+                                <InputNumber
+                                    style={{ width: "100%" }}
+                                    placeholder="e.g., 20"
+                                    min={1}
+                                    max={100}
+                                    size="large"
+                                />
+                            </Form.Item>
                             <span style={{ padding: "8px 16px", border: "1px solid #d9d9d9", borderLeft: "none", display: "flex", alignItems: "center" }}>%</span>
                         </Space.Compact>
                     </Form.Item>

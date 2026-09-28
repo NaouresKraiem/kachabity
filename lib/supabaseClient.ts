@@ -1,9 +1,10 @@
 
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { supabaseUrl as configuredUrl, supabasePublishableKey } from "@/lib/supabase-env";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fhimhbrhlzhxojtiumhm.supabase.co";
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = configuredUrl || "https://placeholder.supabase.co";
+const supabaseKey = supabasePublishableKey;
 
 // Never throw at module load time - this allows builds to complete
 // Validation will happen at runtime when the client is actually used
@@ -27,8 +28,8 @@ export default supabase;
 export function createClient() {
     if (!supabaseKey) {
         throw new Error(
-            "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY. Please add it to your .env.local file.\n" +
-            "Get your key from: https://fhimhbrhlzhxojtiumhm.supabase.co/project/_/settings/api"
+            "Missing NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Add it to your .env file\n" +
+            "(Supabase dashboard → Project Settings → API Keys)."
         );
     }
     return createSupabaseClient(supabaseUrl, supabaseKey, {

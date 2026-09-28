@@ -1,0 +1,80 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - region "Featured Products" [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e8]:
+          - generic [ref=e9]: Où
+          - generic [ref=e10]: Tradition
+          - generic [ref=e11]: Rencontre
+          - generic [ref=e12]: Élégance
+        - generic [ref=e13]: Chargement...
+    - paragraph [ref=e24]: Loading...
+  - contentinfo [ref=e25]:
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - link [ref=e29] [cursor=pointer]:
+            - /url: /fr
+            - img "Kachabity" [ref=e30]
+            - img "Kachabity" [ref=e31]
+          - paragraph [ref=e32]: Découvrez des produits artisanaux tunisiens authentiques et des trésors traditionnels.
+          - generic [ref=e33]:
+            - link "Facebook" [ref=e34] [cursor=pointer]:
+              - /url: https://facebook.com/yourpage
+            - link "Instagram" [ref=e37] [cursor=pointer]:
+              - /url: https://instagram.com/yourpage
+            - link "TikTok" [ref=e40] [cursor=pointer]:
+              - /url: https://tiktok.com/@yourpage
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - heading "Liens rapides" [level=3] [ref=e45]
+            - list [ref=e46]:
+              - listitem [ref=e47]:
+                - link "Catégories" [ref=e48] [cursor=pointer]:
+                  - /url: /fr/categories
+              - listitem [ref=e49]:
+                - link "Remises" [ref=e50] [cursor=pointer]:
+                  - /url: /fr/products?promo=true
+              - listitem [ref=e51]:
+                - link "Nouveautés" [ref=e52] [cursor=pointer]:
+                  - /url: /fr/products?sort=new
+              - listitem [ref=e53]:
+                - link "Meilleures ventes" [ref=e54] [cursor=pointer]:
+                  - /url: /fr/products?sort=popular
+          - generic [ref=e55]:
+            - heading "À propos" [level=3] [ref=e56]
+            - list [ref=e57]:
+              - listitem [ref=e58]:
+                - link "À propos de nous" [ref=e59] [cursor=pointer]:
+                  - /url: /fr/about
+              - listitem [ref=e60]:
+                - link "Contact" [ref=e61] [cursor=pointer]:
+                  - /url: /fr/contact
+              - listitem [ref=e62]:
+                - link "FAQ" [ref=e63] [cursor=pointer]:
+                  - /url: /fr#faqs
+          - generic [ref=e64]:
+            - heading "Légal" [level=3] [ref=e65]
+            - list [ref=e66]:
+              - listitem [ref=e67]:
+                - link "Termes et conditions" [ref=e68] [cursor=pointer]:
+                  - /url: /fr/terms-and-conditions
+              - listitem [ref=e69]:
+                - link "Politique de confidentialité" [ref=e70] [cursor=pointer]:
+                  - /url: /fr/privacy
+              - listitem [ref=e71]:
+                - link "Politique d'expédition" [ref=e72] [cursor=pointer]:
+                  - /url: /fr/shipping
+        - generic [ref=e75]:
+          - heading "Abonnez-vous à notre newsletter" [level=3] [ref=e76]
+          - paragraph [ref=e77]: Recevez les dernières mises à jour sur les nouveaux produits et offres exclusives
+          - generic [ref=e78]:
+            - textbox "Entrez votre e-mail" [ref=e79]
+            - button "S'abonner" [ref=e80]
+      - generic [ref=e82]:
+        - paragraph [ref=e83]: © 2026 Kachabity. Tous droits réservés.
+        - generic [ref=e84]:
+          - link "+216 55 558 648" [ref=e85] [cursor=pointer]:
+            - /url: tel:+216 55 558 648
+          - link "contact@yourdomain.com" [ref=e89] [cursor=pointer]:
+            - /url: mailto:contact@yourdomain.com

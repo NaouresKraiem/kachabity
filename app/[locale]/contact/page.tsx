@@ -3,8 +3,6 @@
 import { useState, use } from "react";
 import { useForm } from "react-hook-form";
 import { FormInput, FormTextarea } from "@/components/forms";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import { headerConfig } from "@/lib/config";
 import Image from "next/image";
 
@@ -146,7 +144,6 @@ export default function ContactPage({ params }: { params: Promise<{ locale: Loca
 
     return (
         <main className="min-h-screen bg-white">
-            <StaticHeader locale={locale} />
 
             <section className="bg-[#FAF1EE] border-b border-neutral-200">
 
@@ -288,7 +285,6 @@ export default function ContactPage({ params }: { params: Promise<{ locale: Loca
                 </div>
             </section>
 
-            <Footer />
         </main>
     );
 }

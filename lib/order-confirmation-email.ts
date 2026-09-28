@@ -39,7 +39,7 @@ export async function sendOrderConfirmationEmail(data: EmailData) {
         const emailResult = await transporter.sendMail({
             from: process.env.GMAIL_USER,
             to: order.customer_email,
-            subject: `Order Confirmation - ${order.order_number}`,
+            subject: `Order Confirmation - ${escapeHtml(order.order_number)}`,
             html: emailHtml,
         });
 
@@ -59,7 +59,18 @@ export async function sendOrderConfirmationEmail(data: EmailData) {
     }
 }
 
+// Escapes text for HTML: names, addresses and phone numbers are typed in by customers.
+function escapeHtml(value: unknown): string {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function generateOrderConfirmationHTML(order: Order, orderItems: OrderItem[], customerName: string): string {
+    const logoUrl = process.env.NEXT_PUBLIC_LOGO_URL;
     const itemsHTML = orderItems.map(item => {
         const price = Number(item.price) || 0;
         const quantity = Number(item.quantity) || 0;
@@ -69,14 +80,14 @@ function generateOrderConfirmationHTML(order: Order, orderItems: OrderItem[], cu
                 <table style="width: 100%;">
                     <tr>
                         <td style="width: 100px; vertical-align: top;">
-                            <img src="${item.product_image || '/placeholder.jpg'}" 
-                                 alt="${item.product_name}" 
+                            <img src="${escapeHtml(item.product_image || '/placeholder.jpg')}" 
+                                 alt="${escapeHtml(item.product_name)}" 
                                  style="width: 90px; height: 90px; object-fit: cover; border-radius: 12px; border: 1px solid #e0e0e0;" />
                         </td>
                         <td style="vertical-align: top; padding-left: 16px;">
                             <div>
                                 <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333; font-weight: 600;">
-                                    ${item.product_name}
+                                    ${escapeHtml(item.product_name)}
                                 </h3>
                                 <p style="margin: 0 0 8px 0; color: #888; font-size: 14px;">
                                     Quantity: <span style="color: #7a3b2e; font-weight: 600;">${quantity}</span>
@@ -113,21 +124,21 @@ function generateOrderConfirmationHTML(order: Order, orderItems: OrderItem[], cu
     <div style="max-width: 650px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
         <!-- Logo Header -->
         <div style="background: linear-gradient(135deg, #7a3b2e 0%, #5e2d23 100%); padding: 35px 20px; text-align: center;">
-            <img src="https://fhimhbrhlzhxojtiumhm.supabase.co/storage/v1/object/sign/hero-images/logoKachabity.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80ZTVkZGUwZS1jYTIyLTQ1OTItOTQyZC04MGRiODUzMWNhMmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJoZXJvLWltYWdlcy9sb2dvS2FjaGFiaXR5LmpwZyIsImlhdCI6MTc2MTU4MTAyMSwiZXhwIjoyMTQwMDEzMDIxfQ.S-eUOBf2ey1u_blu8AjZe2-VDmDH-cJ100XEhq35Kjo" 
+            ${logoUrl ? `<img src="${escapeHtml(logoUrl)}" 
                  alt="Kachabity" 
-                 style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #ffffff; margin-bottom: 16px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" />
+                 style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #ffffff; margin-bottom: 16px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" />` : ''}
             <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.5px;">
-                Thank You, ${customerName.toUpperCase()}!
+                Thank You, ${escapeHtml(customerName.toUpperCase())}!
             </h1>
             <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 15px; font-weight: 500;">
-                Order #${order.order_number}
+                Order #${escapeHtml(order.order_number)}
             </p>
         </div>
 
         <!-- Success Message -->
         <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 5px solid #7a3b2e; padding: 20px 24px; margin: 30px 30px 0 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">
-                Hi <strong style="color: #7a3b2e;">${customerName.toUpperCase()}</strong>,<br /><br />
+                Hi <strong style="color: #7a3b2e;">${escapeHtml(customerName.toUpperCase())}</strong>,<br /><br />
                 Your order has been confirmed! We'll send you a shipping confirmation email when your items are on their way. 🎉
             </p>
         </div>
@@ -143,7 +154,7 @@ function generateOrderConfirmationHTML(order: Order, orderItems: OrderItem[], cu
             <table style="width: 100%; margin-bottom: 20px;">
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Order Number:</td>
-                    <td style="padding: 8px 0; text-align: right;"><strong>${order.order_number}</strong></td>
+                    <td style="padding: 8px 0; text-align: right;"><strong>${escapeHtml(order.order_number)}</strong></td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Order Date:</td>
@@ -198,11 +209,11 @@ function generateOrderConfirmationHTML(order: Order, orderItems: OrderItem[], cu
             </h2>
             <div style="background-color: #fafafa; padding: 20px; border-radius: 12px; border: 1px solid #e0e0e0;">
                 <p style="color: #333; line-height: 1.8; margin: 0; font-size: 15px;">
-                    <strong style="color: #7a3b2e; font-size: 16px;">${order.customer_first_name} ${order.customer_last_name}</strong><br />
-                    ${order.shipping_address}<br />
-                    ${order.shipping_city}${order.shipping_state ? ', ' + order.shipping_state : ''} ${order.shipping_zip || ''}<br />
-                    <strong>${order.shipping_country}</strong><br />
-                    ${order.customer_phone ? '📱 ' + order.customer_phone : ''}
+                    <strong style="color: #7a3b2e; font-size: 16px;">${escapeHtml(order.customer_first_name)} ${escapeHtml(order.customer_last_name)}</strong><br />
+                    ${escapeHtml(order.shipping_address)}<br />
+                    ${escapeHtml(order.shipping_city)}${order.shipping_state ? ', ' + escapeHtml(order.shipping_state) : ''} ${escapeHtml(order.shipping_zip)}<br />
+                    <strong>${escapeHtml(order.shipping_country)}</strong><br />
+                    ${order.customer_phone ? '📱 ' + escapeHtml(order.customer_phone) : ''}
                 </p>
             </div>
         </div>

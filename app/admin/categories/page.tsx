@@ -41,7 +41,7 @@ interface CategoryRow {
 export default function AdminCategoriesPage() {
     const router = useRouter();
     const [categories, setCategories] = useState<CategoryRow[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // first fetch starts on mount: show the table spinner right away
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
     const [bulkDeleting, setBulkDeleting] = useState(false);

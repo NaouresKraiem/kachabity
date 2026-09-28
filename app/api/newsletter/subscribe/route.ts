@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabase from '@/lib/supabaseClient';
+import supabase from '@/lib/supabase-admin';
 import nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {

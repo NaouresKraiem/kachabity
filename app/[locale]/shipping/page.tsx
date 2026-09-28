@@ -1,8 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import TermsSection from "@/components/sections/TermsSection";
 import { headerConfig } from "@/lib/config";
 
@@ -227,7 +225,6 @@ export default function ShippingPolicyPage() {
 
     return (
         <>
-            <StaticHeader />
             <main className="min-h-screen bg-gray-50">
                 <section className="border-b border-[#F7EAE4] bg-white">
                     <div className="max-w-7xl mx-auto px-4 py-16 text-center">
@@ -258,7 +255,6 @@ export default function ShippingPolicyPage() {
                     ))}
                 </section>
             </main>
-            <Footer />
         </>
     );
 }

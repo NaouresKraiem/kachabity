@@ -8,7 +8,7 @@ interface FormTextareaProps<T extends FieldValues = FieldValues> {
     error?: FieldError;
     required?: boolean;
     rows?: number;
-    rules?: RegisterOptions;
+    rules?: RegisterOptions<T, Path<T>>;
     className?: string;
 }
 

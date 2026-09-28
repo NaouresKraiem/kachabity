@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, useEffect, ReactNode } from 'react';
 
 interface LanguageContextType {
     locale: string;
@@ -16,6 +16,11 @@ export function LanguageProvider({
     children: ReactNode;
     locale: string;
 }) {
+    // The root layout sets <html lang> on full loads; keep it right after client-side locale switches.
+    useEffect(() => {
+        document.documentElement.lang = locale;
+    }, [locale]);
+
     const setLocale = (newLocale: string) => {
         // Navigate to the new locale
         window.location.href = `/${newLocale}`;

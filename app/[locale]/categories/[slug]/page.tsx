@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import supabase from "@/lib/supabaseClient";
-import StaticHeader from "@/components/layout/StaticHeader";
-import Footer from "@/components/footer/Footer";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProductListCard from "@/components/products/ProductListCard";
-import { Skeleton, Card, message } from "antd";
+import toast from "react-hot-toast";
+import { EMBEDDED_DISCOUNTS, embeddedDiscountPercent, type ProductDiscount } from "@/lib/product-discounts";
+import { getDescendantCategoryIds } from "@/lib/utils/product-utils";
+import { getCategories } from "@/lib/categories-cache";
+import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 
@@ -44,6 +46,7 @@ interface Category {
     name_ar?: string;
     name_fr?: string;
     image_url?: string;
+    parent_id?: string | null;
 }
 
 // Helper function to get translated category name
@@ -99,6 +102,8 @@ export default function CategoryProductsPage() {
 
     const [products, setProducts] = useState<Product[]>([]);
     const [category, setCategory] = useState<Category | null>(null);
+    const [subcategories, setSubcategories] = useState<Category[]>([]);
+    const [categoryIds, setCategoryIds] = useState<string[]>([]);
     const { addItem } = useCart();
     const [loading, setLoading] = useState(true);
     const [productsLoading, setProductsLoading] = useState(false);
@@ -135,15 +140,13 @@ export default function CategoryProductsPage() {
     useEffect(() => {
         async function fetchCategory() {
             try {
-                const { data, error } = await supabase
-                    .from('categories')
-                    .select('*')
-                    .eq('slug', categorySlug)
-                    .single();
-
-                if (error) throw error;
-                if (data) {
-                    setCategory(data);
+                // Load the whole tree once: the page lists products from sub-categories too.
+                const data: Category[] = await getCategories();
+                const current = (data || []).find((c: Category) => c.slug === categorySlug);
+                if (current) {
+                    setCategory(current);
+                    setSubcategories((data || []).filter((c: Category) => c.parent_id === current.id));
+                    setCategoryIds(getDescendantCategoryIds(current.id, data || []));
                 }
             } catch (error) {
                 console.error('Error fetching category:', error);
@@ -172,9 +175,10 @@ export default function CategoryProductsPage() {
                         alt_text,
                         is_main,
                         position
-                    )
+                    ),
+                    ${EMBEDDED_DISCOUNTS}
                 `, { count: 'exact' })
-                .eq('category_id', category.id)
+                .in('category_id', categoryIds.length ? categoryIds : [category.id])
                 .is('deleted_at', null)
                 .eq('status', 'active');
 
@@ -191,7 +195,11 @@ export default function CategoryProductsPage() {
 
             if (error) throw error;
             if (data) {
-                setProducts(data);
+                // Discounts come embedded in the same query (no second round trip).
+                setProducts(data.map((p: { id: string; product_discounts?: ProductDiscount[] }) => ({
+                    ...p,
+                    discount_percent: embeddedDiscountPercent(p),
+                })));
                 setTotalCount(count || 0);
             }
         } catch (error) {
@@ -220,7 +228,7 @@ export default function CategoryProductsPage() {
 
     const toggleWishlist = async (productId: string) => {
         if (!userId) {
-            message.error(text.pleaseLogin);
+            toast.error(text.pleaseLogin);
             return;
         }
 
@@ -260,16 +268,13 @@ export default function CategoryProductsPage() {
     if (loading || !category) {
         return (
             <>
-                <StaticHeader />
                 <LoadingSpinner message={text.loading} />
-                <Footer />
             </>
         );
     }
 
     return (
         <>
-            <StaticHeader />
             <div className="min-h-screen bg-white py-8">
                 <div className="max-w-7xl mx-auto px-4">
                     {/* Back Button and Category Header */}
@@ -286,6 +291,19 @@ export default function CategoryProductsPage() {
                         <h1 className="text-4xl font-bold text-[#2b1a16] mb-2">
                             {getCategoryName(category, locale)}
                         </h1>
+                        {subcategories.length > 0 && (
+                            <div className="flex flex-wrap gap-2 my-4">
+                                {subcategories.map((sub) => (
+                                    <Link
+                                        key={sub.id}
+                                        href={`/${locale}/categories/${sub.slug}`}
+                                        className="px-4 py-2 rounded-full border border-gray-300 text-sm text-[#2b1a16] hover:border-[#7a3b2e] hover:text-[#7a3b2e] transition"
+                                    >
+                                        {getCategoryName(sub, locale)}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
                         {!productsLoading && (
                             <p className="text-gray-600">
                                 {text.showingResults.replace('{count}', products.length.toString())}
@@ -297,23 +315,14 @@ export default function CategoryProductsPage() {
                     {productsLoading ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
-                                <Card
-                                    key={index}
-                                    hoverable
-                                    cover={
-                                        <Skeleton.Image
-                                            active
-                                            style={{
-                                                width: '100%',
-                                                height: '280px',
-                                                aspectRatio: '1/1'
-                                            }}
-                                        />
-                                    }
-                                    className="overflow-hidden"
-                                >
-                                    <Skeleton active paragraph={{ rows: 3 }} />
-                                </Card>
+                                <div key={index} className="animate-pulse overflow-hidden rounded-lg border border-gray-100 bg-white">
+                                            <div className="aspect-square w-full bg-gray-200" />
+                                            <div className="space-y-2 p-4">
+                                                <div className="h-4 w-3/4 rounded bg-gray-200" />
+                                                <div className="h-3 w-1/2 rounded bg-gray-200" />
+                                                <div className="h-3 w-1/3 rounded bg-gray-200" />
+                                            </div>
+                                        </div>
                             ))}
                         </div>
                     ) : products.length === 0 ? (
@@ -347,6 +356,8 @@ export default function CategoryProductsPage() {
                                             addItem({
                                                 id: p.id,
                                                 name: p.name,
+                                                name_ar: p.name_ar,
+                                                name_fr: p.name_fr,
                                                 price: Math.round(price),
                                                 image: productImage,
                                                 reviewCount: p.review_count || 0
@@ -407,7 +418,6 @@ export default function CategoryProductsPage() {
                     )}
                 </div>
             </div>
-            <Footer />
         </>
     );
 }

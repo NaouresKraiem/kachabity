@@ -29,11 +29,13 @@ const translations = {
 
 interface PromoProductsProps {
     locale?: string;
+    /** Server-loaded products (cached); when given, the section renders in the first HTML. */
+    initialProducts?: PromoProduct[];
 }
 
-export default function PromoProducts({ locale = 'en' }: PromoProductsProps) {
-    const [products, setProducts] = useState<PromoProduct[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export default function PromoProducts({ locale = 'en', initialProducts }: PromoProductsProps) {
+    const [products, setProducts] = useState<PromoProduct[]>(initialProducts ?? []);
+    const [isLoading, setIsLoading] = useState(!initialProducts);
     const [mounted, setMounted] = useState(false);
     const t = translations[locale as keyof typeof translations] || translations.en;
 
@@ -65,14 +67,10 @@ export default function PromoProducts({ locale = 'en' }: PromoProductsProps) {
             }
         }
 
-        if (mounted) {
+        if (mounted && !initialProducts) {
             fetchPromoProducts();
         }
-    }, [mounted]);
-
-    if (!mounted) {
-        return null;
-    }
+    }, [mounted, initialProducts]);
 
     return (
         <>  

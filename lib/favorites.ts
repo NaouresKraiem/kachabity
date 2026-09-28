@@ -19,11 +19,16 @@ export interface FavoriteWithProduct {
     created_at: string;
     product: {
         id: string;
-        title: string;
+        name: string;
+        name_ar?: string;
+        name_fr?: string;
+        title?: string;
         slug: string;
         price_cents: number;
+        base_price?: number;
         currency: string;
         image_url: string;
+        product_images?: Array<{ id: string; image_url: string; alt_text?: string | null; is_main: boolean; position: number }>;
         stock?: number | null;
         rating?: number;
         review_count?: number;

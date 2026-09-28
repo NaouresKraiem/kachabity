@@ -19,7 +19,7 @@ export interface ProductListItem {
     product_images?: Array<{
         id: string;
         image_url: string;
-        alt_text?: string;
+        alt_text?: string | null;
         is_main: boolean;
         position: number;
     }>;
@@ -91,6 +91,8 @@ interface ProductListCardProps {
     onToggleFavorite: (productId: string) => void;
     onAddToCart: (product: ProductListItem) => void;
     categorySlug?: string;
+    /** "large" shows a taller portrait photo (256×320); used on the landing page. */
+    size?: "default" | "large";
 }
 
 export default function ProductListCard({
@@ -100,6 +102,7 @@ export default function ProductListCard({
     onToggleFavorite,
     onAddToCart,
     categorySlug,
+    size = "default",
 }: ProductListCardProps) {
     // Memoize expensive calculations
     const productUrl = useMemo(() => `/${locale}/products/${product.slug}`, [locale, product.slug]);
@@ -132,16 +135,16 @@ export default function ProductListCard({
     const displayRating = product.rating || 0;
 
     return (
-        <div className="w-64 shrink-0">
+        <div className={`w-64 shrink-0`}>
             <div>
                 {/* Product Image */}
-                <div className="relative h-64 rounded-[15px] border border-[#E3E3E3] group hover:shadow-xl transition-shadow">
+                <div className={`relative ${size === "large" ? "h-80" : "h-64"} rounded-[15px] border border-[#E3E3E3] group hover:shadow-xl transition-shadow`}>
                     <Link href={productUrl} aria-label={`View ${productName}`}>
                         <Image
                             src={productImage}
                             alt={productName || "Product image"}
                             fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 256px"
+                            sizes={size === "large" ? "256px" : "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 256px"}
                             className="rounded-[15px] p-0.5 overflow-hidden object-cover group-hover:scale-105 transition-transform duration-300"
                             priority={false}
                         />
@@ -150,7 +153,7 @@ export default function ProductListCard({
                     {hasDiscount && (
                         <div className="absolute top-3 left-3 bg-[#FCF4F2] px-3 py-1 rounded-[9px] border border-[#842E1B] shadow-md">
                             <span className="text-xs font-medium text-[#842E1B]">
-                                -{product.discount_percent}% {t.discount}
+                                -{Math.round(product.discount_percent ?? 0)}% {t.discount}
                             </span>
                         </div>
                     )}

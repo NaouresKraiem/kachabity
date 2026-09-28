@@ -1,0 +1,410 @@
+{
+ "categories": {
+  "قشابية تونسية": {
+   "slug": "kachabia-tunisienne",
+   "en": "Tunisian Kachabia",
+   "fr": "Kachabia tunisienne",
+   "sort": 1
+  },
+  "قشابية طويلة": {
+   "slug": "kachabia-longue",
+   "en": "Long Kachabia",
+   "fr": "Kachabia longue",
+   "sort": 1
+  },
+  "قشابية صوف": {
+   "slug": "kachabia-laine",
+   "en": "Wool Kachabia",
+   "fr": "Kachabia en laine",
+   "sort": 1
+  },
+  "قشابية ملف": {
+   "slug": "kachabia-mlef",
+   "en": "Mlef Kachabia",
+   "fr": "Kachabia mlef",
+   "sort": 2
+  },
+  "قشابية كشمير": {
+   "slug": "kachabia-cachemire",
+   "en": "Cashmere Kachabia",
+   "fr": "Kachabia cachemire",
+   "sort": 3
+  },
+  "قشابية demi": {
+   "slug": "kachabia-demi",
+   "en": "Demi-season Kachabia",
+   "fr": "Kachabia demi-saison",
+   "sort": 2
+  },
+  "دنقري تونسي": {
+   "slug": "dengri-tunisien",
+   "en": "Tunisian Dengri",
+   "fr": "Dengri tunisien",
+   "sort": 2
+  },
+  "برنوس تونسي": {
+   "slug": "burnous-tunisien",
+   "en": "Tunisian Burnous",
+   "fr": "Burnous tunisien",
+   "sort": 3
+  },
+  "قميص صلاة": {
+   "slug": "qamis-priere",
+   "en": "Prayer Qamis",
+   "fr": "Qamis de prière",
+   "sort": 4
+  },
+  "بلوزة جربية": {
+   "slug": "blouza-djerbienne",
+   "en": "Djerbian Blouza",
+   "fr": "Blouza djerbienne",
+   "sort": 5
+  },
+  "مريول": {
+   "slug": "mariol",
+   "en": "Mariol",
+   "fr": "Mariol",
+   "sort": 6
+  },
+  "بلغة": {
+   "slug": "balgha",
+   "en": "Balgha Slippers",
+   "fr": "Balgha",
+   "sort": 7
+  },
+  "سعف": {
+   "slug": "artisanat-palme",
+   "en": "Palm-leaf Crafts",
+   "fr": "Artisanat en palme",
+   "sort": 8
+  },
+  "مظلة": {
+   "slug": "mdhalla",
+   "en": "Tunisian Straw Hat",
+   "fr": "Chapeau tunisien (mdhalla)",
+   "sort": 9
+  },
+  "كدرون جربي": {
+   "slug": "kadroun-djerbien",
+   "en": "Djerbian Kadroun",
+   "fr": "Kadroun djerbien",
+   "sort": 10
+  },
+  "شاشية تونسية": {
+   "slug": "chechia-tunisienne",
+   "en": "Tunisian Chechia",
+   "fr": "Chéchia tunisienne",
+   "sort": 11
+  },
+  "سروال عربي": {
+   "slug": "sarouel-arabe",
+   "en": "Arab Sarouel",
+   "fr": "Sarouel arabe",
+   "sort": 12
+  },
+  "منتجات الاطفال": {
+   "slug": "enfants",
+   "en": "Kids",
+   "fr": "Enfants",
+   "sort": 13
+  },
+  "عروضنا": {
+   "slug": "packs",
+   "en": "Packs & Offers",
+   "fr": "Packs & offres",
+   "sort": 14
+  }
+ },
+ "products": {
+  "224": {
+   "slug": "kachabia-laine-zemnia-homme",
+   "en": "Traditional Tunisian Men's Zemnia Wool Kachabia",
+   "fr": "Kachabia tunisienne traditionnelle homme en laine zemnia"
+  },
+  "232": {
+   "slug": "burnous-tunisien-laine",
+   "en": "Original Tunisian Wool Burnous",
+   "fr": "Burnous tunisien en laine authentique"
+  },
+  "240": {
+   "slug": "dengri-tunisien-homme",
+   "en": "Original Tunisian Men's Dengri",
+   "fr": "Dengri tunisien authentique pour homme"
+  },
+  "241": {
+   "slug": "kachabia-zemnia-demi-homme",
+   "en": "Men's Tunisian Zemnia Demi Kachabia",
+   "fr": "Kachabia tunisienne zemnia demi pour homme"
+  },
+  "243": {
+   "slug": "dengri-tunisien-brode",
+   "en": "Embroidered Tunisian Dengri",
+   "fr": "Dengri tunisien brodé"
+  },
+  "688": {
+   "slug": "blouza-djerbienne-enfant",
+   "en": "Kids' Original Tunisian Djerbian Blouza",
+   "fr": "Blouza djerbienne tunisienne authentique pour enfant"
+  },
+  "690": {
+   "slug": "blouza-djerbienne-homme",
+   "en": "Authentic Tunisian Djerbian Blouza",
+   "fr": "Blouza djerbienne tunisienne authentique"
+  },
+  "698": {
+   "slug": "qamis-priere-el-wakar",
+   "en": "El Wakar Prayer Qamis",
+   "fr": "Qamis de prière El Wakar"
+  },
+  "1634": {
+   "slug": "qamis-priere-royal",
+   "en": "Royal Prayer Qamis",
+   "fr": "Qamis de prière royal"
+  },
+  "1801": {
+   "slug": "kadroun-djerbien-laine",
+   "en": "Original Wool Djerbian Kadroun",
+   "fr": "Kadroun djerbien en laine authentique"
+  },
+  "1853": {
+   "slug": "kachabia-poil-de-chameau",
+   "en": "Camel Hair (Wabar) Kachabia",
+   "fr": "Kachabia en poil de chameau (wabar)"
+  },
+  "2213": {
+   "slug": "chechia-tunisienne",
+   "en": "Original Tunisian Chechia",
+   "fr": "Chéchia tunisienne authentique"
+  },
+  "2329": {
+   "slug": "kachabia-couleurs-demi",
+   "en": "Colours Demi Kachabia",
+   "fr": "Kachabia couleurs Demi"
+  },
+  "2638": {
+   "slug": "kachabia-mlef-bouc",
+   "en": "Mlef Kachabia, Rams Pattern",
+   "fr": "Kachabia mlef motif béliers"
+  },
+  "2717": {
+   "slug": "kachabia-laine-uni",
+   "en": "Wool Kachabia Uni",
+   "fr": "Kachabia en laine uni"
+  },
+  "3089": {
+   "slug": "kachabia-mangouch-uni",
+   "en": "Mangouch Kachabia Uni",
+   "fr": "Kachabia mangouch uni"
+  },
+  "3171": {
+   "slug": "kachabia-tibar",
+   "en": "Tibar Kachabia",
+   "fr": "Kachabia tibar"
+  },
+  "3226": {
+   "slug": "kachabia-cachemire",
+   "en": "Cashmere Kachabia",
+   "fr": "Kachabia cachemire"
+  },
+  "3272": {
+   "slug": "kachabia-mangouch-raye",
+   "en": "Mangouch Kachabia Rayé",
+   "fr": "Kachabia mangouch rayée"
+  },
+  "3441": {
+   "slug": "burnous-tunisien-deux-beliers",
+   "en": "Tunisian Burnous Zouz Akbach (Two Rams)",
+   "fr": "Burnous tunisien zouz akbach (deux béliers)"
+  },
+  "3534": {
+   "slug": "casquette-traditionnelle",
+   "en": "Traditional Cap",
+   "fr": "Cap traditionnel"
+  },
+  "3553": {
+   "slug": "kachabia-wazra-marron",
+   "en": "Brown Wazra Kachabia 1",
+   "fr": "Kachabia wazra marron 1"
+  },
+  "3582": {
+   "slug": "kachabia-chakhma-uni",
+   "en": "Chakhma Kachabia Uni",
+   "fr": "Kachabia chakhma uni"
+  },
+  "3742": {
+   "slug": "kachabia-ennour",
+   "en": "Ennour Kachabia",
+   "fr": "Kachabia Ennour"
+  },
+  "3831": {
+   "slug": "qamis-priere-ennour",
+   "en": "Ennour Prayer Qamis",
+   "fr": "Qamis de prière Ennour"
+  },
+  "3999": {
+   "slug": "kachabia-demi-cachemire",
+   "en": "Tunisian Demi Cashmere Kachabia",
+   "fr": "Kachabia tunisienne demi cachemire"
+  },
+  "4443": {
+   "slug": "kachabia-wazra-blanche",
+   "en": "White Wazra Kachabia",
+   "fr": "Kachabia wazra blanche"
+  },
+  "4496": {
+   "slug": "kachabia-laine-uni-gris",
+   "en": "Tunisian Wool Kachabia Uni Grey",
+   "fr": "Kachabia en laine tunisienne uni gris"
+  },
+  "4563": {
+   "slug": "kachabia-gris-wazra-marron",
+   "en": "Tunisian Grey Kachabia, Brown Wazra",
+   "fr": "Kachabia tunisienne grise wazra marron"
+  },
+  "4595": {
+   "slug": "kachabia-gris-wazra-blanche",
+   "en": "Grey Kachabia, White Wazra",
+   "fr": "Kachabia grise wazra blanche"
+  },
+  "4661": {
+   "slug": "kachabia-ennour-demi",
+   "en": "Ennour Demi Kachabia",
+   "fr": "Kachabia Ennour Demi"
+  },
+  "4672": {
+   "slug": "kachabia-gris-wazra-demi",
+   "en": "Grey Wazra Demi Kachabia",
+   "fr": "Kachabia grise wazra Demi"
+  },
+  "4681": {
+   "slug": "dengri-tunisien-brode-enfant",
+   "en": "Kids' Embroidered Tunisian Dengri",
+   "fr": "Dengri tunisien brodé pour enfant"
+  },
+  "4705": {
+   "slug": "dengri-tunisien-enfant",
+   "en": "Kids' Tunisian Dengri",
+   "fr": "Dengri tunisien pour enfant"
+  },
+  "4755": {
+   "slug": "kachabia-demi-mouchete",
+   "en": "Men's Tunisian Demi Moucheté Kachabia",
+   "fr": "Kachabia tunisienne homme Demi moucheté"
+  },
+  "4952": {
+   "slug": "kachabia-zemnia-rayee",
+   "en": "Tunisian Zemnia Wool Kachabia Rayé",
+   "fr": "Kachabia tunisienne zemnia en laine rayée"
+  },
+  "4975": {
+   "slug": "pack-ould-essoltan",
+   "en": "Pack Ould Essoltan",
+   "fr": "Pack Ould Essoltan"
+  },
+  "5419": {
+   "slug": "qamis-priere-oussama",
+   "en": "El Oussama Prayer Qamis",
+   "fr": "Qamis de prière El Oussama"
+  },
+  "5849": {
+   "slug": "dengri-du-marie",
+   "en": "Groom's Dengri",
+   "fr": "Dengri du marié"
+  },
+  "5858": {
+   "slug": "mariol-marine",
+   "en": "Mariol Marine",
+   "fr": "Mariol marine"
+  },
+  "5860": {
+   "slug": "pack-marie-tunisien",
+   "en": "Tunisian Groom Pack",
+   "fr": "Pack du marié tunisien"
+  },
+  "5898": {
+   "slug": "mariol-motif-ancestral",
+   "en": "Ancestral Pattern Mariol",
+   "fr": "Mariol motif des ancêtres"
+  },
+  "5942": {
+   "slug": "balgha-tunisienne",
+   "en": "Tunisian Balgha",
+   "fr": "Balgha tunisienne"
+  },
+  "6089": {
+   "slug": "kachabia-laine-uni-gris-2",
+   "en": "Tunisian Wool Kachabia Uni Grey",
+   "fr": "Kachabia en laine tunisienne uni gris"
+  },
+  "6099": {
+   "slug": "mdhalla-chapeau-tunisien",
+   "en": "Tunisian Mdhalla (Straw Hat)",
+   "fr": "Mdhalla tunisienne (chapeau de paille)"
+  },
+  "6113": {
+   "slug": "mdhalla-chapeau-tunisien-enfant",
+   "en": "Kids' Tunisian Mdhalla (Straw Hat)",
+   "fr": "Mdhalla tunisienne enfant (chapeau de paille)"
+  },
+  "6301": {
+   "slug": "mariol-marsa",
+   "en": "Mariol El Marsat",
+   "fr": "Mariol El Marsat"
+  },
+  "6307": {
+   "slug": "qamis-priere-el-iqbal",
+   "en": "El Iqbal Prayer Qamis",
+   "fr": "Qamis de prière El Iqbal"
+  },
+  "6350": {
+   "slug": "pack-ete",
+   "en": "Summer Pack",
+   "fr": "Pack été"
+  },
+  "6398": {
+   "slug": "pack-blouza-mdhalla",
+   "en": "Blouza & Tunisian Mdhalla Pack",
+   "fr": "Pack blouza et mdhalla tunisienne"
+  },
+  "6400": {
+   "slug": "pack-blouza-mdhalla-enfant",
+   "en": "Kids' Blouza & Tunisian Mdhalla Pack",
+   "fr": "Pack blouza et mdhalla tunisienne enfant"
+  },
+  "6415": {
+   "slug": "pack-anticher-luxe",
+   "en": "Pack Antichar Luxe",
+   "fr": "Pack antichar luxe"
+  },
+  "6433": {
+   "slug": "balgha-tunisienne-luxe",
+   "en": "Tunisian Balgha Luxe",
+   "fr": "Balgha tunisienne luxe"
+  },
+  "6583": {
+   "slug": "dengri-tunisien-simple",
+   "en": "Simple Tunisian Dengri",
+   "fr": "Dengri tunisien simple"
+  },
+  "6795": {
+   "slug": "kachabia-chakhma-pro-max",
+   "en": "Chakhma Pro Max Kachabia",
+   "fr": "Kachabia chakhma Pro Max"
+  },
+  "6812": {
+   "slug": "kachabia-gris-clair-wazra-marron",
+   "en": "Tunisian Light Grey Kachabia, Brown Wazra",
+   "fr": "Kachabia tunisienne gris clair wazra marron"
+  },
+  "7018": {
+   "slug": "kachabia-wazra-tibar",
+   "en": "Tibar Wazra Kachabia",
+   "fr": "Kachabia wazra tibar"
+  },
+  "7066": {
+   "slug": "kachabia-chakhma-pro-max-2",
+   "en": "Chakhma Pro Max 2 Kachabia",
+   "fr": "Kachabia chakhma Pro Max 2"
+  }
+ }
+}

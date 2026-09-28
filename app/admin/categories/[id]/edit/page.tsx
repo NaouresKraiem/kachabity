@@ -20,6 +20,7 @@ import {
     Upload,
 } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
+import CategoryExtraFields from "@/components/admin/CategoryExtraFields";
 import {
     SaveOutlined,
     ArrowLeftOutlined,
@@ -57,6 +58,9 @@ export default function EditCategoryPage() {
                             slug: category.slug,
                             sort_order: category.sort_order,
                             is_featured: category.is_featured,
+                            name_ar: category.name_ar,
+                            name_fr: category.name_fr,
+                            parent_id: category.parent_id ?? undefined,
                         });
 
                         // Set image if exists
@@ -125,6 +129,9 @@ export default function EditCategoryPage() {
                 sort_order: values.sort_order || 0,
                 is_featured: values.is_featured || false,
                 image_url: imageUrl,
+                name_ar: values.name_ar || null,
+                name_fr: values.name_fr || null,
+                parent_id: values.parent_id || null,
             };
 
             const response = await fetch("/api/categories", {
@@ -203,6 +210,8 @@ export default function EditCategoryPage() {
                                 </Form.Item>
                             </Col>
                         </Row>
+
+                        <CategoryExtraFields excludeId={id} />
 
                         <Form.Item label="Category Image">
                             <Upload

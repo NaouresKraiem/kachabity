@@ -45,12 +45,11 @@ interface Review {
 const ITEMS_PER_SLIDE = 3;
 const MAX_REVIEWS = 9;
 
-export default function CustomerFeedback() {
+export default function CustomerFeedback({ initialReviews }: { initialReviews?: Review[] }) {
     const params = useParams();
     const locale = (params?.locale as string) || 'en';
     const t = translations[locale as keyof typeof translations] || translations.en;
-    const [reviews, setReviews] = useState<Review[]>([]);
-    const [mounted, setMounted] = useState(false);
+    const [reviews, setReviews] = useState<Review[]>((initialReviews ?? []).slice(0, MAX_REVIEWS));
 
     const {
         currentSlide,
@@ -65,10 +64,6 @@ export default function CustomerFeedback() {
     });
 
     useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    useEffect(() => {
         async function fetchReviews() {
             try {
                 const { data, error } = await supabase
@@ -78,7 +73,6 @@ export default function CustomerFeedback() {
                         users:user_id (
                             id,
                             name,
-                            email,
                             avatar_url
                         )
                     `)
@@ -94,12 +88,8 @@ export default function CustomerFeedback() {
             }
         }
 
-        fetchReviews();
-    }, []);
-
-    if (!mounted) {
-        return null;
-    }
+        if (!initialReviews) fetchReviews();
+    }, [initialReviews]);
 
     const serviceHighlights = getServiceHighlights();
     const currentReviews = getCurrentItems(reviews);
@@ -136,7 +126,7 @@ export default function CustomerFeedback() {
                 )}
 
                 {/* Service Highlights */}
-                <div className="flex justify-center items-center gap-2 mt-12 mx-auto">
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mt-12 mx-auto">
                     {serviceHighlights.map((highlight, index) => (
                         <ServiceHighlightCard
                             key={index}

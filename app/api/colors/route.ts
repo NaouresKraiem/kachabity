@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabase from '@/lib/supabaseClient';
+import { invalidateCatalog } from '@/lib/catalog-cache';
+import supabase from '@/lib/supabase-admin';
 // GET - Fetch all colors (public access)
 export async function GET(request: NextRequest) {
     try {
@@ -51,6 +52,8 @@ export async function POST(request: NextRequest) {
 
         if (error) throw error;
 
+        invalidateCatalog(); // refresh cached storefront data
+
         return NextResponse.json({ success: true, data }, { status: 201 });
     } catch (error: any) {
         console.error('Error creating color:', error);
@@ -90,6 +93,8 @@ export async function PUT(request: NextRequest) {
 
         if (error) throw error;
 
+        invalidateCatalog(); // refresh cached storefront data
+
         return NextResponse.json({ success: true, data });
     } catch (error: any) {
         console.error('Error updating color:', error);
@@ -120,6 +125,8 @@ export async function DELETE(request: NextRequest) {
             .eq('id', id);
 
         if (error) throw error;
+
+        invalidateCatalog(); // refresh cached storefront data
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

@@ -228,7 +228,7 @@ export default function CartAnalyticsPage() {
                                         title="Total Carts"
                                         value={totalCarts}
                                         prefix={<ShoppingCartOutlined />}
-                                        valueStyle={{ color: '#1890ff' }}
+                                        styles={{ content: { color: '#1890ff' } }}
                                     />
                                 </Card>
                             </Col>
@@ -238,7 +238,7 @@ export default function CartAnalyticsPage() {
                                         title="Converted"
                                         value={totalConverted}
                                         prefix={<CheckCircleOutlined />}
-                                        valueStyle={{ color: '#52c41a' }}
+                                        styles={{ content: { color: '#52c41a' } }}
                                     />
                                 </Card>
                             </Col>
@@ -248,7 +248,7 @@ export default function CartAnalyticsPage() {
                                         title="Conversion Rate"
                                         value={conversionRate}
                                         suffix="%"
-                                        valueStyle={{ color: '#722ed1' }}
+                                        styles={{ content: { color: '#722ed1' } }}
                                     />
                                 </Card>
                             </Col>
@@ -258,7 +258,7 @@ export default function CartAnalyticsPage() {
                                         title="Avg Cart Value"
                                         value={avgCartValue}
                                         prefix="$"
-                                        valueStyle={{ color: '#fa8c16' }}
+                                        styles={{ content: { color: '#fa8c16' } }}
                                     />
                                 </Card>
                             </Col>
@@ -272,7 +272,7 @@ export default function CartAnalyticsPage() {
                                         title="Abandoned Carts"
                                         value={totalAbandoned}
                                         prefix={<CloseCircleOutlined />}
-                                        valueStyle={{ color: '#ff4d4f' }}
+                                        styles={{ content: { color: '#ff4d4f' } }}
                                     />
                                 </Card>
                             </Col>
@@ -282,7 +282,7 @@ export default function CartAnalyticsPage() {
                                         title="Abandoned Revenue"
                                         value={abandonedRevenue.toFixed(2)}
                                         prefix={<DollarOutlined />}
-                                        valueStyle={{ color: '#ff7a45' }}
+                                        styles={{ content: { color: '#ff7a45' } }}
                                     />
                                     <p style={{ marginTop: '8px', color: '#666', fontSize: '12px' }}>
                                         Potential revenue from abandoned carts

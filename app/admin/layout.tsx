@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Layout, Menu, Typography, Button, ConfigProvider } from "antd";
 import type { MenuProps } from "antd";
@@ -15,8 +16,10 @@ import {
     ShoppingCartOutlined,
     PercentageOutlined,
     PlayCircleOutlined,
+    LogoutOutlined,
 } from "@ant-design/icons";
 import { antdTheme } from "@/lib/antd-config";
+import { createAdminBrowserClient } from "@/lib/supabase-browser";
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -115,20 +118,31 @@ const menuItems: MenuItem[] = [
     // },
 ];
 
+// Page entries become real links: Next.js prefetches them, so clicking switches pages instantly.
+function withLinks(items: MenuItem[]): MenuItem[] {
+    return items.map((item) => {
+        if (!item || !("key" in item)) return item;
+        const key = String(item.key);
+        const children = "children" in item && item.children ? withLinks(item.children as MenuItem[]) : undefined;
+        const label = "label" in item ? item.label : null;
+        return {
+            ...item,
+            ...(key.startsWith("/") ? { label: <Link href={key}>{label}</Link> } : {}),
+            ...(children ? { children } : {}),
+        } as MenuItem;
+    });
+}
+const linkedMenuItems = withLinks(menuItems);
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const [collapsed, setCollapsed] = useState(false);
+    // Highlight the clicked entry immediately instead of waiting for navigation to finish.
+    const [pendingKey, setPendingKey] = useState<string | null>(null);
+    useEffect(() => setPendingKey(null), [pathname]);
 
-    const selectedKeys = useMemo(() => {
-        if (pathname === "/admin/products" || pathname.startsWith("/admin/products/")) {
-            return [pathname];
-        }
-        if (pathname === "/admin/categories" || pathname.startsWith("/admin/categories/")) {
-            return [pathname];
-        }
-        return [pathname];
-    }, [pathname]);
+    const selectedKeys = useMemo(() => [pendingKey ?? pathname], [pendingKey, pathname]);
 
     const openKeys = useMemo(() => {
         if (pathname?.startsWith("/admin/products")) {
@@ -141,9 +155,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }, [pathname]);
 
     const handleMenuClick = ({ key }: { key: string }) => {
-        console.log("Menu clicked:", key);
         if (key.startsWith("/")) {
-            router.push(key);
+            setPendingKey(key); // the <Link> in the label does the navigation
         } else if (key === "products") {
             // If clicking on "Products" parent, navigate to products list
             router.push("/admin/products");
@@ -152,6 +165,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             router.push("/admin/categories");
         }
     };
+
+    const handleSignOut = async () => {
+        await createAdminBrowserClient().auth.signOut();
+        router.replace("/admin/login");
+        router.refresh();
+    };
+
+    if (pathname === "/admin/login") {
+        return <ConfigProvider theme={antdTheme}>{children}</ConfigProvider>;
+    }
 
     return (
         <ConfigProvider theme={antdTheme}>
@@ -202,7 +225,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         mode="inline"
                         selectedKeys={selectedKeys}
                         openKeys={openKeys}
-                        items={menuItems}
+                        items={linkedMenuItems}
                         onClick={handleMenuClick}
                         onOpenChange={(keys) => {
                             // When submenu opens, if user clicked parent (not a child), navigate
@@ -258,9 +281,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 Admin Panel
                             </Title>
                         </div>
-                        <Button type="primary" href="/" target="_blank" style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}>
-                            View Store
-                        </Button>
+                        <div style={{ display: "flex", gap: 8 }}>
+                            <Button type="primary" href="/" target="_blank" style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}>
+                                View Store
+                            </Button>
+                            <Button icon={<LogoutOutlined />} onClick={handleSignOut}>
+                                Sign out
+                            </Button>
+                        </div>
                     </Header>
                     <Content
                         style={{

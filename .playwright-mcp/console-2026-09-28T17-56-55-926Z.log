@@ -1,0 +1,86 @@
+[      41ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006896.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[      84ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[     182ms] [LOG] [Fast Refresh] done in 186ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[    1489ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14537
+[    1672ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[    1673ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[    1685ms] [WARNING] Image with src "http://localhost:3000/assets/images/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1718ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[    1718ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[    1857ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <SegmentViewNode type="layout" pagePath="[locale]/l...">
+      <SegmentTrieNode>
+      <script>
+      <script>
+      <script>
+      <script>
+      <script>
+      <LocaleLayout>
+        <LanguageProvider locale="fr">
+          <CartProvider>
+            <Suspense>
+              <StaticHeader>
+                <header className={"w-full "} dir="ltr">
+                  <div>
+                  <div>
+                  <div className="bg-white b...">
+                    <div className="max-w-7xl ...">
+                      <div>
+                      <div className="flex-1 max...">
+                        <div className="relative b...">
+                          <form onSubmit={function handleSearch}>
+                            <input
+                              type="text"
+                              value=""
+                              onChange={function onChange}
+                              placeholder="Rechercher un produit ..."
+                              className="color-black w-full py-2 rounded-[15px] font-light border placeholder-[#969696..."
+-                             style={{caret-color:"transparent"}}
+                            >
+                            ...
+                      ...
+                  ...
+            ...
+ @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2417
+[    1994ms] [WARNING] Image with src "http://localhost:3000/assets/images/highlight.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    2110ms] [WARNING] Image with src "http://localhost:3000/assets/images/icons/support.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    2110ms] [WARNING] Image with src "http://localhost:3000/assets/images/icons/chat.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    2475ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000007365.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    2629ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-09-image-20260916-182007-257-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    2864ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-144426-367-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3938ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2025-12-image-20260908-112558-915-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3939ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006815.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3950ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000007365.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3961ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-04-1000005878.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3961ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-04-1000005878.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3970ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-03-enf.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3970ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-03-enf.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3983ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006896.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    3983ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006896.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    4711ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-07-1000008944.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    4830ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-144156-703-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    5020ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-07-1000008958.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    5021ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-143822-615-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    6307ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006960.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   15177ms] [WARNING] Image with src "/assets/images/flowerFloated.svg" was detected as the Largest Contentful Paint (LCP). Please add the "priority" property if this image is above the fold.
+Read more: https://nextjs.org/docs/api-reference/next/image#priority @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   15260ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   15295ms] [LOG] [Fast Refresh] done in 135ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   44397ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   44440ms] [LOG] [Fast Refresh] done in 143ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   58771ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   58813ms] [LOG] [Fast Refresh] done in 142ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   60828ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   60940ms] [LOG] [Fast Refresh] done in 212ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816

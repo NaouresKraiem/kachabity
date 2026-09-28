@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import defaultSupabase from '@/lib/supabaseClient';
 import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'crypto';
+import { z } from 'zod';
+import { priceOrder } from '@/lib/order-pricing';
+import { sendOrderConfirmationEmail } from '@/lib/order-confirmation-email';
 
 // Use Service Role Key if available to bypass RLS for admin operations
 const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -10,6 +14,143 @@ const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
 // Warn if service role key is not set
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.warn('⚠️  SUPABASE_SERVICE_ROLE_KEY not set. Admin order operations may fail due to RLS policies.');
+}
+
+const orderItemSchema = z.object({
+    id: z.guid(),
+    name: z.string().optional(),
+    name_ar: z.string().optional().nullable(),
+    name_fr: z.string().optional().nullable(),
+    image: z.string().optional().nullable(),
+    price: z.number().nonnegative(),
+    quantity: z.number().int().positive(),
+});
+
+const createOrderSchema = z.object({
+    customerEmail: z.string().email().optional(),
+    customerFirstName: z.string().trim().min(1),
+    customerLastName: z.string().trim().min(1),
+    customerPhone: z.string().trim().min(1),
+    shippingAddress: z.string().optional(),
+    shippingCity: z.string().optional(),
+    shippingState: z.string().optional(),
+    shippingZip: z.string().optional(),
+    shippingCountry: z.string().optional(),
+    items: z.array(orderItemSchema).min(1),
+    subtotal: z.number().nonnegative(),
+    shippingCost: z.number().nonnegative(),
+    total: z.number().nonnegative(),
+    orderNotes: z.string().max(2000).optional(),
+});
+
+function generateOrderNumber(): string {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = randomBytes(4).toString('hex').toUpperCase();
+    return `ORD-${timestamp}-${random}`;
+}
+
+// Links the order to the shopper only when their access token checks out.
+async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
+    const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+    if (!token) return null;
+    const { data } = await supabase.auth.getUser(token);
+    return data.user?.id ?? null;
+}
+
+// POST - Create an order (public checkout). Orders are inserted here with the
+// service-role key because RLS does not let shoppers write orders directly.
+export async function POST(request: NextRequest) {
+    try {
+        const parsed = createOrderSchema.safeParse(await request.json());
+        if (!parsed.success) {
+            return NextResponse.json(
+                { success: false, error: 'Invalid order data' },
+                { status: 400 }
+            );
+        }
+        const orderData = parsed.data;
+
+        // Never store client-supplied amounts: re-price against the database and
+        // reject if the shopper was shown something different.
+        const priced = await priceOrder(orderData.items, orderData.shippingCountry, orderData.total);
+        if (!priced.ok) {
+            return NextResponse.json(
+                { success: false, error: 'Order prices are out of date', code: priced.code },
+                { status: 409 }
+            );
+        }
+        const { pricing } = priced;
+        const userId = await getUserIdFromRequest(request);
+
+        const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert({
+                order_number: generateOrderNumber(),
+                user_id: userId,
+                customer_email: orderData.customerEmail || null,
+                customer_first_name: orderData.customerFirstName,
+                customer_last_name: orderData.customerLastName,
+                customer_phone: orderData.customerPhone,
+                shipping_address: orderData.shippingAddress || null,
+                shipping_city: orderData.shippingCity || null,
+                shipping_state: orderData.shippingState || null,
+                shipping_zip: orderData.shippingZip || null,
+                shipping_country: orderData.shippingCountry || null,
+                subtotal: pricing.subtotal,
+                shipping_cost: pricing.shippingCost,
+                total: pricing.total,
+                order_notes: orderData.orderNotes || null,
+                status: 'pending',
+                payment_status: 'pending',
+            })
+            .select()
+            .single();
+
+        if (orderError) throw orderError;
+
+        const { data: orderItems, error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderData.items.map((item) => {
+                const product = pricing.products.get(item.id)!;
+                return {
+                    order_id: order.id,
+                    product_id: item.id,
+                    product_name: product.name,
+                    product_name_ar: product.name_ar,
+                    product_name_fr: product.name_fr,
+                    product_image: product.image,
+                    quantity: item.quantity,
+                    price: item.price,
+                    subtotal: item.price * item.quantity,
+                };
+            }))
+            .select();
+
+        if (itemsError) {
+            await supabase.from('orders').delete().eq('id', order.id);
+            throw itemsError;
+        }
+
+        // Sent from stored data only; a failed email never fails the order.
+        if (order.customer_email) {
+            const emailResult = await sendOrderConfirmationEmail({
+                order,
+                orderItems: orderItems ?? [],
+                customerName: `${order.customer_first_name} ${order.customer_last_name}`,
+            });
+            if (!emailResult.success) {
+                console.error('Order confirmation email failed for', order.order_number);
+            }
+        }
+
+        return NextResponse.json({ success: true, data: order }, { status: 201 });
+    } catch (error) {
+        console.error('Error creating order:', error);
+        return NextResponse.json(
+            { success: false, error: 'Unable to create order' },
+            { status: 500 }
+        );
+    }
 }
 
 // GET - Fetch all orders (admin access)

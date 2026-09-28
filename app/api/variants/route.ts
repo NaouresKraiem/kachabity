@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabase from '@/lib/supabaseClient';
+import { invalidateCatalog } from '@/lib/catalog-cache';
+import supabase from '@/lib/supabase-admin';
 
 // GET - Fetch variants for a product (public read)
 export async function GET(request: NextRequest) {
@@ -65,6 +66,8 @@ export async function POST(request: NextRequest) {
 
         if (error) throw error;
 
+        invalidateCatalog(); // refresh cached storefront data
+
         return NextResponse.json({ success: true, data }, { status: 201 });
     } catch (error: any) {
         console.error('Error creating variant:', error);
@@ -109,6 +112,8 @@ export async function PUT(request: NextRequest) {
 
         if (error) throw error;
 
+        invalidateCatalog(); // refresh cached storefront data
+
         return NextResponse.json({ success: true, data });
     } catch (error: any) {
         console.error('Error updating variant:', error);
@@ -147,6 +152,8 @@ export async function DELETE(request: NextRequest) {
 
             if (deleteError) throw deleteError;
         }
+
+        invalidateCatalog(); // refresh cached storefront data
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

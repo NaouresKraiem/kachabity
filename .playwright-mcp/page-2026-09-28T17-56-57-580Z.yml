@@ -1,0 +1,183 @@
+- generic [active] [ref=f4e1]:
+  - banner [ref=f4e2]:
+    - generic [ref=f4e4]:
+      - generic [ref=f4e5]:
+        - generic [ref=f4e6]: +216 55 558 648
+        - generic [ref=f4e7]: contact@yourdomain.com
+      - generic [ref=f4e8]:
+        - generic [ref=f4e9]: "Suivez-nous :"
+        - generic [ref=f4e10]:
+          - link "Follow us on facebook" [ref=f4e11] [cursor=pointer]:
+            - /url: https://facebook.com/yourpage
+          - link "Follow us on instagram" [ref=f4e14] [cursor=pointer]:
+            - /url: https://instagram.com/yourpage
+          - link "Follow us on tiktok" [ref=f4e17] [cursor=pointer]:
+            - /url: https://tiktok.com/@yourpage
+      - button "🇫🇷 Français" [ref=f4e22]:
+        - generic [ref=f4e23]: 🇫🇷
+        - generic [ref=f4e24]: Français
+    - generic [ref=f4e28]:
+      - img "logo" [ref=f4e30] [cursor=pointer]
+      - generic [ref=f4e33]:
+        - textbox "Rechercher un produit ..." [ref=f4e34]
+        - button [ref=f4e35]
+      - button "Shopping cart" [ref=f4e39] [cursor=pointer]:
+        - img "cart" [ref=f4e41]
+        - generic [ref=f4e42]: Panier
+    - generic [ref=f4e44]:
+      - navigation [ref=f4e45]:
+        - button "Catégories" [ref=f4e47]
+        - link "Remises" [ref=f4e51] [cursor=pointer]:
+          - /url: /fr/products?promo=true
+        - link "À propos" [ref=f4e52] [cursor=pointer]:
+          - /url: /fr/about
+        - link "Contactez-nous" [ref=f4e53] [cursor=pointer]:
+          - /url: /fr/contact
+      - generic [ref=f4e54] [cursor=pointer]:
+        - img "handmade" [ref=f4e55]
+        - generic [ref=f4e56]: 100% fait main
+  - main [ref=f4e57]:
+    - region "Featured Products" [ref=f4e58]:
+      - generic [ref=f4e60]:
+        - generic [ref=f4e63]:
+          - generic [ref=f4e64]: Où
+          - generic [ref=f4e65]: Tradition
+          - generic [ref=f4e66]: Rencontre
+          - generic [ref=f4e67]: Élégance
+        - generic [ref=f4e68]: Chargement...
+    - generic [ref=f4e78]:
+      - heading "Kachabia, burnous et dengri, faits en Tunisie" [level=2] [ref=f4e79]
+      - paragraph [ref=f4e80]: Des pièces en laine tissées par des artisans tunisiens et livrées chez vous. Vous payez à la réception de votre commande.
+      - generic [ref=f4e81]:
+        - link "Voir la collection" [ref=f4e82] [cursor=pointer]:
+          - /url: /fr/products
+        - link "Tous les produits" [ref=f4e83] [cursor=pointer]:
+          - /url: /fr/products
+      - list [ref=f4e84]:
+        - listitem [ref=f4e85]: Paiement à la livraison
+        - listitem [ref=f4e89]: Livraison offerte dès 500 TND
+    - generic [ref=f4e95]:
+      - generic:
+        - img "Decorative flower"
+      - generic [ref=f4e97]:
+        - heading "Catégories en vedette" [level=2] [ref=f4e98]
+        - paragraph [ref=f4e99]: Parcourez certaines de nos catégories les plus populaires
+    - generic [ref=f4e123]:
+      - heading "Produits les plus vendus" [level=2] [ref=f4e124]
+      - paragraph [ref=f4e125]: Parcourez certains de nos produits les plus populaires
+      - img "Decorative" [ref=f4e126]
+    - generic [ref=f4e173]:
+      - heading "Comment commander" [level=2] [ref=f4e174]
+      - generic [ref=f4e175]:
+        - list [ref=f4e176]:
+          - listitem [ref=f4e177]:
+            - text: "1"
+            - heading "Choisissez votre pièce" [level=3] [ref=f4e178]
+            - paragraph [ref=f4e179]: Sélectionnez le modèle, la couleur et la taille sur la fiche produit.
+          - listitem [ref=f4e180]:
+            - text: "2"
+            - heading "Passez commande" [level=3] [ref=f4e181]
+            - paragraph [ref=f4e182]: Indiquez votre adresse au moment de valider. Cela prend deux minutes.
+          - listitem [ref=f4e183]:
+            - text: "3"
+            - heading "Nous livrons chez vous" [level=3] [ref=f4e184]
+            - paragraph [ref=f4e185]: La livraison est offerte dès 500 TND d'achat.
+          - listitem [ref=f4e186]:
+            - text: "4"
+            - heading "Payez à la réception" [level=3] [ref=f4e187]
+            - paragraph [ref=f4e188]: Vous réglez en espèces à l'arrivée du colis.
+        - generic [ref=f4e189]:
+          - paragraph [ref=f4e190]: Un doute sur la taille ?
+          - paragraph [ref=f4e191]: Appelez-nous, nous vous aidons à choisir avant de commander.
+          - link "+216 55 558 648" [ref=f4e192] [cursor=pointer]:
+            - /url: tel:+21655558648
+    - generic [ref=f4e194]:
+      - heading "Questions Fréquemment Posées" [level=2] [ref=f4e196]
+      - generic [ref=f4e197]:
+        - generic [ref=f4e198]:
+          - button "Qu'est-ce que قشابِـيتي?" [ref=f4e199]
+          - paragraph [ref=f4e206]: قشابِـيتي est la première et la plus grande plateforme en ligne pour les produits artisanaux tunisiens traditionnels. Nous offrons une large gamme d'articles authentiques faits à la main, notamment des vêtements traditionnels, des accessoires et des décorations d'intérieur, tous fabriqués par des artisans qualifiés à travers la Tunisie. Notre mission est de préserver et de promouvoir l'artisanat traditionnel tout en le rendant accessible aux clients du monde entier.
+        - generic [ref=f4e207]:
+          - button "Comment passer une commande?" [ref=f4e208]
+          - paragraph [ref=f4e215]: Passer une commande est facile ! Parcourez simplement nos produits, ajoutez des articles à votre panier et passez à la caisse. Vous devrez fournir vos informations de livraison et vos coordonnées de paiement. Une fois votre commande confirmée, vous recevrez un email de confirmation avec les détails de votre commande.
+        - generic [ref=f4e216]:
+          - button "Quelles options d'expédition sont disponibles?" [ref=f4e217]
+          - paragraph [ref=f4e224]: Nous proposons l'expédition en Tunisie et à l'international. Les coûts d'expédition et les délais de livraison varient selon votre emplacement. Vous pouvez consulter les informations détaillées d'expédition lors du paiement. Pour les commandes en Tunisie, la livraison standard prend généralement 3 à 5 jours ouvrables.
+        - generic [ref=f4e225]:
+          - button "Comment puis-je suivre ma commande?" [ref=f4e226]
+          - paragraph [ref=f4e233]: Une fois votre commande expédiée, vous recevrez un numéro de suivi par email. Vous pouvez utiliser ce numéro de suivi pour suivre la progression de votre colis sur notre site Web ou sur le site Web du transporteur.
+        - generic [ref=f4e234]:
+          - button "Quelle est votre politique de retour?" [ref=f4e235]
+          - paragraph [ref=f4e242]: Nous acceptons les retours dans les 14 jours suivant la livraison pour les articles dans leur état d'origine. Veuillez contacter notre équipe de service client pour initier un retour. Les articles doivent être non portés, non lavés et dans leur emballage d'origine. Les articles personnalisés ou personnalisés peuvent ne pas être éligibles au retour.
+        - generic [ref=f4e243]:
+          - button "Vos produits sont-ils 100% faits à la main?" [ref=f4e244]
+          - paragraph [ref=f4e251]: Oui ! Tous nos produits sont 100% faits à la main par des artisans qualifiés. Nous travaillons directement avec des artisans à travers la Tunisie pour garantir l'authenticité et la qualité. Chaque pièce est unique et fabriquée avec des techniques traditionnelles transmises de génération en génération.
+  - contentinfo [ref=f4e252]:
+    - generic [ref=f4e253]:
+      - generic [ref=f4e254]:
+        - generic [ref=f4e255]:
+          - link [ref=f4e256] [cursor=pointer]:
+            - /url: /fr
+            - img "Kachabity" [ref=f4e257]
+            - img "Kachabity" [ref=f4e258]
+          - paragraph [ref=f4e259]: Découvrez des produits artisanaux tunisiens authentiques et des trésors traditionnels.
+          - generic [ref=f4e260]:
+            - link "Facebook" [ref=f4e261] [cursor=pointer]:
+              - /url: https://facebook.com/yourpage
+            - link "Instagram" [ref=f4e264] [cursor=pointer]:
+              - /url: https://instagram.com/yourpage
+            - link "TikTok" [ref=f4e267] [cursor=pointer]:
+              - /url: https://tiktok.com/@yourpage
+        - generic [ref=f4e270]:
+          - generic [ref=f4e271]:
+            - heading "Liens rapides" [level=3] [ref=f4e272]
+            - list [ref=f4e273]:
+              - listitem [ref=f4e274]:
+                - link "Catégories" [ref=f4e275] [cursor=pointer]:
+                  - /url: /fr/categories
+              - listitem [ref=f4e276]:
+                - link "Remises" [ref=f4e277] [cursor=pointer]:
+                  - /url: /fr/products?promo=true
+              - listitem [ref=f4e278]:
+                - link "Nouveautés" [ref=f4e279] [cursor=pointer]:
+                  - /url: /fr/products?sort=new
+              - listitem [ref=f4e280]:
+                - link "Meilleures ventes" [ref=f4e281] [cursor=pointer]:
+                  - /url: /fr/products?sort=popular
+          - generic [ref=f4e282]:
+            - heading "À propos" [level=3] [ref=f4e283]
+            - list [ref=f4e284]:
+              - listitem [ref=f4e285]:
+                - link "À propos de nous" [ref=f4e286] [cursor=pointer]:
+                  - /url: /fr/about
+              - listitem [ref=f4e287]:
+                - link "Contact" [ref=f4e288] [cursor=pointer]:
+                  - /url: /fr/contact
+              - listitem [ref=f4e289]:
+                - link "FAQ" [ref=f4e290] [cursor=pointer]:
+                  - /url: /fr#faqs
+          - generic [ref=f4e291]:
+            - heading "Légal" [level=3] [ref=f4e292]
+            - list [ref=f4e293]:
+              - listitem [ref=f4e294]:
+                - link "Termes et conditions" [ref=f4e295] [cursor=pointer]:
+                  - /url: /fr/terms-and-conditions
+              - listitem [ref=f4e296]:
+                - link "Politique de confidentialité" [ref=f4e297] [cursor=pointer]:
+                  - /url: /fr/privacy
+              - listitem [ref=f4e298]:
+                - link "Politique d'expédition" [ref=f4e299] [cursor=pointer]:
+                  - /url: /fr/shipping
+        - generic [ref=f4e302]:
+          - heading "Abonnez-vous à notre newsletter" [level=3] [ref=f4e303]
+          - paragraph [ref=f4e304]: Recevez les dernières mises à jour sur les nouveaux produits et offres exclusives
+          - generic [ref=f4e305]:
+            - textbox "Entrez votre e-mail" [ref=f4e306]
+            - button "S'abonner" [ref=f4e307]
+      - generic [ref=f4e309]:
+        - paragraph [ref=f4e310]: © 2026 Kachabity. Tous droits réservés.
+        - generic [ref=f4e311]:
+          - link "+216 55 558 648" [ref=f4e312] [cursor=pointer]:
+            - /url: tel:+216 55 558 648
+          - link "contact@yourdomain.com" [ref=f4e316] [cursor=pointer]:
+            - /url: mailto:contact@yourdomain.com

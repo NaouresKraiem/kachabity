@@ -8,7 +8,7 @@ interface FormInputProps<T extends FieldValues = FieldValues> {
     register: UseFormRegister<T>;
     error?: FieldError;
     required?: boolean;
-    rules?: RegisterOptions;
+    rules?: RegisterOptions<T, Path<T>>;
     className?: string;
 }
 
