@@ -115,7 +115,7 @@ export default function NewsletterForm({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={placeholder}
-                    className="placeholder:text-[#96999D80] flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-sm"
+                    className="placeholder:text-[#96999D80] min-w-0 flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-sm"
                     disabled={status === "loading"}
                 />
                 <button

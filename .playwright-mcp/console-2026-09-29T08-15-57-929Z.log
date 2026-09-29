@@ -1,0 +1,83 @@
+[     151ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[     246ms] [LOG] [Fast Refresh] done in 195ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[     347ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[     371ms] [LOG] [Fast Refresh] done in 125ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[     843ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14537
+[    1077ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[    1077ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[    1082ms] [WARNING] Image with src "http://localhost:3000/assets/images/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1261ms] [WARNING] Image with src "http://localhost:3000/assets/images/highlight.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1362ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/node_modules_three_build_three_core_996ef05a.js:2440
+[    1373ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2025-12-image-20260908-112558-915-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1373ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000007365.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1373ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006960.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1373ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-04-1000005878.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1373ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006896.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1441ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[    1441ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[    1448ms] [WARNING] Image with src "http://localhost:3000/assets/images/icons/support.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    1448ms] [WARNING] Image with src "http://localhost:3000/assets/images/icons/chat.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[    9060ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[    9063ms] [LOG] [Fast Refresh] done in 103ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   38605ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   38704ms] [LOG] [Fast Refresh] done in 185ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   38807ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   39221ms] [LOG] [Fast Refresh] done in 514ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   39316ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/ar?_rsc=_0WPsmvE75o3f25s:0
+[   39322ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   39347ms] [LOG] [Fast Refresh] done in 125ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   39619ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   39733ms] [LOG] [Fast Refresh] done in 214ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   41949ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14537
+[   42051ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[   42051ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[   42056ms] [WARNING] Image with src "http://localhost:3000/assets/images/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42362ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[   42362ms] [LOG] [] @ http://localhost:3000/_next/static/chunks/_fa3c57b5._.js:1044
+[   42368ms] Error: Switched to client rendering because the server rendering errored:
+
+useCart must be used within CartProvider
+    at useCart (/home/wassim/kachabity/.next/server/chunks/ssr/[root-of-the-server]__4c99c1cb._.js:168:15)
+    at TopProducts (/home/wassim/kachabity/.next/server/chunks/ssr/_5b947097._.js:1813:160)
+    at Object.react_stack_bottom_frame (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:292649)
+    at renderWithHooks (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:114080)
+    at renderElement (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:128752)
+    at renderElement (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:187713)
+    at retryNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:194584)
+    at renderNodeDestructive (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:193847)
+    at renderNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:203204)
+    at renderChildrenArray (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:200308)
+    at retryNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:195061)
+    at renderNodeDestructive (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:193847)
+    at renderNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:203204)
+    at renderElement (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:182924)
+    at retryNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:194584)
+    at renderNodeDestructive (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:193847)
+    at renderNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:203204)
+    at renderChildrenArray (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:200308)
+    at retryNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:195061)
+    at renderNodeDestructive (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:193847)
+    at renderNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:203204)
+    at renderElement (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:176646)
+    at retryNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:194584)
+    at renderNodeDestructive (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:193847)
+    at renderElement (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:128203)
+    at renderElement (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:187713)
+    at retryNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:194584)
+    at renderNodeDestructive (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:193847)
+    at retryNode (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:194969)
+    at performWork (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:215436)
+    at Immediate._onImmediate (/home/wassim/kachabity/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:2:98974)
+    at process.processImmediate (node:internal/timers:504:21)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17)
+[   42425ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/node_modules_three_build_three_core_996ef05a.js:2440
+[   42526ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-144426-367-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42526ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-144156-703-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42527ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-image-20260610-143822-615-scaled.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42527ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006815.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42527ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-04-1000005878.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42527ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2026-06-1000006896.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42617ms] [WARNING] Image with src "http://localhost:3000/assets/images/icons/support.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42617ms] [WARNING] Image with src "http://localhost:3000/assets/images/icons/chat.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014
+[   42724ms] [WARNING] Image with src "https://hwxgibxahqdxkzuvfxvz.supabase.co/storage/v1/object/public/products/wp/2025-06-504840923-17885893776293486-6729960264270549171-n.webp" was detected as the Largest Contentful Paint (LCP). Please add the "priority" property if this image is above the fold.
+Read more: https://nextjs.org/docs/api-reference/next/image#priority @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:1014

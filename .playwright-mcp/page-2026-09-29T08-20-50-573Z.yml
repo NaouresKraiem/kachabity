@@ -1,0 +1,709 @@
+- generic [active] [ref=f11e1]:
+  - banner [ref=f11e2]:
+    - generic [ref=f11e4]:
+      - generic [ref=f11e5]: +216 55 558 648
+      - generic [ref=f11e7]:
+        - generic [ref=f11e8]: "Suivez-nous :"
+        - generic [ref=f11e9]:
+          - link "Follow us on facebook" [ref=f11e10] [cursor=pointer]:
+            - /url: https://www.facebook.com/profile.php?id=61562718525332
+          - link "Follow us on instagram" [ref=f11e13] [cursor=pointer]:
+            - /url: https://www.instagram.com/kachabitii/
+          - link "Follow us on tiktok" [ref=f11e16] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@kachabitii
+      - button "🇫🇷 Français" [ref=f11e21]:
+        - generic [ref=f11e22]: 🇫🇷
+        - generic [ref=f11e23]: Français
+    - generic [ref=f11e27]:
+      - img "logo" [ref=f11e29] [cursor=pointer]
+      - generic [ref=f11e32]:
+        - textbox "Rechercher un produit ..." [ref=f11e33]
+        - button [ref=f11e34]
+      - generic [ref=f11e37]:
+        - link "Se connecter" [ref=f11e38] [cursor=pointer]:
+          - /url: /fr/auth
+        - button "Shopping cart" [ref=f11e41] [cursor=pointer]:
+          - img "cart" [ref=f11e43]
+          - generic [ref=f11e44]: Panier
+    - generic [ref=f11e46]:
+      - navigation [ref=f11e47]:
+        - button "Catégories" [ref=f11e49]
+        - link "Remises" [ref=f11e53] [cursor=pointer]:
+          - /url: /fr/products?promo=true
+        - link "À propos" [ref=f11e54] [cursor=pointer]:
+          - /url: /fr/about
+        - link "Contactez-nous" [ref=f11e55] [cursor=pointer]:
+          - /url: /fr/contact
+      - generic [ref=f11e56] [cursor=pointer]:
+        - img "handmade" [ref=f11e57]
+        - generic [ref=f11e58]: 100% fait main
+  - main [ref=f11e59]:
+    - generic [ref=f11e60]:
+      - generic:
+        - generic:
+          - heading "Kachabia, burnous et dengri, faits en Tunisie" [level=1]
+          - paragraph: Des pièces en laine tissées par des artisans tunisiens et livrées chez vous. Vous payez à la réception de votre commande.
+          - generic:
+            - link "Voir la collection" [ref=f11e67] [cursor=pointer]:
+              - /url: /fr/products?category=kachabia-tunisienne
+            - link "Tous les produits" [ref=f11e68] [cursor=pointer]:
+              - /url: /fr/products
+          - list:
+            - listitem: Paiement à la livraison
+            - listitem: Livraison offerte dès 500 TND
+    - generic [ref=f11e70]:
+      - generic:
+        - img "Decorative flower"
+      - generic [ref=f11e71]:
+        - generic [ref=f11e72]:
+          - heading "Catégories en vedette" [level=2] [ref=f11e73]
+          - paragraph [ref=f11e74]: Parcourez certaines de nos catégories les plus populaires
+        - generic [ref=f11e77]:
+          - link [ref=f11e78] [cursor=pointer]:
+            - /url: /fr/products?category=kachabia-tunisienne
+            - generic [ref=f11e79]:
+              - img "Kachabia tunisienne" [ref=f11e81]
+              - heading "Kachabia tunisienne" [level=3] [ref=f11e82]
+          - link [ref=f11e83] [cursor=pointer]:
+            - /url: /fr/products?category=dengri-tunisien
+            - generic [ref=f11e84]:
+              - img "Dengri tunisien" [ref=f11e86]
+              - heading "Dengri tunisien" [level=3] [ref=f11e87]
+          - link [ref=f11e88] [cursor=pointer]:
+            - /url: /fr/products?category=burnous-tunisien
+            - generic [ref=f11e89]:
+              - img "Burnous tunisien" [ref=f11e91]
+              - heading "Burnous tunisien" [level=3] [ref=f11e92]
+          - link [ref=f11e93] [cursor=pointer]:
+            - /url: /fr/products?category=qamis-priere
+            - generic [ref=f11e94]:
+              - img "Qamis de prière" [ref=f11e96]
+              - heading "Qamis de prière" [level=3] [ref=f11e97]
+          - link [ref=f11e98] [cursor=pointer]:
+            - /url: /fr/products?category=blouza-djerbienne
+            - generic [ref=f11e99]:
+              - img "Blouza djerbienne" [ref=f11e101]
+              - heading "Blouza djerbienne" [level=3] [ref=f11e102]
+          - link [ref=f11e103] [cursor=pointer]:
+            - /url: /fr/products?category=mariol
+            - generic [ref=f11e104]:
+              - img "Mariol" [ref=f11e106]
+              - heading "Mariol" [level=3] [ref=f11e107]
+          - link [ref=f11e108] [cursor=pointer]:
+            - /url: /fr/products?category=balgha
+            - generic [ref=f11e109]:
+              - img "Balgha" [ref=f11e111]
+              - heading "Balgha" [level=3] [ref=f11e112]
+          - link [ref=f11e113] [cursor=pointer]:
+            - /url: /fr/products?category=mdhalla
+            - generic [ref=f11e114]:
+              - img "Chapeau tunisien (mdhalla)" [ref=f11e116]
+              - heading "Chapeau tunisien (mdhalla)" [level=3] [ref=f11e117]
+          - link [ref=f11e118] [cursor=pointer]:
+            - /url: /fr/products?category=kadroun-djerbien
+            - generic [ref=f11e119]:
+              - img "Kadroun djerbien" [ref=f11e121]
+              - heading "Kadroun djerbien" [level=3] [ref=f11e122]
+          - link [ref=f11e123] [cursor=pointer]:
+            - /url: /fr/products?category=chechia-tunisienne
+            - generic [ref=f11e124]:
+              - img "Chéchia tunisienne" [ref=f11e126]
+              - heading "Chéchia tunisienne" [level=3] [ref=f11e127]
+          - link [ref=f11e128] [cursor=pointer]:
+            - /url: /fr/products?category=enfants
+            - generic [ref=f11e129]:
+              - img "Enfants" [ref=f11e131]
+              - heading "Enfants" [level=3] [ref=f11e132]
+          - link [ref=f11e133] [cursor=pointer]:
+            - /url: /fr/products?category=packs
+            - generic [ref=f11e134]:
+              - img "Packs & offres" [ref=f11e136]
+              - heading "Packs & offres" [level=3] [ref=f11e137]
+    - generic [ref=f11e139]:
+      - generic [ref=f11e140]:
+        - generic [ref=f11e141]:
+          - heading "Nouveautés" [level=2] [ref=f11e142]
+          - paragraph [ref=f11e143]: Les dernières pièces arrivées, photographiées dans notre boutique.
+        - link "Voir tous les produits" [ref=f11e144] [cursor=pointer]:
+          - /url: /fr/products
+      - generic [ref=f11e145]:
+        - link "Kachabia chakhma Pro Max 2 Kachabia en laine Kachabia chakhma Pro Max 2 149 TND" [ref=f11e146] [cursor=pointer]:
+          - /url: /fr/products/kachabia-chakhma-pro-max-2-7066
+          - img "Kachabia chakhma Pro Max 2" [ref=f11e148]
+          - generic [ref=f11e149]:
+            - paragraph [ref=f11e150]: Kachabia en laine
+            - heading "Kachabia chakhma Pro Max 2" [level=3] [ref=f11e151]
+            - paragraph [ref=f11e152]:
+              - generic [ref=f11e153]: 149 TND
+        - link "Kachabia wazra tibar Kachabia en laine Kachabia wazra tibar 189 TND" [ref=f11e154] [cursor=pointer]:
+          - /url: /fr/products/kachabia-wazra-tibar-7018
+          - img "Kachabia wazra tibar" [ref=f11e156]
+          - generic [ref=f11e157]:
+            - paragraph [ref=f11e158]: Kachabia en laine
+            - heading "Kachabia wazra tibar" [level=3] [ref=f11e159]
+            - paragraph [ref=f11e160]:
+              - generic [ref=f11e161]: 189 TND
+        - link "Kachabia tunisienne gris clair wazra marron Kachabia en laine Kachabia tunisienne gris clair wazra marron 149 TND" [ref=f11e162] [cursor=pointer]:
+          - /url: /fr/products/kachabia-gris-clair-wazra-marron-6812
+          - img "Kachabia tunisienne gris clair wazra marron" [ref=f11e164]
+          - generic [ref=f11e165]:
+            - paragraph [ref=f11e166]: Kachabia en laine
+            - heading "Kachabia tunisienne gris clair wazra marron" [level=3] [ref=f11e167]
+            - paragraph [ref=f11e168]:
+              - generic [ref=f11e169]: 149 TND
+        - link "Kachabia chakhma Pro Max Kachabia en laine Kachabia chakhma Pro Max 149 TND" [ref=f11e170] [cursor=pointer]:
+          - /url: /fr/products/kachabia-chakhma-pro-max-6795
+          - img "Kachabia chakhma Pro Max" [ref=f11e172]
+          - generic [ref=f11e173]:
+            - paragraph [ref=f11e174]: Kachabia en laine
+            - heading "Kachabia chakhma Pro Max" [level=3] [ref=f11e175]
+            - paragraph [ref=f11e176]:
+              - generic [ref=f11e177]: 149 TND
+        - link "Dengri tunisien simple -13% Dengri tunisien Dengri tunisien simple 69 TND 79 TND" [ref=f11e178] [cursor=pointer]:
+          - /url: /fr/products/dengri-tunisien-simple-6583
+          - generic [ref=f11e179]:
+            - img "Dengri tunisien simple" [ref=f11e180]
+            - generic [ref=f11e181]: "-13%"
+          - generic [ref=f11e182]:
+            - paragraph [ref=f11e183]: Dengri tunisien
+            - heading "Dengri tunisien simple" [level=3] [ref=f11e184]
+            - paragraph [ref=f11e185]:
+              - generic [ref=f11e186]: 69 TND
+              - generic [ref=f11e187]: 79 TND
+        - link "Balgha tunisienne luxe Balgha Balgha tunisienne luxe 40 TND" [ref=f11e188] [cursor=pointer]:
+          - /url: /fr/products/balgha-tunisienne-luxe-6433
+          - img "Balgha tunisienne luxe" [ref=f11e190]
+          - generic [ref=f11e191]:
+            - paragraph [ref=f11e192]: Balgha
+            - heading "Balgha tunisienne luxe" [level=3] [ref=f11e193]
+            - paragraph [ref=f11e194]:
+              - generic [ref=f11e195]: 40 TND
+        - link "Pack antichar luxe Packs & offres Pack antichar luxe 229 TND" [ref=f11e196] [cursor=pointer]:
+          - /url: /fr/products/pack-anticher-luxe-6415
+          - img "Pack antichar luxe" [ref=f11e198]
+          - generic [ref=f11e199]:
+            - paragraph [ref=f11e200]: Packs & offres
+            - heading "Pack antichar luxe" [level=3] [ref=f11e201]
+            - paragraph [ref=f11e202]:
+              - generic [ref=f11e203]: 229 TND
+        - link "Pack blouza et mdhalla tunisienne enfant Packs & offres Pack blouza et mdhalla tunisienne enfant 55 TND" [ref=f11e204] [cursor=pointer]:
+          - /url: /fr/products/pack-blouza-mdhalla-enfant-6400
+          - img "Pack blouza et mdhalla tunisienne enfant" [ref=f11e206]
+          - generic [ref=f11e207]:
+            - paragraph [ref=f11e208]: Packs & offres
+            - heading "Pack blouza et mdhalla tunisienne enfant" [level=3] [ref=f11e209]
+            - paragraph [ref=f11e210]:
+              - generic [ref=f11e211]: 55 TND
+        - link "Pack blouza et mdhalla tunisienne Packs & offres Pack blouza et mdhalla tunisienne 92 TND" [ref=f11e212] [cursor=pointer]:
+          - /url: /fr/products/pack-blouza-mdhalla-6398
+          - img "Pack blouza et mdhalla tunisienne" [ref=f11e214]
+          - generic [ref=f11e215]:
+            - paragraph [ref=f11e216]: Packs & offres
+            - heading "Pack blouza et mdhalla tunisienne" [level=3] [ref=f11e217]
+            - paragraph [ref=f11e218]:
+              - generic [ref=f11e219]: 92 TND
+        - link "Pack été Packs & offres Pack été 52 TND" [ref=f11e220] [cursor=pointer]:
+          - /url: /fr/products/pack-ete-6350
+          - img "Pack été" [ref=f11e222]
+          - generic [ref=f11e223]:
+            - paragraph [ref=f11e224]: Packs & offres
+            - heading "Pack été" [level=3] [ref=f11e225]
+            - paragraph [ref=f11e226]:
+              - generic [ref=f11e227]: 52 TND
+    - generic [ref=f11e229]:
+      - generic [ref=f11e230]:
+        - heading "Produits les plus vendus" [level=2] [ref=f11e231]
+        - paragraph [ref=f11e232]: Parcourez certains de nos produits les plus populaires
+        - img "Decorative" [ref=f11e233]
+      - generic [ref=f11e236]:
+        - generic [ref=f11e238]:
+          - generic [ref=f11e239]:
+            - link "View Kachabia chakhma Pro Max 2":
+              - /url: /fr/products/kachabia-chakhma-pro-max-2-7066
+              - img "Kachabia chakhma Pro Max 2" [ref=f11e240] [cursor=pointer]
+            - button "Add Kachabia chakhma Pro Max 2 to favorites" [ref=f11e241]
+          - generic [ref=f11e244]:
+            - link [ref=f11e245] [cursor=pointer]:
+              - /url: /fr/products/kachabia-chakhma-pro-max-2-7066
+              - heading "Kachabia chakhma Pro Max 2" [level=3] [ref=f11e246]
+            - generic [ref=f11e247]:
+              - img "0 out of 5 stars" [ref=f11e248]
+              - generic [ref=f11e259]: 0 (0 avis)
+            - generic [ref=f11e260]:
+              - generic [ref=f11e261]: 149 TND
+              - button "Add Kachabia chakhma Pro Max 2 to cart" [ref=f11e263]: Ajouter
+        - generic [ref=f11e268]:
+          - generic [ref=f11e269]:
+            - link "View Kachabia wazra tibar":
+              - /url: /fr/products/kachabia-wazra-tibar-7018
+              - img "Kachabia wazra tibar" [ref=f11e270] [cursor=pointer]
+            - button "Add Kachabia wazra tibar to favorites" [ref=f11e271]
+          - generic [ref=f11e274]:
+            - link [ref=f11e275] [cursor=pointer]:
+              - /url: /fr/products/kachabia-wazra-tibar-7018
+              - heading "Kachabia wazra tibar" [level=3] [ref=f11e276]
+            - generic [ref=f11e277]:
+              - img "0 out of 5 stars" [ref=f11e278]
+              - generic [ref=f11e289]: 0 (0 avis)
+            - generic [ref=f11e290]:
+              - generic [ref=f11e291]: 189 TND
+              - button "Add Kachabia wazra tibar to cart" [ref=f11e293]: Ajouter
+        - generic [ref=f11e298]:
+          - generic [ref=f11e299]:
+            - link "View Kachabia tunisienne gris clair wazra marron":
+              - /url: /fr/products/kachabia-gris-clair-wazra-marron-6812
+              - img "Kachabia tunisienne gris clair wazra marron" [ref=f11e300] [cursor=pointer]
+            - button "Add Kachabia tunisienne gris clair wazra marron to favorites" [ref=f11e301]
+          - generic [ref=f11e304]:
+            - link [ref=f11e305] [cursor=pointer]:
+              - /url: /fr/products/kachabia-gris-clair-wazra-marron-6812
+              - heading "Kachabia tunisienne gris clair wazra marron" [level=3] [ref=f11e306]
+            - generic [ref=f11e307]:
+              - img "0 out of 5 stars" [ref=f11e308]
+              - generic [ref=f11e319]: 0 (0 avis)
+            - generic [ref=f11e320]:
+              - generic [ref=f11e321]: 149 TND
+              - button "Add Kachabia tunisienne gris clair wazra marron to cart" [ref=f11e323]: Ajouter
+        - generic [ref=f11e328]:
+          - generic [ref=f11e329]:
+            - link "View Kachabia chakhma Pro Max":
+              - /url: /fr/products/kachabia-chakhma-pro-max-6795
+              - img "Kachabia chakhma Pro Max" [ref=f11e330] [cursor=pointer]
+            - button "Add Kachabia chakhma Pro Max to favorites" [ref=f11e331]
+          - generic [ref=f11e334]:
+            - link [ref=f11e335] [cursor=pointer]:
+              - /url: /fr/products/kachabia-chakhma-pro-max-6795
+              - heading "Kachabia chakhma Pro Max" [level=3] [ref=f11e336]
+            - generic [ref=f11e337]:
+              - img "0 out of 5 stars" [ref=f11e338]
+              - generic [ref=f11e349]: 0 (0 avis)
+            - generic [ref=f11e350]:
+              - generic [ref=f11e351]: 149 TND
+              - button "Add Kachabia chakhma Pro Max to cart" [ref=f11e353]: Ajouter
+        - generic [ref=f11e358]:
+          - generic [ref=f11e359]:
+            - link "View Dengri tunisien simple":
+              - /url: /fr/products/dengri-tunisien-simple-6583
+              - img "Dengri tunisien simple" [ref=f11e360] [cursor=pointer]
+            - generic [ref=f11e361]: "-13% Réduction"
+            - button "Add Dengri tunisien simple to favorites" [ref=f11e363]
+          - generic [ref=f11e366]:
+            - link [ref=f11e367] [cursor=pointer]:
+              - /url: /fr/products/dengri-tunisien-simple-6583
+              - heading "Dengri tunisien simple" [level=3] [ref=f11e368]
+            - generic [ref=f11e369]:
+              - img "0 out of 5 stars" [ref=f11e370]
+              - generic [ref=f11e381]: 0 (0 avis)
+            - generic [ref=f11e382]:
+              - generic [ref=f11e383]:
+                - generic [ref=f11e384]: 69 TND
+                - generic [ref=f11e385]: 79 TND
+              - button "Add Dengri tunisien simple to cart" [ref=f11e386]: Ajouter
+        - generic [ref=f11e391]:
+          - generic [ref=f11e392]:
+            - link "View Balgha tunisienne luxe":
+              - /url: /fr/products/balgha-tunisienne-luxe-6433
+              - img "Balgha tunisienne luxe" [ref=f11e393] [cursor=pointer]
+            - button "Add Balgha tunisienne luxe to favorites" [ref=f11e394]
+          - generic [ref=f11e397]:
+            - link [ref=f11e398] [cursor=pointer]:
+              - /url: /fr/products/balgha-tunisienne-luxe-6433
+              - heading "Balgha tunisienne luxe" [level=3] [ref=f11e399]
+            - generic [ref=f11e400]:
+              - img "0 out of 5 stars" [ref=f11e401]
+              - generic [ref=f11e412]: 0 (0 avis)
+            - generic [ref=f11e413]:
+              - generic [ref=f11e414]: 40 TND
+              - button "Add Balgha tunisienne luxe to cart" [ref=f11e416]: Ajouter
+        - generic [ref=f11e421]:
+          - generic [ref=f11e422]:
+            - link "View Pack antichar luxe":
+              - /url: /fr/products/pack-anticher-luxe-6415
+              - img "Pack antichar luxe" [ref=f11e423] [cursor=pointer]
+            - button "Add Pack antichar luxe to favorites" [ref=f11e424]
+          - generic [ref=f11e427]:
+            - link [ref=f11e428] [cursor=pointer]:
+              - /url: /fr/products/pack-anticher-luxe-6415
+              - heading "Pack antichar luxe" [level=3] [ref=f11e429]
+            - generic [ref=f11e430]:
+              - img "0 out of 5 stars" [ref=f11e431]
+              - generic [ref=f11e442]: 0 (0 avis)
+            - generic [ref=f11e443]:
+              - generic [ref=f11e444]: 229 TND
+              - button "Add Pack antichar luxe to cart" [ref=f11e446]: Ajouter
+        - generic [ref=f11e451]:
+          - generic [ref=f11e452]:
+            - link "View Pack blouza et mdhalla tunisienne enfant":
+              - /url: /fr/products/pack-blouza-mdhalla-enfant-6400
+              - img "Pack blouza et mdhalla tunisienne enfant" [ref=f11e453] [cursor=pointer]
+            - button "Add Pack blouza et mdhalla tunisienne enfant to favorites" [ref=f11e454]
+          - generic [ref=f11e457]:
+            - link [ref=f11e458] [cursor=pointer]:
+              - /url: /fr/products/pack-blouza-mdhalla-enfant-6400
+              - heading "Pack blouza et mdhalla tunisienne enfant" [level=3] [ref=f11e459]
+            - generic [ref=f11e460]:
+              - img "0 out of 5 stars" [ref=f11e461]
+              - generic [ref=f11e472]: 0 (0 avis)
+            - generic [ref=f11e473]:
+              - generic [ref=f11e474]: 55 TND
+              - button "Add Pack blouza et mdhalla tunisienne enfant to cart" [ref=f11e476]: Ajouter
+        - generic [ref=f11e481]:
+          - generic [ref=f11e482]:
+            - link "View Pack blouza et mdhalla tunisienne":
+              - /url: /fr/products/pack-blouza-mdhalla-6398
+              - img "Pack blouza et mdhalla tunisienne" [ref=f11e483] [cursor=pointer]
+            - button "Add Pack blouza et mdhalla tunisienne to favorites" [ref=f11e484]
+          - generic [ref=f11e487]:
+            - link [ref=f11e488] [cursor=pointer]:
+              - /url: /fr/products/pack-blouza-mdhalla-6398
+              - heading "Pack blouza et mdhalla tunisienne" [level=3] [ref=f11e489]
+            - generic [ref=f11e490]:
+              - img "0 out of 5 stars" [ref=f11e491]
+              - generic [ref=f11e502]: 0 (0 avis)
+            - generic [ref=f11e503]:
+              - generic [ref=f11e504]: 92 TND
+              - button "Add Pack blouza et mdhalla tunisienne to cart" [ref=f11e506]: Ajouter
+        - generic [ref=f11e511]:
+          - generic [ref=f11e512]:
+            - link "View Pack été":
+              - /url: /fr/products/pack-ete-6350
+              - img "Pack été" [ref=f11e513] [cursor=pointer]
+            - button "Add Pack été to favorites" [ref=f11e514]
+          - generic [ref=f11e517]:
+            - link [ref=f11e518] [cursor=pointer]:
+              - /url: /fr/products/pack-ete-6350
+              - heading "Pack été" [level=3] [ref=f11e519]
+            - generic [ref=f11e520]:
+              - img "0 out of 5 stars" [ref=f11e521]
+              - generic [ref=f11e532]: 0 (0 avis)
+            - generic [ref=f11e533]:
+              - generic [ref=f11e534]: 52 TND
+              - button "Add Pack été to cart" [ref=f11e536]: Ajouter
+    - generic [ref=f11e542]:
+      - generic [ref=f11e543]:
+        - heading "Kachabia tunisienne" [level=2] [ref=f11e544]
+        - paragraph [ref=f11e545]: "24 pièces dans cette collection, la plus complète de la boutique. Choisissez un style :"
+        - list [ref=f11e546]:
+          - listitem [ref=f11e547]:
+            - link "Kachabia longue" [ref=f11e548] [cursor=pointer]:
+              - /url: /fr/products?category=kachabia-longue
+          - listitem [ref=f11e549]:
+            - link "Kachabia demi-saison" [ref=f11e550] [cursor=pointer]:
+              - /url: /fr/products?category=kachabia-demi
+        - link "Voir toute la collection" [ref=f11e551] [cursor=pointer]:
+          - /url: /fr/products?category=kachabia-tunisienne
+      - list [ref=f11e553]:
+        - listitem [ref=f11e554]:
+          - link "Kachabia chakhma Pro Max 2 Kachabia en laine Kachabia chakhma Pro Max 2 149 TND" [ref=f11e555] [cursor=pointer]:
+            - /url: /fr/products/kachabia-chakhma-pro-max-2-7066
+            - img "Kachabia chakhma Pro Max 2" [ref=f11e557]
+            - generic [ref=f11e558]:
+              - paragraph [ref=f11e559]: Kachabia en laine
+              - heading "Kachabia chakhma Pro Max 2" [level=3] [ref=f11e560]
+              - paragraph [ref=f11e561]:
+                - generic [ref=f11e562]: 149 TND
+        - listitem [ref=f11e563]:
+          - link "Kachabia wazra tibar Kachabia en laine Kachabia wazra tibar 189 TND" [ref=f11e564] [cursor=pointer]:
+            - /url: /fr/products/kachabia-wazra-tibar-7018
+            - img "Kachabia wazra tibar" [ref=f11e566]
+            - generic [ref=f11e567]:
+              - paragraph [ref=f11e568]: Kachabia en laine
+              - heading "Kachabia wazra tibar" [level=3] [ref=f11e569]
+              - paragraph [ref=f11e570]:
+                - generic [ref=f11e571]: 189 TND
+        - listitem [ref=f11e572]:
+          - link "Kachabia tunisienne gris clair wazra marron Kachabia en laine Kachabia tunisienne gris clair wazra marron 149 TND" [ref=f11e573] [cursor=pointer]:
+            - /url: /fr/products/kachabia-gris-clair-wazra-marron-6812
+            - img "Kachabia tunisienne gris clair wazra marron" [ref=f11e575]
+            - generic [ref=f11e576]:
+              - paragraph [ref=f11e577]: Kachabia en laine
+              - heading "Kachabia tunisienne gris clair wazra marron" [level=3] [ref=f11e578]
+              - paragraph [ref=f11e579]:
+                - generic [ref=f11e580]: 149 TND
+        - listitem [ref=f11e581]:
+          - link "Kachabia chakhma Pro Max Kachabia en laine Kachabia chakhma Pro Max 149 TND" [ref=f11e582] [cursor=pointer]:
+            - /url: /fr/products/kachabia-chakhma-pro-max-6795
+            - img "Kachabia chakhma Pro Max" [ref=f11e584]
+            - generic [ref=f11e585]:
+              - paragraph [ref=f11e586]: Kachabia en laine
+              - heading "Kachabia chakhma Pro Max" [level=3] [ref=f11e587]
+              - paragraph [ref=f11e588]:
+                - generic [ref=f11e589]: 149 TND
+        - listitem [ref=f11e590]:
+          - link "Kachabia tunisienne zemnia en laine rayée Kachabia en laine Kachabia tunisienne zemnia en laine rayée 280 TND" [ref=f11e591] [cursor=pointer]:
+            - /url: /fr/products/kachabia-zemnia-rayee-4952
+            - img "Kachabia tunisienne zemnia en laine rayée" [ref=f11e593]
+            - generic [ref=f11e594]:
+              - paragraph [ref=f11e595]: Kachabia en laine
+              - heading "Kachabia tunisienne zemnia en laine rayée" [level=3] [ref=f11e596]
+              - paragraph [ref=f11e597]:
+                - generic [ref=f11e598]: 280 TND
+        - listitem [ref=f11e599]:
+          - link "Kachabia tunisienne homme Demi moucheté -25% Kachabia demi-saison Kachabia tunisienne homme Demi moucheté 59 TND 79 TND" [ref=f11e600] [cursor=pointer]:
+            - /url: /fr/products/kachabia-demi-mouchete-4755
+            - generic [ref=f11e601]:
+              - img "Kachabia tunisienne homme Demi moucheté" [ref=f11e602]
+              - generic [ref=f11e603]: "-25%"
+            - generic [ref=f11e604]:
+              - paragraph [ref=f11e605]: Kachabia demi-saison
+              - heading "Kachabia tunisienne homme Demi moucheté" [level=3] [ref=f11e606]
+              - paragraph [ref=f11e607]:
+                - generic [ref=f11e608]: 59 TND
+                - generic [ref=f11e609]: 79 TND
+        - listitem [ref=f11e610]:
+          - link "Kachabia grise wazra Demi -14% Kachabia demi-saison Kachabia grise wazra Demi 119 TND 139 TND" [ref=f11e611] [cursor=pointer]:
+            - /url: /fr/products/kachabia-gris-wazra-demi-4672
+            - generic [ref=f11e612]:
+              - img "Kachabia grise wazra Demi" [ref=f11e613]
+              - generic [ref=f11e614]: "-14%"
+            - generic [ref=f11e615]:
+              - paragraph [ref=f11e616]: Kachabia demi-saison
+              - heading "Kachabia grise wazra Demi" [level=3] [ref=f11e617]
+              - paragraph [ref=f11e618]:
+                - generic [ref=f11e619]: 119 TND
+                - generic [ref=f11e620]: 139 TND
+        - listitem [ref=f11e621]:
+          - link "Kachabia Ennour Demi -14% Kachabia demi-saison Kachabia Ennour Demi 119 TND 139 TND" [ref=f11e622] [cursor=pointer]:
+            - /url: /fr/products/kachabia-ennour-demi-4661
+            - generic [ref=f11e623]:
+              - img "Kachabia Ennour Demi" [ref=f11e624]
+              - generic [ref=f11e625]: "-14%"
+            - generic [ref=f11e626]:
+              - paragraph [ref=f11e627]: Kachabia demi-saison
+              - heading "Kachabia Ennour Demi" [level=3] [ref=f11e628]
+              - paragraph [ref=f11e629]:
+                - generic [ref=f11e630]: 119 TND
+                - generic [ref=f11e631]: 139 TND
+        - listitem [ref=f11e632]:
+          - link "Kachabia grise wazra blanche Kachabia en laine Kachabia grise wazra blanche 149 TND" [ref=f11e633] [cursor=pointer]:
+            - /url: /fr/products/kachabia-gris-wazra-blanche-4595
+            - img "Kachabia grise wazra blanche" [ref=f11e635]
+            - generic [ref=f11e636]:
+              - paragraph [ref=f11e637]: Kachabia en laine
+              - heading "Kachabia grise wazra blanche" [level=3] [ref=f11e638]
+              - paragraph [ref=f11e639]:
+                - generic [ref=f11e640]: 149 TND
+        - listitem [ref=f11e641]:
+          - link "Kachabia tunisienne grise wazra marron Kachabia en laine Kachabia tunisienne grise wazra marron 149 TND" [ref=f11e642] [cursor=pointer]:
+            - /url: /fr/products/kachabia-gris-wazra-marron-4563
+            - img "Kachabia tunisienne grise wazra marron" [ref=f11e644]
+            - generic [ref=f11e645]:
+              - paragraph [ref=f11e646]: Kachabia en laine
+              - heading "Kachabia tunisienne grise wazra marron" [level=3] [ref=f11e647]
+              - paragraph [ref=f11e648]:
+                - generic [ref=f11e649]: 149 TND
+    - generic [ref=f11e652]:
+      - generic [ref=f11e653]:
+        - heading "Produits promotionnels" [level=2] [ref=f11e654]
+        - paragraph [ref=f11e655]: Offres à durée limitée sur nos meilleurs produits
+        - img "Decorative" [ref=f11e656]
+      - generic [ref=f11e657]:
+        - generic [ref=f11e660]:
+          - generic [ref=f11e661]:
+            - link "Dengri tunisien simple":
+              - /url: /fr/products/dengri-tunisien-simple-6583
+              - img "Dengri tunisien simple" [ref=f11e662] [cursor=pointer]
+            - generic [ref=f11e663]: "-13% Discount"
+          - generic [ref=f11e665]:
+            - generic [ref=f11e666]:
+              - link [ref=f11e667] [cursor=pointer]:
+                - /url: /fr/products/dengri-tunisien-simple-6583
+                - heading "Dengri tunisien simple" [level=3] [ref=f11e668]
+              - generic [ref=f11e669]:
+                - generic [ref=f11e670]: 69 TND
+                - generic [ref=f11e671]: 79 TND
+            - button "Ajouter au panier" [ref=f11e673]
+        - generic [ref=f11e678]:
+          - generic [ref=f11e679]:
+            - link "Dengri du marié":
+              - /url: /fr/products/dengri-du-marie-5849
+              - img "Dengri du marié" [ref=f11e680] [cursor=pointer]
+            - generic [ref=f11e681]: "-13% Discount"
+          - generic [ref=f11e683]:
+            - generic [ref=f11e684]:
+              - link [ref=f11e685] [cursor=pointer]:
+                - /url: /fr/products/dengri-du-marie-5849
+                - heading "Dengri du marié" [level=3] [ref=f11e686]
+              - generic [ref=f11e687]:
+                - generic [ref=f11e688]: 69 TND
+                - generic [ref=f11e689]: 79 TND
+            - button "Ajouter au panier" [ref=f11e691]
+        - generic [ref=f11e696]:
+          - generic [ref=f11e697]:
+            - link "Pack Ould Essoltan":
+              - /url: /fr/products/pack-ould-essoltan-4975
+              - img "Pack Ould Essoltan" [ref=f11e698] [cursor=pointer]
+            - generic [ref=f11e699]: "-22% Discount"
+          - generic [ref=f11e701]:
+            - generic [ref=f11e702]:
+              - link [ref=f11e703] [cursor=pointer]:
+                - /url: /fr/products/pack-ould-essoltan-4975
+                - heading "Pack Ould Essoltan" [level=3] [ref=f11e704]
+              - generic [ref=f11e705]:
+                - generic [ref=f11e706]: 69 TND
+                - generic [ref=f11e707]: 89 TND
+            - button "Ajouter au panier" [ref=f11e709]
+        - generic [ref=f11e714]:
+          - generic [ref=f11e715]:
+            - link "Qamis de prière El Iqbal":
+              - /url: /fr/products/qamis-priere-el-iqbal-6307
+              - img "Qamis de prière El Iqbal" [ref=f11e716] [cursor=pointer]
+            - generic [ref=f11e717]: "-17% Discount"
+          - generic [ref=f11e719]:
+            - generic [ref=f11e720]:
+              - link [ref=f11e721] [cursor=pointer]:
+                - /url: /fr/products/qamis-priere-el-iqbal-6307
+                - heading "Qamis de prière El Iqbal" [level=3] [ref=f11e722]
+              - generic [ref=f11e723]:
+                - generic [ref=f11e724]: 49 TND
+                - generic [ref=f11e725]: 59 TND
+            - button "Ajouter au panier" [ref=f11e727]
+        - generic [ref=f11e732]:
+          - generic [ref=f11e733]:
+            - link "Qamis de prière El Oussama":
+              - /url: /fr/products/qamis-priere-oussama-5419
+              - img "Qamis de prière El Oussama" [ref=f11e734] [cursor=pointer]
+            - generic [ref=f11e735]: "-17% Discount"
+          - generic [ref=f11e737]:
+            - generic [ref=f11e738]:
+              - link [ref=f11e739] [cursor=pointer]:
+                - /url: /fr/products/qamis-priere-oussama-5419
+                - heading "Qamis de prière El Oussama" [level=3] [ref=f11e740]
+              - generic [ref=f11e741]:
+                - generic [ref=f11e742]: 49 TND
+                - generic [ref=f11e743]: 59 TND
+            - button "Ajouter au panier" [ref=f11e745]
+      - link "Voir tout" [ref=f11e749] [cursor=pointer]:
+        - /url: /fr/products?promo=true
+    - generic [ref=f11e753]:
+      - generic [ref=f11e754]:
+        - heading "Avis de nos clients" [level=2] [ref=f11e755]
+        - paragraph [ref=f11e756]: Ne nous croyez pas sur parole. Faites confiance à nos clients
+      - generic [ref=f11e757]:
+        - generic [ref=f11e758]:
+          - img "Free Shipping" [ref=f11e760]
+          - heading "Free Shipping" [level=3] [ref=f11e761]
+          - paragraph [ref=f11e762]: For invoices
+          - paragraph [ref=f11e763]: over 500 TND
+        - generic [ref=f11e764]:
+          - img "Cash Back" [ref=f11e766]
+          - heading "Cash Back" [level=3] [ref=f11e767]
+          - paragraph [ref=f11e768]: When paying for products
+          - paragraph [ref=f11e769]: via Dasun Wallet
+        - generic [ref=f11e770]:
+          - img "24/7 Support" [ref=f11e772]
+          - heading "24/7 Support" [level=3] [ref=f11e773]
+          - paragraph [ref=f11e774]: When something goes
+          - paragraph [ref=f11e775]: wrong
+    - generic [ref=f11e777]:
+      - heading "Comment commander" [level=2] [ref=f11e778]
+      - generic [ref=f11e779]:
+        - list [ref=f11e780]:
+          - listitem [ref=f11e781]:
+            - text: "1"
+            - heading "Choisissez votre pièce" [level=3] [ref=f11e782]
+            - paragraph [ref=f11e783]: Sélectionnez le modèle, la couleur et la taille sur la fiche produit.
+          - listitem [ref=f11e784]:
+            - text: "2"
+            - heading "Passez commande" [level=3] [ref=f11e785]
+            - paragraph [ref=f11e786]: Indiquez votre adresse au moment de valider. Cela prend deux minutes.
+          - listitem [ref=f11e787]:
+            - text: "3"
+            - heading "Nous livrons chez vous" [level=3] [ref=f11e788]
+            - paragraph [ref=f11e789]: La livraison est offerte dès 500 TND d'achat.
+          - listitem [ref=f11e790]:
+            - text: "4"
+            - heading "Payez à la réception" [level=3] [ref=f11e791]
+            - paragraph [ref=f11e792]: Vous réglez en espèces à l'arrivée du colis.
+        - generic [ref=f11e793]:
+          - paragraph [ref=f11e794]: Un doute sur la taille ?
+          - paragraph [ref=f11e795]: Appelez-nous, nous vous aidons à choisir avant de commander.
+          - link "+216 55 558 648" [ref=f11e796] [cursor=pointer]:
+            - /url: tel:+21655558648
+    - generic [ref=f11e798]:
+      - heading "Questions Fréquemment Posées" [level=2] [ref=f11e800]
+      - generic [ref=f11e801]:
+        - generic [ref=f11e802]:
+          - button "Qu'est-ce que قشابِـيتي?" [ref=f11e803]
+          - paragraph [ref=f11e810]: قشابِـيتي est la première et la plus grande plateforme en ligne pour les produits artisanaux tunisiens traditionnels. Nous offrons une large gamme d'articles authentiques faits à la main, notamment des vêtements traditionnels, des accessoires et des décorations d'intérieur, tous fabriqués par des artisans qualifiés à travers la Tunisie. Notre mission est de préserver et de promouvoir l'artisanat traditionnel tout en le rendant accessible aux clients du monde entier.
+        - generic [ref=f11e811]:
+          - button "Comment passer une commande?" [ref=f11e812]
+          - paragraph [ref=f11e819]: Passer une commande est facile ! Parcourez simplement nos produits, ajoutez des articles à votre panier et passez à la caisse. Vous devrez fournir vos informations de livraison et vos coordonnées de paiement. Une fois votre commande confirmée, vous recevrez un email de confirmation avec les détails de votre commande.
+        - generic [ref=f11e820]:
+          - button "Quelles options d'expédition sont disponibles?" [ref=f11e821]
+          - paragraph [ref=f11e828]: Nous proposons l'expédition en Tunisie et à l'international. Les coûts d'expédition et les délais de livraison varient selon votre emplacement. Vous pouvez consulter les informations détaillées d'expédition lors du paiement. Pour les commandes en Tunisie, la livraison standard prend généralement 3 à 5 jours ouvrables.
+        - generic [ref=f11e829]:
+          - button "Comment puis-je suivre ma commande?" [ref=f11e830]
+          - paragraph [ref=f11e837]: Une fois votre commande expédiée, vous recevrez un numéro de suivi par email. Vous pouvez utiliser ce numéro de suivi pour suivre la progression de votre colis sur notre site Web ou sur le site Web du transporteur.
+        - generic [ref=f11e838]:
+          - button "Quelle est votre politique de retour?" [ref=f11e839]
+          - paragraph [ref=f11e846]: Nous acceptons les retours dans les 14 jours suivant la livraison pour les articles dans leur état d'origine. Veuillez contacter notre équipe de service client pour initier un retour. Les articles doivent être non portés, non lavés et dans leur emballage d'origine. Les articles personnalisés ou personnalisés peuvent ne pas être éligibles au retour.
+        - generic [ref=f11e847]:
+          - button "Vos produits sont-ils 100% faits à la main?" [ref=f11e848]
+          - paragraph [ref=f11e855]: Oui ! Tous nos produits sont 100% faits à la main par des artisans qualifiés. Nous travaillons directement avec des artisans à travers la Tunisie pour garantir l'authenticité et la qualité. Chaque pièce est unique et fabriquée avec des techniques traditionnelles transmises de génération en génération.
+  - contentinfo [ref=f11e856]:
+    - generic [ref=f11e857]:
+      - generic [ref=f11e858]:
+        - generic [ref=f11e859]:
+          - link [ref=f11e860] [cursor=pointer]:
+            - /url: /fr
+            - img "Kachabity" [ref=f11e861]
+            - img "Kachabity" [ref=f11e862]
+          - paragraph [ref=f11e863]: Découvrez des produits artisanaux tunisiens authentiques et des trésors traditionnels.
+          - generic [ref=f11e864]:
+            - link "Facebook" [ref=f11e865] [cursor=pointer]:
+              - /url: https://www.facebook.com/profile.php?id=61562718525332
+            - link "Instagram" [ref=f11e868] [cursor=pointer]:
+              - /url: https://www.instagram.com/kachabitii/
+            - link "TikTok" [ref=f11e871] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@kachabitii
+        - generic [ref=f11e874]:
+          - generic [ref=f11e875]:
+            - heading "Liens rapides" [level=3] [ref=f11e876]
+            - list [ref=f11e877]:
+              - listitem [ref=f11e878]:
+                - link "Catégories" [ref=f11e879] [cursor=pointer]:
+                  - /url: /fr/categories
+              - listitem [ref=f11e880]:
+                - link "Remises" [ref=f11e881] [cursor=pointer]:
+                  - /url: /fr/products?promo=true
+              - listitem [ref=f11e882]:
+                - link "Nouveautés" [ref=f11e883] [cursor=pointer]:
+                  - /url: /fr/products?sort=new
+              - listitem [ref=f11e884]:
+                - link "Meilleures ventes" [ref=f11e885] [cursor=pointer]:
+                  - /url: /fr/products?sort=popular
+          - generic [ref=f11e886]:
+            - heading "À propos" [level=3] [ref=f11e887]
+            - list [ref=f11e888]:
+              - listitem [ref=f11e889]:
+                - link "À propos de nous" [ref=f11e890] [cursor=pointer]:
+                  - /url: /fr/about
+              - listitem [ref=f11e891]:
+                - link "Contact" [ref=f11e892] [cursor=pointer]:
+                  - /url: /fr/contact
+              - listitem [ref=f11e893]:
+                - link "FAQ" [ref=f11e894] [cursor=pointer]:
+                  - /url: /fr#faqs
+          - generic [ref=f11e895]:
+            - heading "Légal" [level=3] [ref=f11e896]
+            - list [ref=f11e897]:
+              - listitem [ref=f11e898]:
+                - link "Termes et conditions" [ref=f11e899] [cursor=pointer]:
+                  - /url: /fr/terms-and-conditions
+              - listitem [ref=f11e900]:
+                - link "Politique de confidentialité" [ref=f11e901] [cursor=pointer]:
+                  - /url: /fr/privacy
+              - listitem [ref=f11e902]:
+                - link "Politique d'expédition" [ref=f11e903] [cursor=pointer]:
+                  - /url: /fr/shipping
+        - generic [ref=f11e906]:
+          - heading "Abonnez-vous à notre newsletter" [level=3] [ref=f11e907]
+          - paragraph [ref=f11e908]: Recevez les dernières mises à jour sur les nouveaux produits et offres exclusives
+          - generic [ref=f11e909]:
+            - textbox "Entrez votre e-mail" [ref=f11e910]
+            - button "S'abonner" [ref=f11e911]
+      - generic [ref=f11e913]:
+        - paragraph [ref=f11e914]: © 2026 Kachabity. Tous droits réservés.
+        - link "+216 55 558 648" [ref=f11e916] [cursor=pointer]:
+          - /url: tel:+216 55 558 648

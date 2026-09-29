@@ -1,0 +1,82 @@
+- generic [active] [ref=f10e1]:
+  - main [ref=f10e2]:
+    - generic [ref=f10e3]:
+      - generic:
+        - generic:
+          - heading "Kachabia, burnous et dengri, faits en Tunisie" [level=1]
+          - paragraph: Des pièces en laine tissées par des artisans tunisiens et livrées chez vous. Vous payez à la réception de votre commande.
+          - generic:
+            - link "Voir la collection" [ref=f10e10] [cursor=pointer]:
+              - /url: /fr/products?category=kachabia-tunisienne
+            - link "Tous les produits" [ref=f10e11] [cursor=pointer]:
+              - /url: /fr/products
+          - list:
+            - listitem: Paiement à la livraison
+            - listitem: Livraison offerte dès 500 TND
+    - paragraph [ref=f10e16]: Loading...
+  - contentinfo [ref=f10e17]:
+    - generic [ref=f10e18]:
+      - generic [ref=f10e19]:
+        - generic [ref=f10e20]:
+          - link [ref=f10e21] [cursor=pointer]:
+            - /url: /fr
+            - img "Kachabity" [ref=f10e22]
+            - img "Kachabity" [ref=f10e23]
+          - paragraph [ref=f10e24]: Découvrez des produits artisanaux tunisiens authentiques et des trésors traditionnels.
+          - generic [ref=f10e25]:
+            - link "Facebook" [ref=f10e26] [cursor=pointer]:
+              - /url: https://www.facebook.com/profile.php?id=61562718525332
+            - link "Instagram" [ref=f10e29] [cursor=pointer]:
+              - /url: https://www.instagram.com/kachabitii/
+            - link "TikTok" [ref=f10e32] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@kachabitii
+        - generic [ref=f10e35]:
+          - generic [ref=f10e36]:
+            - heading "Liens rapides" [level=3] [ref=f10e37]
+            - list [ref=f10e38]:
+              - listitem [ref=f10e39]:
+                - link "Catégories" [ref=f10e40] [cursor=pointer]:
+                  - /url: /fr/categories
+              - listitem [ref=f10e41]:
+                - link "Remises" [ref=f10e42] [cursor=pointer]:
+                  - /url: /fr/products?promo=true
+              - listitem [ref=f10e43]:
+                - link "Nouveautés" [ref=f10e44] [cursor=pointer]:
+                  - /url: /fr/products?sort=new
+              - listitem [ref=f10e45]:
+                - link "Meilleures ventes" [ref=f10e46] [cursor=pointer]:
+                  - /url: /fr/products?sort=popular
+          - generic [ref=f10e47]:
+            - heading "À propos" [level=3] [ref=f10e48]
+            - list [ref=f10e49]:
+              - listitem [ref=f10e50]:
+                - link "À propos de nous" [ref=f10e51] [cursor=pointer]:
+                  - /url: /fr/about
+              - listitem [ref=f10e52]:
+                - link "Contact" [ref=f10e53] [cursor=pointer]:
+                  - /url: /fr/contact
+              - listitem [ref=f10e54]:
+                - link "FAQ" [ref=f10e55] [cursor=pointer]:
+                  - /url: /fr#faqs
+          - generic [ref=f10e56]:
+            - heading "Légal" [level=3] [ref=f10e57]
+            - list [ref=f10e58]:
+              - listitem [ref=f10e59]:
+                - link "Termes et conditions" [ref=f10e60] [cursor=pointer]:
+                  - /url: /fr/terms-and-conditions
+              - listitem [ref=f10e61]:
+                - link "Politique de confidentialité" [ref=f10e62] [cursor=pointer]:
+                  - /url: /fr/privacy
+              - listitem [ref=f10e63]:
+                - link "Politique d'expédition" [ref=f10e64] [cursor=pointer]:
+                  - /url: /fr/shipping
+        - generic [ref=f10e67]:
+          - heading "Abonnez-vous à notre newsletter" [level=3] [ref=f10e68]
+          - paragraph [ref=f10e69]: Recevez les dernières mises à jour sur les nouveaux produits et offres exclusives
+          - generic [ref=f10e70]:
+            - textbox "Entrez votre e-mail" [ref=f10e71]
+            - button "S'abonner" [ref=f10e72]
+      - generic [ref=f10e74]:
+        - paragraph [ref=f10e75]: © 2026 Kachabity. Tous droits réservés.
+        - link "+216 55 558 648" [ref=f10e77] [cursor=pointer]:
+          - /url: tel:+216 55 558 648

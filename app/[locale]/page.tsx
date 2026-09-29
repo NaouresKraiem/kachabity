@@ -23,29 +23,49 @@ import { getFeaturedCategories, getTopProducts, getPromoProducts, getSaleBanners
 // The hero carousel is hidden until it has its own images; the product showcase leads the page meanwhile.
 const SHOW_HERO_CAROUSEL = false;
 
-// Pieces shown in the product showcase: a kachabia, a dengri and a burnous.
+// Pieces shown in the header: a zemnia wool kachabia, a dengri and a blouza. They are
+// the static photos, and the first cards of the 3D ring.
 const SHOWCASE_SLUGS = [
-  "kachabia-wazra-tibar-7018",
+  "kachabia-laine-zemnia-homme-224",
   "dengri-tunisien-homme-240",
+  "blouza-djerbienne-homme-690",
+];
+
+// More pieces to complete the 3D ring (fourteen cards in all): kachabias in different
+// wools, dengris, and a burnous.
+const RING_EXTRA_SLUGS = [
+  "kachabia-wazra-tibar-7018",
+  "kachabia-ennour-3742",
+  "dengri-du-marie-5849",
+  "kachabia-poil-de-chameau-1853",
   "burnous-tunisien-laine-232",
+  "kachabia-cachemire-3226",
+  "kachabia-zemnia-rayee-4952",
+  "kachabia-mlef-bouc-2638",
+  "dengri-tunisien-simple-6583",
+  "kachabia-chakhma-pro-max-2-7066",
+  "kachabia-zemnia-demi-homme-241",
 ];
 
 interface LandingData {
   showcase: LandingProduct[];
+  ringExtras: LandingProduct[];
   newArrivals: LandingProduct[];
   spotlight: SpotlightCollection | null;
   freeShippingThreshold: number | null;
 }
 
 async function loadLandingData(locale: string): Promise<LandingData> {
-  const [showcase, newArrivals, spotlight, settings] = await Promise.all([
+  const [showcase, ringExtras, newArrivals, spotlight, settings] = await Promise.all([
     getProductsBySlugs(locale, SHOWCASE_SLUGS),
+    getProductsBySlugs(locale, RING_EXTRA_SLUGS),
     getNewArrivals(locale, 10),
     getSpotlightCollection(locale),
     getSiteSettings(),
   ]);
   return {
     showcase,
+    ringExtras,
     newArrivals,
     spotlight,
     freeShippingThreshold: settings.free_shipping_enabled ? settings.global_free_shipping_threshold : null,
@@ -56,11 +76,21 @@ async function loadLandingData(locale: string): Promise<LandingData> {
 // Errors are caught outside the cache so a failed load isn't cached.
 async function getLandingData(locale: string): Promise<LandingData> {
   try {
-    return await cachedCatalogQuery(`landing-v2-${locale}`, () => loadLandingData(locale))();
+    return await cachedCatalogQuery(`landing-v4-${locale}`, () => loadLandingData(locale))();
   } catch (error) {
     console.error('Error fetching landing page data:', error);
-    return { showcase: [], newArrivals: [], spotlight: null, freeShippingThreshold: null };
+    return { showcase: [], ringExtras: [], newArrivals: [], spotlight: null, freeShippingThreshold: null };
   }
+}
+
+// The 3D ring: the showcase pieces first, then the extra pieces.
+function ringProducts(data: LandingData): LandingProduct[] {
+  const picks: LandingProduct[] = [];
+  for (const product of [...data.showcase, ...data.ringExtras]) {
+    if (picks.length === 16) break;
+    if (product.image && !picks.some((p) => p.id === product.id)) picks.push(product);
+  }
+  return picks;
 }
 
 // Hero rows change rarely (edited in the Supabase dashboard): serve them from the Next.js data cache.
@@ -143,6 +173,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <ProductShowcase
           locale={locale}
           products={landing.showcase}
+          ringProducts={ringProducts(landing)}
           collectionSlug={landing.spotlight?.slug ?? null}
           freeShippingThreshold={landing.freeShippingThreshold}
         />

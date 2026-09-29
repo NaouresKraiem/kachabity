@@ -1,0 +1,121 @@
+- generic [active] [ref=f4e1]:
+  - banner [ref=f4e2]:
+    - generic [ref=f4e4]:
+      - generic [ref=f4e5]:
+        - link "Follow us on facebook" [ref=f4e6] [cursor=pointer]:
+          - /url: https://www.facebook.com/profile.php?id=61562718525332
+        - link "Follow us on instagram" [ref=f4e9] [cursor=pointer]:
+          - /url: https://www.instagram.com/kachabitii/
+        - link "Follow us on tiktok" [ref=f4e12] [cursor=pointer]:
+          - /url: https://www.tiktok.com/@kachabitii
+      - generic [ref=f4e15]:
+        - button "Toggle dark mode" [ref=f4e16]
+        - button [ref=f4e20]
+    - generic [ref=f4e26]:
+      - generic [ref=f4e27]:
+        - button "Toggle menu" [ref=f4e28]
+        - link "تسجيل الدخول" [ref=f4e31] [cursor=pointer]:
+          - /url: /ar/auth
+      - generic [ref=f4e36]:
+        - link "Phone" [ref=f4e37] [cursor=pointer]:
+          - /url: tel:+21655558648
+        - button "Search" [ref=f4e40]
+  - main [ref=f4e43]:
+    - generic [ref=f4e45]:
+      - generic [ref=f4e46]:
+        - heading "قشابية، برنوس ودنقري، صُنعت في تونس" [level=1] [ref=f4e47]
+        - paragraph [ref=f4e48]: قطع من الصوف ينسجها حرفيون تونسيون وتصلك إلى باب منزلك. تدفع عند استلام طلبك.
+        - generic [ref=f4e49]:
+          - link "تسوّق المجموعة" [ref=f4e50] [cursor=pointer]:
+            - /url: /ar/products?category=kachabia-tunisienne
+          - link "كل المنتجات" [ref=f4e51] [cursor=pointer]:
+            - /url: /ar/products
+        - list [ref=f4e52]:
+          - listitem [ref=f4e53]: الدفع عند الاستلام
+          - listitem [ref=f4e57]: توصيل مجاني ابتداءً من 500 TND
+      - generic [ref=f4e64]:
+        - link "القشابية وزرة تيبار القشابية وزرة تيبار 189 TND" [ref=f4e65] [cursor=pointer]:
+          - /url: /ar/products/kachabia-wazra-tibar-7018
+          - img "القشابية وزرة تيبار" [ref=f4e66]
+          - generic [ref=f4e67]:
+            - generic [ref=f4e68]: القشابية وزرة تيبار
+            - generic [ref=f4e69]: 189 TND
+        - link "دنقري تونسي أصلي للرجال دنقري تونسي أصلي للرجال 119 TND" [ref=f4e70] [cursor=pointer]:
+          - /url: /ar/products/dengri-tunisien-homme-240
+          - img "دنقري تونسي أصلي للرجال" [ref=f4e71]
+          - generic [ref=f4e72]:
+            - generic [ref=f4e73]: دنقري تونسي أصلي للرجال
+            - generic [ref=f4e74]: 119 TND
+        - link "برنوس تونسي صوف أصلي برنوس تونسي صوف أصلي 380 TND" [ref=f4e75] [cursor=pointer]:
+          - /url: /ar/products/burnous-tunisien-laine-232
+          - img "برنوس تونسي صوف أصلي" [ref=f4e76]
+          - generic [ref=f4e77]:
+            - generic [ref=f4e78]: برنوس تونسي صوف أصلي
+            - generic [ref=f4e79]: 380 TND
+    - paragraph [ref=f4e84]: Loading...
+  - contentinfo [ref=f4e85]:
+    - generic [ref=f4e86]:
+      - generic [ref=f4e87]:
+        - generic [ref=f4e88]:
+          - link [ref=f4e89] [cursor=pointer]:
+            - /url: /ar
+            - img "Kachabity" [ref=f4e90]
+            - img "Kachabity" [ref=f4e91]
+          - paragraph [ref=f4e92]: اكتشف المنتجات الحرفية التونسية الأصيلة والكنوز التقليدية.
+          - generic [ref=f4e93]:
+            - link "Facebook" [ref=f4e94] [cursor=pointer]:
+              - /url: https://www.facebook.com/profile.php?id=61562718525332
+            - link "Instagram" [ref=f4e97] [cursor=pointer]:
+              - /url: https://www.instagram.com/kachabitii/
+            - link "TikTok" [ref=f4e100] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@kachabitii
+        - generic [ref=f4e103]:
+          - generic [ref=f4e104]:
+            - heading "روابط سريعة" [level=3] [ref=f4e105]
+            - list [ref=f4e106]:
+              - listitem [ref=f4e107]:
+                - link "الفئات" [ref=f4e108] [cursor=pointer]:
+                  - /url: /ar/categories
+              - listitem [ref=f4e109]:
+                - link "التخفيضات" [ref=f4e110] [cursor=pointer]:
+                  - /url: /ar/products?promo=true
+              - listitem [ref=f4e111]:
+                - link "وصل حديثاً" [ref=f4e112] [cursor=pointer]:
+                  - /url: /ar/products?sort=new
+              - listitem [ref=f4e113]:
+                - link "الأكثر مبيعاً" [ref=f4e114] [cursor=pointer]:
+                  - /url: /ar/products?sort=popular
+          - generic [ref=f4e115]:
+            - heading "حول" [level=3] [ref=f4e116]
+            - list [ref=f4e117]:
+              - listitem [ref=f4e118]:
+                - link "من نحن" [ref=f4e119] [cursor=pointer]:
+                  - /url: /ar/about
+              - listitem [ref=f4e120]:
+                - link "اتصل بنا" [ref=f4e121] [cursor=pointer]:
+                  - /url: /ar/contact
+              - listitem [ref=f4e122]:
+                - link "الأسئلة الشائعة" [ref=f4e123] [cursor=pointer]:
+                  - /url: /ar#faqs
+          - generic [ref=f4e124]:
+            - heading "قانوني" [level=3] [ref=f4e125]
+            - list [ref=f4e126]:
+              - listitem [ref=f4e127]:
+                - link "الشروط والأحكام" [ref=f4e128] [cursor=pointer]:
+                  - /url: /ar/terms-and-conditions
+              - listitem [ref=f4e129]:
+                - link "سياسة الخصوصية" [ref=f4e130] [cursor=pointer]:
+                  - /url: /ar/privacy
+              - listitem [ref=f4e131]:
+                - link "سياسة الشحن" [ref=f4e132] [cursor=pointer]:
+                  - /url: /ar/shipping
+        - generic [ref=f4e135]:
+          - heading "اشترك في نشرتنا الإخبارية" [level=3] [ref=f4e136]
+          - paragraph [ref=f4e137]: احصل على آخر التحديثات حول المنتجات الجديدة والعروض الحصرية
+          - generic [ref=f4e138]:
+            - textbox "أدخل بريدك الإلكتروني" [ref=f4e139]
+            - button "اشترك" [ref=f4e140]
+      - generic [ref=f4e142]:
+        - paragraph [ref=f4e143]: © 2026 قشابِـيتي. جميع الحقوق محفوظة.
+        - link "+216 55 558 648" [ref=f4e145] [cursor=pointer]:
+          - /url: tel:+216 55 558 648
