@@ -1,6 +1,7 @@
 import supabase from '@/lib/supabaseClient';
 import { getProductImageUrl } from '@/lib/product-images';
 import { cachedCatalogQuery } from '@/lib/catalog-cache';
+import { getLandingConfig, getPickedIds } from '@/lib/landing-products';
 
 /**
  * Home page data, loaded on the server from the Next.js data cache (tag "catalog")
@@ -15,10 +16,11 @@ type DiscountRow = { product_id: string; discount_percent: number; ends_at: stri
 
 async function loadTopProducts(): Promise<{ products: unknown[] }> {
     try {
-        // 1. Fetch top products (limit 10)
-        // Ideally sort by sold_count, but falling back to created_at if needed
-        // We select sold_count explicitly to ensure it's available
-        const { data: productsData, error: productsError } = await supabase
+        // 1. Products the admin pinned (Admin → Landing page) first, in their order, then the
+        //    best sellers if autofill is on.
+        const [config, pinnedIds] = await Promise.all([getLandingConfig(), getPickedIds('top_products')]);
+        const { count, autofill } = config.lists.top_products;
+        const topQuery = () => supabase
             .from('products')
             .select(`
                 id, name, name_ar, name_fr, slug, description, base_price, category_id, status, sold_count, created_at,
@@ -27,10 +29,23 @@ async function loadTopProducts(): Promise<{ products: unknown[] }> {
             `)
             .eq('status', 'active')
             .is('deleted_at', null)
-            .is('product_images.variant_id', null)
-            .order('sold_count', { ascending: false, nullsFirst: false }) // Prioritize sold_count
-            .order('created_at', { ascending: false }) // Fallback
-            .limit(10);
+            .is('product_images.variant_id', null);
+        const [pinnedResult, autoResult] = await Promise.all([
+            pinnedIds.length > 0 ? topQuery().in('id', pinnedIds) : Promise.resolve({ data: [], error: null }),
+            autofill
+                ? topQuery()
+                    .order('sold_count', { ascending: false, nullsFirst: false })
+                    .order('created_at', { ascending: false })
+                    .limit(count + pinnedIds.length)
+                : Promise.resolve({ data: [], error: null }),
+        ]);
+        const productsError = pinnedResult.error || autoResult.error;
+        const pinnedRows = ((pinnedResult.data ?? []) as TopProductRow[])
+            .sort((a, b) => pinnedIds.indexOf(a.id) - pinnedIds.indexOf(b.id));
+        const productsData = [
+            ...pinnedRows,
+            ...((autoResult.data ?? []) as TopProductRow[]).filter((p) => !pinnedIds.includes(p.id)),
+        ].slice(0, count);
 
         if (productsError) {
             console.error("❌ Top products error:", productsError);
@@ -123,20 +138,37 @@ async function loadTopProducts(): Promise<{ products: unknown[] }> {
 
 async function loadPromoProducts(): Promise<{ products: unknown[] }> {
     try {
-        // 1) Get active discounts
-        const { data: discountsData, error: discountsError } = await supabase
+        // 1) Active discounts: the products the admin pinned (Admin → Landing page) first, in
+        //    their order, then the latest discounts if autofill is on.
+        const [config, pinnedIds] = await Promise.all([getLandingConfig(), getPickedIds('promo_products')]);
+        const { count, autofill } = config.lists.promo_products;
+        // Only discounts on live products, so `count` isn't used up by archived ones.
+        const discountQuery = () => supabase
             .from('product_discounts')
-            .select('product_id, discount_percent, ends_at')
+            .select('product_id, discount_percent, ends_at, products!inner(id)')
             .eq('active', true)
-            .order('created_at', { ascending: false })
-            .limit(6);
+            .eq('products.status', 'active')
+            .is('products.deleted_at', null);
+        const [pinnedResult, autoResult] = await Promise.all([
+            pinnedIds.length > 0 ? discountQuery().in('product_id', pinnedIds) : Promise.resolve({ data: [], error: null }),
+            autofill
+                ? discountQuery().order('created_at', { ascending: false }).limit(count + pinnedIds.length)
+                : Promise.resolve({ data: [], error: null }),
+        ]);
+        const discountsError = pinnedResult.error || autoResult.error;
 
-        if (discountsError) {
-            console.error("❌ Discounts error:", discountsError);
-            return { products: [] };
+        if (discountsError) throw discountsError; // not cached, so the next request retries
+
+        type PromoDiscount = { product_id: string; discount_percent: number; ends_at: string | null };
+        const pinnedDiscounts = ((pinnedResult.data ?? []) as PromoDiscount[])
+            .sort((a, b) => pinnedIds.indexOf(a.product_id) - pinnedIds.indexOf(b.product_id));
+        const discountsData: PromoDiscount[] = [];
+        for (const d of [...pinnedDiscounts, ...((autoResult.data ?? []) as PromoDiscount[])]) {
+            if (!discountsData.some((x) => x.product_id === d.product_id)) discountsData.push(d);
         }
+        discountsData.splice(count);
 
-        if (!discountsData || discountsData.length === 0) {
+        if (discountsData.length === 0) {
             return { products: [] };
         }
 
@@ -161,10 +193,7 @@ async function loadPromoProducts(): Promise<{ products: unknown[] }> {
             .eq('status', 'active')
             .is('deleted_at', null);
 
-        if (productsError) {
-            console.error("❌ Products error:", productsError);
-            return { products: [] };
-        }
+        if (productsError) throw productsError;
 
         if (!productsData || productsData.length === 0) {
             return { products: [] };
@@ -184,6 +213,8 @@ async function loadPromoProducts(): Promise<{ products: unknown[] }> {
         }
 
         // 3) Map productsData to promo format
+        // Keep the order chosen above (pinned first).
+        productsData.sort((a: { id: string }, b: { id: string }) => productIds.indexOf(String(a.id)) - productIds.indexOf(String(b.id)));
         const promoProducts = productsData.map((product: any) => {
             const discount: { discount_percent: number; ends_at: string | null } | undefined = discountMap.get(String(product.id));
             const imageUrl = getProductImageUrl(product) || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400';
@@ -225,8 +256,10 @@ async function loadPromoProducts(): Promise<{ products: unknown[] }> {
 async function loadFeaturedCategories() {
     const { data, error } = await supabase
         .from('categories')
-        .select('id, name, name_ar, name_fr, slug, image_url, sort_order, is_featured')
+        .select('id, name, name_ar, name_fr, slug, image_url, sort_order, is_featured, featured_position')
         .eq('is_featured', true)
+        // The order set in Admin → Landing page, then the menu order.
+        .order('featured_position', { ascending: true, nullsFirst: false })
         .order('sort_order', { ascending: true });
     if (error) throw error;
     return data ?? [];

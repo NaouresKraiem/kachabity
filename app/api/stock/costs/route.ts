@@ -6,18 +6,18 @@ export const dynamic = 'force-dynamic';
 // Purchase costs per product. Middleware limits this route to admins.
 
 export async function GET() {
-    const { data, error } = await supabase.from('product_costs').select('product_id, cost, updated_at');
+    const { data, error } = await supabase.from('product_costs').select('product_id, cost, updated_at').is('deleted_at', null);
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     return NextResponse.json({ success: true, data: data ?? [] });
 }
 
-// PUT { product_id, cost } sets the cost; a null cost removes it.
+// PUT { product_id, cost } sets the cost; a null cost marks it deleted.
 export async function PUT(request: NextRequest) {
     const { product_id, cost } = await request.json();
     if (!product_id) return NextResponse.json({ success: false, error: 'Missing product_id' }, { status: 400 });
 
     if (cost === null || cost === undefined || cost === '') {
-        const { error } = await supabase.from('product_costs').delete().eq('product_id', product_id);
+        const { error } = await supabase.from('product_costs').update({ deleted_at: new Date().toISOString() }).eq('product_id', product_id);
         if (error) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
         return NextResponse.json({ success: true, data: null });
     }
@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest) {
     }
     const { data, error } = await supabase
         .from('product_costs')
-        .upsert({ product_id, cost: value }, { onConflict: 'product_id' })
+        .upsert({ product_id, cost: value, deleted_at: null }, { onConflict: 'product_id' })
         .select()
         .single();
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 400 });

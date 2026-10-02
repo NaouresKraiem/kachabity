@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
         let query = supabase
             .from('product_images')
             .select('*')
+            .is('deleted_at', null)
             .order('position', { ascending: true });
 
         if (productId) {
@@ -51,11 +52,12 @@ export async function POST(request: NextRequest) {
         // If position is not provided, determine it based on existing images
         let position = body.position;
         if (position === undefined) {
-            const { count } = await supabase
+            const countQuery = supabase
                 .from('product_images')
                 .select('*', { count: 'exact', head: true })
                 .eq('product_id', body.product_id)
-                .eq('variant_id', body.variant_id || null);
+                .is('deleted_at', null);
+            const { count } = await (body.variant_id ? countQuery.eq('variant_id', body.variant_id) : countQuery.is('variant_id', null));
 
             position = (count || 0);
         }
@@ -143,7 +145,7 @@ export async function DELETE(request: NextRequest) {
 
         const { error } = await supabase
             .from('product_images')
-            .delete()
+            .update({ deleted_at: new Date().toISOString() })
             .eq('id', id);
 
         if (error) throw error;

@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
                     base_price
                 )
             `)
+            .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -116,7 +117,7 @@ export async function DELETE(request: NextRequest) {
 
         const { error } = await supabase
             .from('product_discounts')
-            .delete()
+            .update({ active: false, deleted_at: new Date().toISOString() })
             .eq('id', body.id);
 
         if (error) throw error;

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logActivity } from '@/lib/activity-log';
 import supabase from '@/lib/supabase-admin';
 import { ALL_PERMISSIONS, DEFAULT_STAFF_PERMISSIONS, getAdminActor, getAdminRole, getPermissions, type Permission } from '@/lib/admin-auth';
 
@@ -79,7 +80,12 @@ export async function POST(request: NextRequest) {
             { status: exists ? 409 : 400 }
         );
     }
-    return NextResponse.json({ success: true, data: member(data.user as AuthUser) });
+    const created = member(data.user as AuthUser);
+    await logActivity(getAdminActor(request.headers), {
+        action: 'create', entity: 'team_member', entityId: created.id, label: created.email,
+        changes: { role: created.role, permissions: created.permissions },
+    });
+    return NextResponse.json({ success: true, data: created });
 }
 
 // PUT { id, role, permissions? } changes a member's role and staff permissions;
@@ -106,11 +112,18 @@ export async function PUT(request: NextRequest) {
     }
     const { data, error } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.updateUserById>>>(() => supabase.auth.admin.updateUserById(id, { app_metadata: appMetadata }));
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    await logActivity(getAdminActor(request.headers), {
+        action: role === null ? 'remove_access' : 'update', entity: 'team_member', entityId: id, label: existing.user.email ?? null,
+        changes: {
+            role: { from: getAdminRole(existing.user), to: role },
+            permissions: { from: getAdminRole(existing.user) ? getPermissions(existing.user) : [], to: appMetadata.permissions ?? null },
+        },
+    });
     return NextResponse.json({ success: true, data: member(data.user as AuthUser) });
 }
 
-// DELETE ?id= permanently deletes a back-office account. Their stock movements keep the
-// author's email; orders placed with the account are kept without the link.
+// DELETE ?id= soft-deletes a back-office account: it can no longer sign in, and its row,
+// stock movements and orders stay as they are.
 export async function DELETE(request: NextRequest) {
     const id = request.nextUrl.searchParams.get('id');
     if (!id) return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });
@@ -124,7 +137,17 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ success: false, error: 'This admin comes from the ADMIN_EMAILS setting. Remove it there first.' }, { status: 400 });
     }
 
-    const { error } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.deleteUser>>>(() => supabase.auth.admin.deleteUser(id));
+    // Soft delete: access is removed first (so the account leaves the team list), then
+    // Supabase Auth marks the user deleted instead of removing the row.
+    const appMetadata: Record<string, unknown> = { ...(existing.user.app_metadata ?? {}), role: null, deleted_at: new Date().toISOString() };
+    delete appMetadata.permissions;
+    const { error: updateError } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.updateUserById>>>(() => supabase.auth.admin.updateUserById(id, { app_metadata: appMetadata }));
+    if (updateError) return NextResponse.json({ success: false, error: updateError.message }, { status: 400 });
+    const { error } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.deleteUser>>>(() => supabase.auth.admin.deleteUser(id, true));
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    await logActivity(getAdminActor(request.headers), {
+        action: 'delete', entity: 'team_member', entityId: id, label: existing.user.email ?? null,
+        changes: { role: { from: getAdminRole(existing.user), to: null } },
+    });
     return NextResponse.json({ success: true });
 }

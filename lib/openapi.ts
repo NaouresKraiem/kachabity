@@ -1,3 +1,5 @@
+import { ALL_PERMISSIONS } from '@/lib/admin-auth';
+
 const serverUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 type SchemaObject = Record<string, unknown>;
@@ -147,7 +149,7 @@ export const openApiSpec = {
             },
             delete: {
                 tags: ['Catalog'],
-                summary: 'Delete or soft-delete a product',
+                summary: 'Soft-delete products (status archived + deleted_at)',
                 parameters: [
                     {
                         name: 'id',
@@ -218,7 +220,7 @@ export const openApiSpec = {
             },
             delete: {
                 tags: ['Catalog'],
-                summary: 'Delete category',
+                summary: 'Soft-delete categories (deleted_at)',
                 parameters: [
                     { name: 'id', in: 'query', required: true, schema: { type: 'string' } },
                 ],
@@ -283,7 +285,7 @@ export const openApiSpec = {
             },
             delete: {
                 tags: ['Catalog'],
-                summary: 'Delete color',
+                summary: 'Soft-delete colors (deleted_at)',
                 parameters: [
                     { name: 'id', in: 'query', required: true, schema: { type: 'string' } },
                 ],
@@ -348,7 +350,7 @@ export const openApiSpec = {
             },
             delete: {
                 tags: ['Catalog'],
-                summary: 'Delete size',
+                summary: 'Soft-delete sizes (deleted_at)',
                 parameters: [
                     { name: 'id', in: 'query', required: true, schema: { type: 'string' } },
                 ],
@@ -423,7 +425,7 @@ export const openApiSpec = {
             },
             delete: {
                 tags: ['Inventory'],
-                summary: 'Delete variant',
+                summary: 'Soft-delete a variant (deleted_at, unavailable) and its photos',
                 parameters: [
                     { name: 'id', in: 'query', required: true, schema: { type: 'string' } },
                 ],
@@ -492,7 +494,7 @@ export const openApiSpec = {
             },
             delete: {
                 tags: ['Inventory'],
-                summary: 'Delete product image',
+                summary: 'Soft-delete a product image (deleted_at)',
                 parameters: [
                     { name: 'id', in: 'query', required: true, schema: { type: 'string' } },
                 ],
@@ -500,6 +502,85 @@ export const openApiSpec = {
                     200: messageResponse('Image deleted'),
                     400: errorResponse(400, 'Image ID missing'),
                     500: errorResponse(500, 'Failed to delete image'),
+                },
+            },
+        },
+        '/api/landing': {
+            get: {
+                tags: ['Marketing'],
+                summary: 'Home page configuration: product picks per section, featured categories and landing_config (marketing permission)',
+                responses: {
+                    200: { description: '{ sections: Record<section, productId[]>, featuredCategories: categoryId[], config: { layout, lists, spotlightCategoryId } }' },
+                    500: errorResponse(500, 'Failed to load'),
+                },
+            },
+            put: {
+                tags: ['Marketing'],
+                summary: 'Save any combination of a section\'s picks, the config and the featured categories. Removed picks are soft-deleted.',
+                requestBody: {
+                    required: true,
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                properties: {
+                                    section: { type: 'string', enum: ['new_arrivals', 'showcase', 'ring', 'top_products', 'promo_products', 'spotlight'] },
+                                    product_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
+                                    featured_category_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
+                                    config: {
+                                        type: 'object',
+                                        description: 'layout: [{ key, visible }] in display order; lists: { new_arrivals|top_products|promo_products|spotlight: { count (1-30), autofill } }; spotlightCategoryId: uuid or null',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    200: messageResponse('Saved'),
+                    400: errorResponse(400, 'Invalid section or ids'),
+                    500: errorResponse(500, 'Failed to save'),
+                },
+            },
+        },
+        '/api/admin/activity': {
+            get: {
+                tags: ['Team'],
+                summary: 'Back-office activity history (admin only, append-only log)',
+                parameters: ['actor', 'entity', 'action', 'entityId', 'from', 'to', 'page', 'pageSize'].map((name) => ({
+                    name, in: 'query', required: false, schema: { type: 'string' },
+                })),
+                responses: {
+                    200: { description: '{ rows, total, actors }; actor=database lists direct database edits' },
+                    403: errorResponse(403, 'Admins only'),
+                },
+            },
+        },
+        '/api/admin/trash': {
+            get: {
+                tags: ['Team'],
+                summary: 'Deleted items: counts per table, or the soft-deleted rows of one table',
+                description: 'Needs the hard_delete permission, plus the area permission of ?table= when given.',
+                parameters: [{ name: 'table', in: 'query', required: false, schema: { type: 'string' }, description: 'products, orders, colors, … (omit for counts)' }],
+                responses: {
+                    200: { description: '{ counts } without table; { rows: [{ id, label, deleted_at }] } with table' },
+                    400: errorResponse(400, 'Unknown table'),
+                    403: errorResponse(403, 'Missing hard_delete or area permission'),
+                },
+            },
+            delete: {
+                tags: ['Team'],
+                summary: 'Erase soft-deleted rows for good (rows that are not deleted are ignored)',
+                description: 'Needs hard_delete plus the area permission of the table. Each erased row is recorded in the activity log (action purge).',
+                parameters: [
+                    { name: 'table', in: 'query', required: true, schema: { type: 'string' } },
+                    { name: 'ids', in: 'query', required: true, schema: { type: 'string' }, description: 'Comma-separated ids' },
+                ],
+                responses: {
+                    200: { description: '{ erased: number }' },
+                    400: errorResponse(400, 'Unknown table or invalid ids'),
+                    403: errorResponse(403, 'Missing hard_delete or area permission'),
+                    409: errorResponse(409, 'IN_USE (still used by live records) or HAS_STOCK (variants still hold stock); nothing erased'),
                 },
             },
         },
@@ -677,27 +758,27 @@ export const openApiSpec = {
             get: { tags: ['Stock'], summary: 'List locations', responses: { 200: messageResponse('Locations') } },
             post: { tags: ['Stock'], summary: 'Create a location', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, sells_online: { type: 'boolean' } } } } } }, responses: { 200: messageResponse('Created'), 400: errorResponse(400, 'Invalid or duplicate name') } },
             put: { tags: ['Stock'], summary: 'Update a location', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, name: { type: 'string' }, sells_online: { type: 'boolean' } } } } } }, responses: { 200: messageResponse('Updated') } },
-            delete: { tags: ['Stock'], summary: 'Delete a location (admin)', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
+            delete: { tags: ['Stock'], summary: 'Soft-delete a location (admin); refused while it sells online or holds stock', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
         },
         '/api/stock/suppliers': {
             get: { tags: ['Stock'], summary: 'List suppliers', responses: { 200: messageResponse('Suppliers') } },
             post: { tags: ['Stock'], summary: 'Create a supplier', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, email: { type: 'string' }, phone: { type: 'string' }, notes: { type: 'string' } } } } } }, responses: { 200: messageResponse('Created'), 400: errorResponse(400, 'Invalid or duplicate name') } },
             put: { tags: ['Stock'], summary: 'Update a supplier', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, name: { type: 'string' }, email: { type: 'string' }, phone: { type: 'string' }, notes: { type: 'string' } } } } } }, responses: { 200: messageResponse('Updated') } },
-            delete: { tags: ['Stock'], summary: 'Delete a supplier (admin)', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
+            delete: { tags: ['Stock'], summary: 'Soft-delete a supplier (admin)', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
         },
         '/api/stock/collections': {
             get: { tags: ['Stock'], summary: 'List collections', responses: { 200: messageResponse('Collections') } },
             post: { tags: ['Stock'], summary: 'Create a collection', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' } } } } } }, responses: { 200: messageResponse('Created'), 400: errorResponse(400, 'Invalid or duplicate name') } },
             put: { tags: ['Stock'], summary: 'Update a collection', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, name: { type: 'string' } } } } } }, responses: { 200: messageResponse('Updated') } },
-            delete: { tags: ['Stock'], summary: 'Delete a collection (admin)', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
+            delete: { tags: ['Stock'], summary: 'Soft-delete a collection (admin)', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
         },
         '/api/admin/me': {
             get: { tags: ['Team'], summary: 'Role and permissions of the signed-in back-office user', responses: { 200: messageResponse('{ role, email }') } },
         },
         '/api/admin/team': {
             get: { tags: ['Team'], summary: 'List admins and staff', responses: { 200: messageResponse('Members') } },
-            post: { tags: ['Team'], summary: 'Create a back-office account', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { email: { type: 'string' }, password: { type: 'string' }, role: { type: 'string', enum: ['admin', 'staff'] }, permissions: { type: 'array', items: { type: 'string', enum: ['products', 'stock', 'orders', 'discounts', 'marketing', 'analytics', 'costs', 'delete'] }, description: 'Staff only; admins have every permission' } } } } } }, responses: { 200: messageResponse('Created'), 409: errorResponse(409, 'Account exists') } },
-            put: { tags: ['Team'], summary: 'Change a role, or remove access with role null', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, role: { type: 'string', enum: ['admin', 'staff'], nullable: true }, permissions: { type: 'array', items: { type: 'string', enum: ['products', 'stock', 'orders', 'discounts', 'marketing', 'analytics', 'costs', 'delete'] }, description: 'Staff only; admins have every permission' } } } } } }, responses: { 200: messageResponse('Updated') } },
+            post: { tags: ['Team'], summary: 'Create a back-office account', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { email: { type: 'string' }, password: { type: 'string' }, role: { type: 'string', enum: ['admin', 'staff'] }, permissions: { type: 'array', items: { type: 'string', enum: ALL_PERMISSIONS }, description: 'Staff only; admins have every permission' } } } } } }, responses: { 200: messageResponse('Created'), 409: errorResponse(409, 'Account exists') } },
+            put: { tags: ['Team'], summary: 'Change a role, or remove access with role null', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, role: { type: 'string', enum: ['admin', 'staff'], nullable: true }, permissions: { type: 'array', items: { type: 'string', enum: ALL_PERMISSIONS }, description: 'Staff only; admins have every permission' } } } } } }, responses: { 200: messageResponse('Updated') } },
         },
         '/api/cart/send-recovery-emails': {
             post: {

@@ -40,12 +40,12 @@ export async function GET(request: NextRequest) {
             .is('products.deleted_at', null)
             .is('inventory_levels', null);
         const costsQuery = actor.permissions.includes('costs')
-            ? supabase.from('product_costs').select('product_id, cost')
+            ? supabase.from('product_costs').select('product_id, cost').is('deleted_at', null)
             : Promise.resolve({ data: null, error: null });
 
         // Everything is independent, so it all goes out at once.
         const [locationsResult, statsResult, recentResult, untrackedResult, levels, uncountedResult, costsResult] = await Promise.all([
-            supabase.from('locations').select('id, name, sells_online'),
+            supabase.from('locations').select('id, name, sells_online').is('deleted_at', null),
             supabase.from('daily_movement_stats').select('*'),
             supabase
                 .from('stock_movements')

@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
                 .from('products')
                 .select('id, name, name_ar, name_fr, slug, status, base_price, category_id, deleted_at, created_at, categories(name, slug), product_images(id, image_url, alt_text, is_main, position), product_variants!product_variants_product_id_fkey(count)')
                 .is('product_images.variant_id', null)
+                .is('product_images.deleted_at', null)
                 .order('created_at', { ascending: false });
             if (!isAdmin) summary = summary.eq('status', 'active').is('deleted_at', null);
             const { data, error } = await summary;
@@ -36,7 +37,8 @@ export async function GET(request: NextRequest) {
         // Build query
         let query = supabase
             .from('products')
-            .select('*, categories(name, slug), product_images(*)');
+            .select('*, categories(name, slug), product_images(*)')
+            .is('product_images.deleted_at', null);
 
         // Filter by ID if provided
         if (id) {
@@ -73,7 +75,8 @@ export async function GET(request: NextRequest) {
             const { data: variants, error: variantsError } = await supabase
                 .from('product_variants')
                 .select('*, sizes(*), colors(*)')
-                .in('product_id', productIds);
+                .in('product_id', productIds)
+                .is('deleted_at', null);
 
             if (!variantsError && variants) {
                 // Attach variants to products
@@ -179,9 +182,9 @@ function saveErrorResponse(error: { code?: string; message?: string }) {
 // The saved product with its images and variants, as the admin forms expect it.
 async function loadSavedProduct(productId: string) {
     const [imagesResult, productResult, variantsResult] = await Promise.all([
-        supabase.from('product_images').select('*').eq('product_id', productId),
+        supabase.from('product_images').select('*').eq('product_id', productId).is('deleted_at', null),
         supabase.from('products').select('*, categories(name, slug)').eq('id', productId).single(),
-        supabase.from('product_variants').select('*, sizes(*), colors(*)').eq('product_id', productId),
+        supabase.from('product_variants').select('*, sizes(*), colors(*)').eq('product_id', productId).is('deleted_at', null),
     ]);
     if (productResult.error) throw productResult.error;
     const images = imagesResult.data ?? [];
@@ -321,7 +324,7 @@ export async function DELETE(request: NextRequest) {
 
         const { error } = await supabase
             .from('products')
-            .update({ deleted_at: new Date().toISOString() })
+            .update({ status: 'archived', deleted_at: new Date().toISOString() })
             .in('id', ids);
         if (error) throw error;
 

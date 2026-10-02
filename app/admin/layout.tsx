@@ -25,6 +25,8 @@ import {
     SettingOutlined,
     TeamOutlined,
     DatabaseOutlined,
+    HomeOutlined,
+    DeleteOutlined,
 } from "@ant-design/icons";
 import { antdTheme } from "@/lib/antd-config";
 import { createAdminBrowserClient } from "@/lib/supabase-browser";
@@ -114,6 +116,11 @@ const menuItems: MenuItem[] = [
         ],
     },
     {
+        key: "/admin/landing",
+        icon: <HomeOutlined />,
+        label: msg("Landing page"),
+    },
+    {
         key: "/admin/promotions",
         icon: <PercentageOutlined />,
         label: msg("Product Discounts"),
@@ -137,6 +144,16 @@ const menuItems: MenuItem[] = [
         key: "/admin/team",
         icon: <TeamOutlined />,
         label: msg("Team"),
+    },
+    {
+        key: "/admin/activity",
+        icon: <HistoryOutlined />,
+        label: msg("Activity"),
+    },
+    {
+        key: "/admin/trash",
+        icon: <DeleteOutlined />,
+        label: msg("Deleted items"),
     },
     // {
     //     key: "/admin/sales",
@@ -194,7 +211,10 @@ const MENU_PERMISSIONS: Record<string, Permission | "admin"> = {
     "/admin/promotions": "discounts",
     "/admin/sale-banners": "marketing",
     "/admin/reels": "marketing",
+    "/admin/landing": "marketing",
     "/admin/team": "admin",
+    "/admin/activity": "admin",
+    "/admin/trash": "hard_delete",
 };
 
 function menuFor(isAdmin: boolean, permissions: Permission[], t: (text: string) => string): MenuItem[] {

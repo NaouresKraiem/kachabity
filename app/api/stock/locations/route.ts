@@ -4,7 +4,18 @@ import { stockLookupHandlers } from '@/lib/stock-crud';
 
 export const dynamic = 'force-dynamic';
 
-const handlers = stockLookupHandlers('locations', ['name', 'sells_online'], 'Location');
+// A deleted location would hide its stock, so only empty, offline locations can be deleted.
+async function canDeleteLocation(id: string): Promise<string | null> {
+    const [{ data: location }, { count }] = await Promise.all([
+        supabase.from('locations').select('sells_online').eq('id', id).maybeSingle(),
+        supabase.from('inventory_levels').select('variant_id', { count: 'exact', head: true }).eq('location_id', id).gt('available', 0),
+    ]);
+    if (location?.sells_online) return 'This location sells online. Make another location the online one first.';
+    if (count) return 'This location still holds stock. Transfer it to another location first.';
+    return null;
+}
+
+const handlers = stockLookupHandlers('locations', ['name', 'sells_online'], 'Location', canDeleteLocation);
 
 export const { GET, DELETE } = handlers;
 

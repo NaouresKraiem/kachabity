@@ -1,9 +1,11 @@
 // Server-side product queries for the landing page sections
-// (showcase hero, new arrivals, collection spotlight).
+// (showcase hero, new arrivals, collection spotlight). The admin picks the showcase,
+// ring and pinned new arrivals in Admin → Landing page (table landing_products).
 
 import supabase from '@/lib/supabaseClient';
 import { getActiveProductDiscounts } from '@/lib/product-discounts';
 import { getProductName, getCategoryName, getDescendantCategoryIds } from '@/lib/utils/product-utils';
+import { parseLandingConfig, type LandingConfig, type LandingSection, type ListSettings } from '@/lib/landing-config';
 
 export interface LandingProduct {
     id: string;
@@ -90,10 +92,7 @@ async function getCategories(): Promise<CategoryRow[]> {
         .from('categories')
         .select('id, name, name_ar, name_fr, slug, parent_id, sort_order')
         .order('sort_order', { ascending: true });
-    if (error) {
-        console.error('Error fetching categories for landing page:', error);
-        return [];
-    }
+    if (error) throw error; // not cached: getLandingData falls back without caching
     return data || [];
 }
 
@@ -105,41 +104,81 @@ function liveProducts() {
         .is('deleted_at', null);
 }
 
-export async function getNewArrivals(locale: string, limit = 8): Promise<LandingProduct[]> {
-    const [{ data, error }, categories] = await Promise.all([
-        liveProducts().order('created_at', { ascending: false }).limit(limit * 2),
-        getCategories(),
-    ]);
+// Admin-editable in Admin → Landing page (site_settings row `landing_config`).
+export async function getLandingConfig(): Promise<LandingConfig> {
+    const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'landing_config')
+        .maybeSingle();
+    // Throw rather than fall back to the defaults, which would be cached as the admin's choice.
+    if (error) throw error;
+    return parseLandingConfig(data?.setting_value);
+}
+
+// The products the admin picked for a section, in their order.
+export async function getPickedIds(section: LandingSection): Promise<string[]> {
+    const { data, error } = await supabase
+        .from('landing_products')
+        .select('product_id')
+        .eq('section', section)
+        .order('position', { ascending: true });
+    if (error) throw error; // not cached: an empty list would look like "nothing picked"
+    return ((data ?? []) as { product_id: string }[]).map((row) => row.product_id);
+}
+
+// Products by id, returned in the order given; unpublished ones and ones without a photo are skipped.
+async function getProductsByIds(locale: string, ids: string[], categories: CategoryRow[]): Promise<LandingProduct[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await liveProducts().in('id', ids);
+    if (error) throw error;
+    const rows = (data as ProductRow[] | null ?? [])
+        .filter((r) => mainImage(r.product_images))
+        .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+    return toLandingProducts(rows, categories, locale);
+}
+
+// A section's picks. Showcase and ring fall back to the newest products when nothing is picked.
+export async function getLandingPicks(locale: string, section: Exclude<LandingSection, 'new_arrivals'>): Promise<LandingProduct[]> {
+    const [ids, categories] = await Promise.all([getPickedIds(section), getCategories()]);
+    const picks = await getProductsByIds(locale, ids, categories);
+    if (picks.length > 0) return picks;
+    return getNewestProducts(locale, section === 'showcase' ? 3 : 11, [], categories);
+}
+
+async function getNewestProducts(locale: string, limit: number, excludeIds: string[], categories: CategoryRow[]): Promise<LandingProduct[]> {
+    if (limit <= 0) return [];
+    const { data, error } = await liveProducts()
+        .order('created_at', { ascending: false })
+        .limit(limit * 2 + excludeIds.length);
     if (error) {
         console.error('Error fetching new arrivals:', error);
         return [];
     }
     // Products without a photo don't belong in an image-led section.
-    const withImages = (data as ProductRow[] | null ?? []).filter((r) => mainImage(r.product_images));
-    return toLandingProducts(withImages.slice(0, limit), categories, locale);
-}
-
-// Products by slug, returned in the order given; missing or unpublished slugs are skipped.
-export async function getProductsBySlugs(locale: string, slugs: string[]): Promise<LandingProduct[]> {
-    const [{ data, error }, categories] = await Promise.all([
-        liveProducts().in('slug', slugs),
-        getCategories(),
-    ]);
-    if (error) {
-        console.error('Error fetching products by slug:', error);
-        return [];
-    }
     const rows = (data as ProductRow[] | null ?? [])
-        .filter((r) => mainImage(r.product_images))
-        .sort((a, b) => slugs.indexOf(a.slug) - slugs.indexOf(b.slug));
+        .filter((r) => !excludeIds.includes(r.id) && mainImage(r.product_images))
+        .slice(0, limit);
     return toLandingProducts(rows, categories, locale);
 }
 
-// Spotlights the top-level category with the most live products in its subtree.
-export async function getSpotlightCollection(locale: string, limit = 10): Promise<SpotlightCollection | null> {
+// Pinned products first (in the admin's order), then the newest products if autofill is on.
+export async function getNewArrivals(locale: string, settings: ListSettings): Promise<LandingProduct[]> {
+    const [ids, categories] = await Promise.all([getPickedIds('new_arrivals'), getCategories()]);
+    const pinned = (await getProductsByIds(locale, ids, categories)).slice(0, settings.count);
+    if (!settings.autofill) return pinned;
+    const newest = await getNewestProducts(locale, settings.count - pinned.length, pinned.map((p) => p.id), categories);
+    return [...pinned, ...newest];
+}
+
+// Spotlights the category the admin chose, or else the top-level category with the most
+// live products in its subtree. Pinned products come first, then its best sellers (autofill).
+export async function getSpotlightCollection(
+    locale: string,
+    settings: ListSettings,
+    categoryId: string | null
+): Promise<SpotlightCollection | null> {
     const categories = await getCategories();
-    const roots = categories.filter((c) => !c.parent_id);
-    if (roots.length === 0) return null;
 
     const { data: counts, error: countError } = await supabase
         .from('products')
@@ -155,35 +194,51 @@ export async function getSpotlightCollection(locale: string, limit = 10): Promis
     for (const row of counts || []) {
         if (row.category_id) perCategory.set(row.category_id, (perCategory.get(row.category_id) || 0) + 1);
     }
-
-    let best: { root: CategoryRow; ids: string[]; total: number } | null = null;
-    for (const root of roots) {
+    const subtree = (root: CategoryRow) => {
         const ids = getDescendantCategoryIds(root.id, categories);
-        const total = ids.reduce((sum, id) => sum + (perCategory.get(id) || 0), 0);
-        if (!best || total > best.total) best = { root, ids, total };
-    }
-    if (!best || best.total < 3) return null;
+        return { root, ids, total: ids.reduce((sum, id) => sum + (perCategory.get(id) || 0), 0) };
+    };
 
-    const { data, error } = await liveProducts()
-        .in('category_id', best.ids)
-        .order('sold_count', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(limit);
-    if (error) {
-        console.error('Error fetching spotlight products:', error);
-        return null;
+    const chosen = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
+    let best: { root: CategoryRow; ids: string[]; total: number } | null = chosen ? subtree(chosen) : null;
+    if (!best) {
+        for (const root of categories.filter((c) => !c.parent_id)) {
+            const candidate = subtree(root);
+            if (!best || candidate.total > best.total) best = candidate;
+        }
+    }
+    if (!best) return null;
+
+    const pinnedIds = await getPickedIds('spotlight');
+    const pinned = (await getProductsByIds(locale, pinnedIds, categories)).slice(0, settings.count);
+    let filled: LandingProduct[] = [];
+    const remaining = settings.count - pinned.length;
+    if (settings.autofill && remaining > 0 && best.ids.length > 0) {
+        const { data, error } = await liveProducts()
+            .in('category_id', best.ids)
+            .order('sold_count', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(remaining + pinned.length);
+        if (error) {
+            console.error('Error fetching spotlight products:', error);
+            return null;
+        }
+        const rows = (data as ProductRow[] | null ?? [])
+            .filter((r) => mainImage(r.product_images) && !pinned.some((p) => p.id === r.id))
+            .slice(0, remaining);
+        filled = await toLandingProducts(rows, categories, locale);
     }
 
-    const rows = (data as ProductRow[] | null ?? []).filter((r) => mainImage(r.product_images));
-    const products = await toLandingProducts(rows, categories, locale);
-    const bestRootId = best.root.id;
+    const products = [...pinned, ...filled];
+    if (products.length < 3) return null;
+    const rootId = best.root.id;
 
     return {
         name: getCategoryName(best.root, locale).trim(),
         slug: best.root.slug,
-        productCount: best.total,
+        productCount: Math.max(best.total, products.length),
         subcategories: categories
-            .filter((c) => c.parent_id === bestRootId)
+            .filter((c) => c.parent_id === rootId)
             .map((c) => ({ name: getCategoryName(c, locale).trim(), slug: c.slug })),
         products,
     };

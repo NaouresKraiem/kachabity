@@ -43,10 +43,11 @@ export async function addToFavorites(userId: string, productId: string): Promise
     try {
         const { error } = await supabase
             .from("user_favorites")
-            .insert({
-                user_id: userId,
-                product_id: productId
-            });
+            // A removed favorite is kept (deleted_at set); adding it again brings it back.
+            .upsert(
+                { user_id: userId, product_id: productId, deleted_at: null },
+                { onConflict: "user_id,product_id" }
+            );
 
         if (error) {
             console.error("Error adding to favorites:", error);
@@ -67,7 +68,7 @@ export async function removeFromFavorites(userId: string, productId: string): Pr
     try {
         const { error } = await supabase
             .from("user_favorites")
-            .delete()
+            .update({ deleted_at: new Date().toISOString() })
             .eq("user_id", userId)
             .eq("product_id", productId);
 
@@ -94,6 +95,7 @@ export async function toggleFavorite(userId: string, productId: string): Promise
             .select("id")
             .eq("user_id", userId)
             .eq("product_id", productId)
+            .is("deleted_at", null)
             .maybeSingle(); // Returns null if not found, no error
 
         if (checkError) {
@@ -150,6 +152,7 @@ export async function getUserFavorites(userId: string): Promise<{ favorites: Fav
                 )
             `)
             .eq("user_id", userId)
+            .is("deleted_at", null)
             .order("created_at", { ascending: false });
 
         if (error) {
@@ -252,6 +255,7 @@ export async function isProductFavorited(userId: string, productId: string): Pro
             .select("id")
             .eq("user_id", userId)
             .eq("product_id", productId)
+            .is("deleted_at", null)
             .maybeSingle(); // Returns null if not found, no error
 
         if (error) {
@@ -274,7 +278,8 @@ export async function getProductFavoriteCount(productId: string): Promise<number
         const { count, error } = await supabase
             .from("user_favorites")
             .select("*", { count: "exact", head: true })
-            .eq("product_id", productId);
+            .eq("product_id", productId)
+            .is("deleted_at", null);
 
         if (error) {
             console.error("Error getting favorite count:", error);
