@@ -8,23 +8,28 @@ import {
     Input,
     Button,
     Select,
-    InputNumber, Upload,
-    message,
+    InputNumber,
+    Upload,
     Card,
     Breadcrumb,
     Typography,
     Space,
     Divider,
     Row,
-    Col
+    Col,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
 import ProductTranslationFields from "@/components/admin/ProductTranslationFields";
+import { searchByText } from "@/components/admin/select-search";
+import ProductStockFields, { saveProductCost } from "@/components/admin/ProductStockFields";
+import { useAdminRole } from "@/lib/admin-role-context";
 import {
     SaveOutlined,
     ArrowLeftOutlined,
     PlusOutlined
 } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -60,8 +65,10 @@ interface Variant {
 }
 
 export default function CreateProductPage() {
+    const { t } = useAdminT();
     const router = useRouter();
     const [form] = Form.useForm();
+    const canSeeCosts = useAdminRole().can("costs");
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [sizes, setSizes] = useState<Size[]>([]);
@@ -82,9 +89,9 @@ export default function CreateProductPage() {
                     const errorText = await response.text();
                     console.error("Categories API error:", response.status, errorText);
                     if (response.status === 401) {
-                        message.error("Unauthorized. Please log in as admin.");
+                        message.error(t("Unauthorized. Please log in as admin."));
                     } else {
-                        message.warning(`Failed to load categories (${response.status}). Please refresh.`);
+                        message.warning(t("Failed to load categories ({status}). Please refresh.", { status: response.status }));
                     }
                     return;
                 }
@@ -93,7 +100,7 @@ export default function CreateProductPage() {
                 if (!contentType || !contentType.includes("application/json")) {
                     const text = await response.text();
                     console.error("Expected JSON but got:", contentType, text.substring(0, 100));
-                    message.error("Server returned invalid response");
+                    message.error(t("Server returned invalid response"));
                     return;
                 }
 
@@ -102,15 +109,15 @@ export default function CreateProductPage() {
                     const categoriesData = result.data || [];
                     setCategories(categoriesData);
                     if (categoriesData.length === 0) {
-                        message.warning("No categories available. Please create categories first.");
+                        message.warning(t("No categories available. Please create categories first."));
                     }
                 } else {
                     console.error("Failed to fetch categories:", result.error);
-                    message.warning(result.error || "Failed to load categories. Please refresh the page.");
+                    message.warning(result.error || t("Failed to load categories. Please refresh the page."));
                 }
             } catch (error: any) {
                 console.error("Failed to fetch categories", error);
-                message.error(`Failed to load categories: ${error.message || "Please check your connection."}`);
+                message.error(t("Failed to load categories: {error}", { error: error.message || t("Please check your connection.") }));
             }
         }
         fetchCategories();
@@ -222,6 +229,9 @@ export default function CreateProductPage() {
                 category_id: values.category_id || null,
                 base_price: parseFloat(values.base_price),
                 status: values.status || "active",
+                code: values.code || null,
+                supplier_id: values.supplier_id || null,
+                collection_id: values.collection_id || null,
                 images: productImageUrls.map((url, index) => ({
                     url,
                     is_main: index === 0,
@@ -272,14 +282,17 @@ export default function CreateProductPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success("Product created successfully!");
+                if (canSeeCosts && values.cost != null && result.data?.id) {
+                    await saveProductCost(result.data.id, values.cost).catch((e) => message.warning(e.message));
+                }
+                message.success(t("Product created successfully!"));
                 router.push("/admin/products");
             } else {
-                message.error(result.error || "Failed to create product");
+                message.error(result.error || t("Failed to create product"));
             }
         } catch (error: any) {
             console.error("Error creating product:", error);
-            message.error(error.message || "Failed to create product");
+            message.error(error.message || t("Failed to create product"));
         } finally {
             setLoading(false);
         }
@@ -358,7 +371,7 @@ export default function CreateProductPage() {
 
         if (newVariants.length > 0) {
             setVariants([...variants, ...newVariants]);
-            message.success(`Added ${newVariants.length} variant(s)`);
+            message.success(t("Added {length} variant(s)", { length: newVariants.length }));
             // Clear selections
             setQuickColorId(undefined);
             setQuickSizeIds([]);
@@ -371,18 +384,18 @@ export default function CreateProductPage() {
         <div style={{ padding: 24, background: "#fff", minHeight: "100vh" }}>
             <Breadcrumb
                 items={[
-                    { title: <Link href="/admin/dashboard">Dashboard</Link> },
-                    { title: <Link href="/admin/products">Products</Link> },
-                    { title: "Create" },
+                    { title: <Link href="/admin/dashboard">{t("Dashboard")}</Link> },
+                    { title: <Link href="/admin/products">{t("Products")}</Link> },
+                    { title: t("Create") },
                 ]}
             />
 
             <div style={{ marginTop: 24, marginBottom: 24 }}>
                 <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-                    Create New Product
+                    {t("Create New Product")}
                 </Title>
                 <Text type="secondary">
-                    Add a new product to your catalog
+                    {t("Add a new product to your catalog")}
                 </Text>
             </div>
 
@@ -396,24 +409,24 @@ export default function CreateProductPage() {
                     }}
                 >
                     {/* Basic Information */}
-                    <Title level={4}>Basic Information</Title>
+                    <Title level={4}>{t("Basic Information")}</Title>
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Product Name"
+                                label={t("Product Name")}
                                 name="name"
                                 rules={[
-                                    { required: true, message: "Please enter product name" },
+                                    { required: true, message: t("Please enter product name") },
                                 ]}
                             >
-                                <Input placeholder="Enter product name" />
+                                <Input placeholder={t("Enter product name")} />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Slug"
+                                label={t("Slug")}
                                 name="slug"
-                                tooltip="URL-friendly identifier (auto-generated from name if left empty)"
+                                tooltip={t("URL-friendly identifier (auto-generated from name if left empty)")}
                             >
                                 <Input placeholder="product-slug" />
                             </Form.Item>
@@ -421,25 +434,30 @@ export default function CreateProductPage() {
                     </Row>
 
                     <Form.Item
-                        label="Description"
+                        label={t("Description")}
                         name="description"
                     >
                         <TextArea
                             rows={4}
-                            placeholder="Enter product description"
+                            placeholder={t("Enter product description")}
                         />
                     </Form.Item>
 
                     <ProductTranslationFields />
 
+                    <Divider />
+                    <Title level={4}>{t("Stock")}</Title>
+                    {/* Tracking is switched on automatically when opening stock is entered. */}
+                    <ProductStockFields showTracking={false} />
+
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Category"
+                                label={t("Category")}
                                 name="category_id"
                             >
                                 <Select
-                                    placeholder={categories.length === 0 ? "No categories available" : "Select category"}
+                                    placeholder={categories.length === 0 ? t("No categories available") : t("Select category")}
                                     allowClear
                                     showSearch
                                     optionFilterProp="children"
@@ -455,19 +473,19 @@ export default function CreateProductPage() {
                             </Form.Item>
                             {categories.length === 0 && (
                                 <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
-                                    No categories available. Please create categories in the database first.
+                                    {t("No categories available. Please create categories in the database first.")}
                                 </Text>
                             )}
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Status"
+                                label={t("Status")}
                                 name="status"
                             >
                                 <Select>
-                                    <Option value="active">Active</Option>
-                                    <Option value="inactive">Inactive</Option>
-                                    <Option value="archived">Archived</Option>
+                                    <Option value="active">{t("Active")}</Option>
+                                    <Option value="inactive">{t("Inactive")}</Option>
+                                    <Option value="archived">{t("Archived")}</Option>
                                 </Select>
                             </Form.Item>
                         </Col>
@@ -476,15 +494,15 @@ export default function CreateProductPage() {
                     <Divider />
 
                     {/* Pricing */}
-                    <Title level={4}>Pricing & Stock</Title>
+                    <Title level={4}>{t("Pricing & Stock")}</Title>
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
-                            <Form.Item label="Base Price" required>
+                            <Form.Item label={t("Base Price")} required>
                                 <Space.Compact style={{ width: "100%" }}>
                                     {/* noStyle binds the value to InputNumber; the outer item only renders the label */}
                                     <Form.Item name="base_price" noStyle rules={[
-                                        { required: true, message: "Please enter base price" },
-                                        { type: "number", min: 0, message: "Price must be positive" },
+                                        { required: true, message: t("Please enter base price") },
+                                        { type: "number", min: 0, message: t("Price must be positive") },
                                     ]}>
                                         <InputNumber
                                             style={{ width: "100%" }}
@@ -504,12 +522,12 @@ export default function CreateProductPage() {
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Stock Quantity (per size)"
+                                label={t("Opening stock (per size)")}
                                 name="stock_quantity"
                                 initialValue={0}
                                 rules={[
-                                    { required: true, message: "Please enter stock quantity" },
-                                    { type: "number", min: 0, message: "Stock must be positive" },
+                                    { required: true, message: t("Please enter stock quantity") },
+                                    { type: "number", min: 0, message: t("Stock must be positive") },
                                 ]}
                             >
                                 <InputNumber
@@ -520,7 +538,7 @@ export default function CreateProductPage() {
                                 />
                             </Form.Item>
                             <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: -16 }}>
-                                This quantity will be assigned to each size variant
+                                {t("Recorded as a restock at the online location. Any stock above zero switches on website stock tracking.")}
                             </Text>
                         </Col>
                     </Row>
@@ -528,19 +546,21 @@ export default function CreateProductPage() {
                     <Divider />
 
                     {/* Color and Sizes */}
-                    <Title level={4}>Color & Sizes</Title>
+                    <Title level={4}>{t("Color & Sizes")}</Title>
                     <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                        Select a color and sizes for this product. Variants will be created automatically.
+                        {t("Select a color and sizes for this product. Variants will be created automatically.")}
                     </Text>
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Product Color"
+                                label={t("Product Color")}
                                 name="color_id"
-                                rules={[{ required: true, message: "Please select a color" }]}
+                                rules={[{ required: true, message: t("Please select a color") }]}
                             >
                                 <Select
-                                    placeholder="Select product color"
+                                    showSearch
+                                    filterOption={searchByText}
+                                    placeholder={t("Select product color")}
                                     size="large"
                                     optionLabelProp="label"
                                 >
@@ -548,6 +568,7 @@ export default function CreateProductPage() {
                                         <Option
                                             key={color.id}
                                             value={color.id}
+                                            searchtext={color.display_name || color.name}
                                             label={color.display_name || color.name}
                                         >
                                             <Space>
@@ -572,17 +593,19 @@ export default function CreateProductPage() {
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Available Sizes"
+                                label={t("Available Sizes")}
                                 name="size_ids"
-                                rules={[{ required: true, message: "Please select at least one size" }]}
+                                rules={[{ required: true, message: t("Please select at least one size") }]}
                             >
                                 <Select
                                     mode="multiple"
-                                    placeholder="Select available sizes"
+                                    showSearch
+                                    filterOption={searchByText}
+                                    placeholder={t("Select available sizes")}
                                     size="large"
                                 >
                                     {sizes.map((size) => (
-                                        <Option key={size.id} value={size.id}>
+                                        <Option key={size.id} value={size.id} searchtext={size.display_name || size.name}>
                                             {size.display_name || size.name}
                                         </Option>
                                     ))}
@@ -594,7 +617,7 @@ export default function CreateProductPage() {
                     <Divider />
 
                     {/* Images */}
-                    <Title level={4}>Product Images</Title>
+                    <Title level={4}>{t("Product Images")}</Title>
                     <Form.Item>
                         <Upload
                             listType="picture-card"
@@ -606,12 +629,12 @@ export default function CreateProductPage() {
                             {imageFiles.length < 10 && (
                                 <div>
                                     <PlusOutlined />
-                                    <div style={{ marginTop: 8 }}>Upload</div>
+                                    <div style={{ marginTop: 8 }}>{t("Upload")}</div>
                                 </div>
                             )}
                         </Upload>
                         <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
-                            Upload up to 10 images. First image will be set as main.
+                            {t("Upload up to 10 images. First image will be set as main.")}
                         </Text>
                     </Form.Item>
 
@@ -630,13 +653,13 @@ export default function CreateProductPage() {
                                 size="large"
                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                             >
-                                Create Product
+                                {t("Create Product")}
                             </Button>
                             <Button
                                 icon={<ArrowLeftOutlined />}
                                 onClick={() => router.push("/admin/products")}
                             >
-                                Cancel
+                                {t("Cancel")}
                             </Button>
                         </Space>
                     </Form.Item>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Col, Form, Input, Row, Select } from "antd";
+import { useAdminT } from "@/lib/admin-i18n";
 
 interface CategoryOption {
     id: string;
@@ -16,6 +17,7 @@ interface CategoryExtraFieldsProps {
 
 /** Translated names and parent category, shared by the create and edit category forms. */
 export default function CategoryExtraFields({ excludeId }: CategoryExtraFieldsProps) {
+    const { t } = useAdminT();
     const [categories, setCategories] = useState<CategoryOption[]>([]);
 
     useEffect(() => {
@@ -43,26 +45,26 @@ export default function CategoryExtraFields({ excludeId }: CategoryExtraFieldsPr
         <>
             <Row gutter={16}>
                 <Col xs={24} md={12}>
-                    <Form.Item label="Name (Arabic)" name="name_ar">
+                    <Form.Item label={t("Name (Arabic)")} name="name_ar">
                         <Input dir="rtl" placeholder="اسم الفئة" />
                     </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                    <Form.Item label="Name (French)" name="name_fr">
-                        <Input placeholder="Nom de la catégorie" />
+                    <Form.Item label={t("Name (French)")} name="name_fr">
+                        <Input placeholder={t("Nom de la catégorie")} />
                     </Form.Item>
                 </Col>
             </Row>
             <Form.Item
-                label="Parent Category"
+                label={t("Parent Category")}
                 name="parent_id"
-                tooltip="Leave empty for a top-level category. A parent's page also lists its sub-categories' products."
+                tooltip={t("Leave empty for a top-level category. A parent's page also lists its sub-categories' products.")}
             >
                 <Select
                     allowClear
                     showSearch
                     optionFilterProp="label"
-                    placeholder="None (top-level)"
+                    placeholder={t("None (top-level)")}
                     options={categories
                         .filter((c) => !excluded.has(c.id))
                         .map((c) => ({ value: c.id, label: c.name }))}

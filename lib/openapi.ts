@@ -88,6 +88,8 @@ export const openApiSpec = {
         { name: 'Inventory', description: 'Variants and product images' },
         { name: 'Marketing', description: 'Newsletter and contact forms' },
         { name: 'Operations', description: 'Orders, uploads, and automations' },
+        { name: 'Stock', description: 'Inventory per location, stock movements and stock settings (stock permission; costs need the costs permission)' },
+        { name: 'Team', description: 'Back-office accounts and roles (admin only)' },
     ],
     paths: {
         '/api/products': {
@@ -638,10 +640,64 @@ export const openApiSpec = {
                 responses: {
                     201: messageResponse('Order created'),
                     400: errorResponse(400, 'Invalid order data'),
-                    409: errorResponse(409, 'Prices or totals are out of date (code: PRICES_CHANGED, TOTALS_CHANGED, PRODUCT_UNAVAILABLE)'),
+                    409: errorResponse(409, 'Prices or totals are out of date (code: PRICES_CHANGED, TOTALS_CHANGED, PRODUCT_UNAVAILABLE, OUT_OF_STOCK, VARIANT_REQUIRED)'),
                     500: errorResponse(500, 'Unable to create order'),
                 },
             },
+        },
+        '/api/stock/inventory': {
+            get: { tags: ['Stock'], summary: 'Stock per variant and location', description: 'One row per live variant with levels per location, total, online stock and status.', responses: { 200: messageResponse('{ locations, rows }') } },
+        },
+        '/api/stock/movements': {
+            get: {
+                tags: ['Stock'],
+                summary: 'Movement history, newest first',
+                parameters: ['type', 'location_id', 'variant_id', 'search', 'limit', 'offset'].map((name) => ({ name, in: 'query', schema: { type: 'string' } })),
+                responses: { 200: messageResponse('Movements with total count') },
+            },
+            post: {
+                tags: ['Stock'],
+                summary: 'Record stock movements',
+                description: 'type restock/return add, sale removes, adjustment is signed, transfer moves to to_location_id, count sets counted quantities (differences saved as adjustments). All lines succeed or none.',
+                requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { type: { type: 'string', enum: ['restock', 'sale', 'return', 'adjustment', 'transfer', 'count'] }, location_id: { type: 'string', format: 'uuid' }, to_location_id: { type: 'string', format: 'uuid' }, items: { type: 'array', items: { type: 'object', properties: { variant_id: { type: 'string', format: 'uuid' }, quantity: { type: 'integer' } } } }, reference: { type: 'string' }, note: { type: 'string' }, track: { type: 'boolean', description: 'Start tracking these products on the website' } } } } } },
+                responses: { 200: messageResponse('{ recorded }'), 400: errorResponse(400, 'Invalid movement data'), 409: errorResponse(409, 'Not enough stock') },
+            },
+        },
+        '/api/stock/overview': {
+            get: { tags: ['Stock'], summary: 'Dashboard figures and 30-day series', description: 'stock_value is null for staff.', responses: { 200: messageResponse('Overview') } },
+        },
+        '/api/stock/tracking': {
+            put: { tags: ['Stock'], summary: 'Switch website stock tracking for products', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { product_ids: { type: 'array', items: { type: 'string', format: 'uuid' } }, tracked: { type: 'boolean' } } } } } }, responses: { 200: messageResponse('Updated') } },
+        },
+        '/api/stock/costs': {
+            get: { tags: ['Stock'], summary: 'Purchase costs (admin)', responses: { 200: messageResponse('Costs'), 403: errorResponse(403, 'Admins only') } },
+            put: { tags: ['Stock'], summary: 'Set or clear a product cost (admin)', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { product_id: { type: 'string', format: 'uuid' }, cost: { type: 'number', nullable: true } } } } } }, responses: { 200: messageResponse('Saved'), 403: errorResponse(403, 'Admins only') } },
+        },
+        '/api/stock/locations': {
+            get: { tags: ['Stock'], summary: 'List locations', responses: { 200: messageResponse('Locations') } },
+            post: { tags: ['Stock'], summary: 'Create a location', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, sells_online: { type: 'boolean' } } } } } }, responses: { 200: messageResponse('Created'), 400: errorResponse(400, 'Invalid or duplicate name') } },
+            put: { tags: ['Stock'], summary: 'Update a location', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, name: { type: 'string' }, sells_online: { type: 'boolean' } } } } } }, responses: { 200: messageResponse('Updated') } },
+            delete: { tags: ['Stock'], summary: 'Delete a location (admin)', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
+        },
+        '/api/stock/suppliers': {
+            get: { tags: ['Stock'], summary: 'List suppliers', responses: { 200: messageResponse('Suppliers') } },
+            post: { tags: ['Stock'], summary: 'Create a supplier', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, email: { type: 'string' }, phone: { type: 'string' }, notes: { type: 'string' } } } } } }, responses: { 200: messageResponse('Created'), 400: errorResponse(400, 'Invalid or duplicate name') } },
+            put: { tags: ['Stock'], summary: 'Update a supplier', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, name: { type: 'string' }, email: { type: 'string' }, phone: { type: 'string' }, notes: { type: 'string' } } } } } }, responses: { 200: messageResponse('Updated') } },
+            delete: { tags: ['Stock'], summary: 'Delete a supplier (admin)', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
+        },
+        '/api/stock/collections': {
+            get: { tags: ['Stock'], summary: 'List collections', responses: { 200: messageResponse('Collections') } },
+            post: { tags: ['Stock'], summary: 'Create a collection', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' } } } } } }, responses: { 200: messageResponse('Created'), 400: errorResponse(400, 'Invalid or duplicate name') } },
+            put: { tags: ['Stock'], summary: 'Update a collection', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, name: { type: 'string' } } } } } }, responses: { 200: messageResponse('Updated') } },
+            delete: { tags: ['Stock'], summary: 'Delete a collection (admin)', parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } }], responses: { 200: messageResponse('Deleted'), 400: errorResponse(400, 'Still in use'), 403: errorResponse(403, 'Admins only') } },
+        },
+        '/api/admin/me': {
+            get: { tags: ['Team'], summary: 'Role and permissions of the signed-in back-office user', responses: { 200: messageResponse('{ role, email }') } },
+        },
+        '/api/admin/team': {
+            get: { tags: ['Team'], summary: 'List admins and staff', responses: { 200: messageResponse('Members') } },
+            post: { tags: ['Team'], summary: 'Create a back-office account', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { email: { type: 'string' }, password: { type: 'string' }, role: { type: 'string', enum: ['admin', 'staff'] }, permissions: { type: 'array', items: { type: 'string', enum: ['products', 'stock', 'orders', 'discounts', 'marketing', 'analytics', 'costs', 'delete'] }, description: 'Staff only; admins have every permission' } } } } } }, responses: { 200: messageResponse('Created'), 409: errorResponse(409, 'Account exists') } },
+            put: { tags: ['Team'], summary: 'Change a role, or remove access with role null', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'string', format: 'uuid' }, role: { type: 'string', enum: ['admin', 'staff'], nullable: true }, permissions: { type: 'array', items: { type: 'string', enum: ['products', 'stock', 'orders', 'discounts', 'marketing', 'analytics', 'costs', 'delete'] }, description: 'Staff only; admins have every permission' } } } } } }, responses: { 200: messageResponse('Updated') } },
         },
         '/api/cart/send-recovery-emails': {
             post: {
@@ -874,6 +930,7 @@ export const openApiSpec = {
                             required: ['id', 'price', 'quantity'],
                             properties: {
                                 id: { type: 'string', format: 'uuid' },
+                                variantId: { type: 'string', format: 'uuid', nullable: true, description: 'Chosen size/color; required for tracked products with several variants' },
                                 price: { type: 'number' },
                                 quantity: { type: 'integer', minimum: 1 },
                             },

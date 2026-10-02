@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { message } from "antd";
+import {  } from "antd";
+import { message } from "@/components/admin/antd-app";
 import Image from "next/image";
+import { useAdminT } from "@/lib/admin-i18n";
 
 export interface GalleryImage {
     id?: string;
@@ -19,6 +21,7 @@ interface MultiImageUploadProps {
 }
 
 export default function MultiImageUpload({ label, value, onChange, onPrimaryChange, maxImages = 8 }: MultiImageUploadProps) {
+    const { t } = useAdminT();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
 
@@ -31,7 +34,7 @@ export default function MultiImageUpload({ label, value, onChange, onPrimaryChan
 
         // Enforce max count
         if (value.length + filesArray.length > maxImages) {
-            message.error(`You can upload up to ${maxImages} images.`);
+            message.error(t("You can upload up to {maxImages} images.", { maxImages }));
             return;
         }
 
@@ -108,13 +111,13 @@ export default function MultiImageUpload({ label, value, onChange, onPrimaryChan
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition" />
                             <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                                <button type="button" onClick={() => handleRemove(index)} className="px-2 py-1 text-xs bg-red-600 text-white rounded">Del</button>
+                                <button type="button" onClick={() => handleRemove(index)} className="px-2 py-1 text-xs bg-red-600 text-white rounded">{t("Del")}</button>
                             </div>
                             <div className="absolute bottom-1 left-1 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                 <button type="button" onClick={() => move(index, index - 1)} className="px-2 py-1 text-xs bg-white/90 rounded">←</button>
                                 <button type="button" onClick={() => move(index, index + 1)} className="px-2 py-1 text-xs bg-white/90 rounded">→</button>
                                 {onPrimaryChange && (
-                                    <button type="button" onClick={() => onPrimaryChange(img.url)} className="px-2 py-1 text-xs bg-amber-500 text-white rounded">Primary</button>
+                                    <button type="button" onClick={() => onPrimaryChange(img.url)} className="px-2 py-1 text-xs bg-amber-500 text-white rounded">{t("Primary")}</button>
                                 )}
                             </div>
                         </div>
@@ -139,7 +142,7 @@ export default function MultiImageUpload({ label, value, onChange, onPrimaryChan
                         className="hidden"
                     />
                 </div>
-                <p className="text-xs text-gray-500">Accepted: JPG, PNG, WebP, GIF. Max size: 5MB. Up to {maxImages} images.</p>
+                <p className="text-xs text-gray-500">{t("Accepted: JPG, PNG, WebP, GIF. Max size: 5MB. Up to {count} images.", { count: maxImages })}</p>
             </div>
         </div>
     );

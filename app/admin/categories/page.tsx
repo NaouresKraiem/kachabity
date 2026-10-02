@@ -8,7 +8,6 @@ import {
     Card,
     Breadcrumb,
     Input,
-    message,
     Popconfirm,
     Table,
     Tag,
@@ -16,6 +15,8 @@ import {
     Space,
     Image,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
+import { useAdminRole } from "@/lib/admin-role-context";
 import type { ColumnsType } from "antd/es/table";
 import {
     DeleteOutlined,
@@ -24,6 +25,7 @@ import {
     SearchOutlined,
     ReloadOutlined,
 } from "@ant-design/icons";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 
@@ -39,6 +41,8 @@ interface CategoryRow {
 }
 
 export default function AdminCategoriesPage() {
+    const { t } = useAdminT();
+    const canDelete = useAdminRole().can("delete");
     const router = useRouter();
     const [categories, setCategories] = useState<CategoryRow[]>([]);
     const [loading, setLoading] = useState(true); // first fetch starts on mount: show the table spinner right away
@@ -54,7 +58,7 @@ export default function AdminCategoriesPage() {
             if (!response.ok) {
                 const text = await response.text();
                 console.error("API Error:", response.status, text);
-                message.error(`Failed to load categories: ${response.status}`);
+                message.error(t("Failed to load categories: {status}", { status: response.status }));
                 return;
             }
 
@@ -62,7 +66,7 @@ export default function AdminCategoriesPage() {
             if (!contentType || !contentType.includes("application/json")) {
                 const text = await response.text();
                 console.error("Expected JSON but got:", contentType, text.substring(0, 100));
-                message.error("Server returned invalid response");
+                message.error(t("Server returned invalid response"));
                 return;
             }
 
@@ -70,11 +74,11 @@ export default function AdminCategoriesPage() {
             if (result.success) {
                 setCategories(result.data || []);
             } else {
-                message.error(result.error || "Unable to load categories");
+                message.error(result.error || t("Unable to load categories"));
             }
         } catch (error: any) {
             console.error("Fetch error:", error);
-            message.error(`Failed to fetch categories: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to fetch categories: {error}", { error: error.message || t("Unknown error") }));
         } finally {
             setLoading(false);
         }
@@ -102,65 +106,52 @@ export default function AdminCategoriesPage() {
             if (!response.ok) {
                 const text = await response.text();
                 console.error("Delete API Error:", response.status, text);
-                message.error(`Failed to delete: ${response.status}`);
+                message.error(t("Failed to delete: {status}", { status: response.status }));
                 return;
             }
 
             const result = await response.json();
             if (result.success) {
-                message.success(`Deleted ${category.name}`);
+                message.success(t("Deleted {name}", { name: category.name }));
                 fetchCategories();
             } else {
-                message.error(result.error || "Unable to delete category");
+                message.error(result.error || t("Unable to delete category"));
             }
         } catch (error: any) {
             console.error("Delete error:", error);
-            message.error(`Failed to delete category: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to delete category: {error}", { error: error.message || t("Unknown error") }));
         }
     };
 
     const handleBulkDelete = async () => {
         if (selectedRowKeys.length === 0) {
-            message.warning("No categories selected");
+            message.warning(t("No categories selected"));
             return;
         }
 
         setBulkDeleting(true);
         try {
-            const deletePromises = selectedRowKeys.map(id =>
-                fetch(`/api/categories?id=${id}`, { method: "DELETE" })
-            );
-
-            const results = await Promise.all(deletePromises);
-
-            let successCount = 0;
-            let failCount = 0;
-
-            for (const response of results) {
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        successCount++;
-                    } else {
-                        failCount++;
-                    }
-                } else {
-                    failCount++;
-                }
+            // One request: the server deletes all selected categories in a single transaction, or none.
+            const response = await fetch(`/api/categories?ids=${selectedRowKeys.join(",")}`, { method: "DELETE" });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result?.success) {
+                throw new Error(result?.error || "Delete failed");
             }
+            const successCount = selectedRowKeys.length;
+            const failCount = 0;
 
             if (successCount > 0) {
-                message.success(`Successfully deleted ${successCount} categor${successCount > 1 ? 'ies' : 'y'}`);
+                message.success(t("Successfully deleted {count} categor(ies)", { count: successCount }));
             }
             if (failCount > 0) {
-                message.error(`Failed to delete ${failCount} categor${failCount > 1 ? 'ies' : 'y'}`);
+                message.error(t("Failed to delete {count} categor(ies)", { count: failCount }));
             }
 
             setSelectedRowKeys([]);
             fetchCategories();
         } catch (error: any) {
             console.error("Bulk delete error:", error);
-            message.error(`Failed to delete categories: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to delete categories: {error}", { error: error.message || t("Unknown error") }));
         } finally {
             setBulkDeleting(false);
         }
@@ -168,7 +159,7 @@ export default function AdminCategoriesPage() {
 
     const columns: ColumnsType<CategoryRow> = [
         {
-            title: "Image",
+            title: t("Image"),
             key: "image",
             width: 100,
             render: (_: any, record: CategoryRow) => {
@@ -195,13 +186,13 @@ export default function AdminCategoriesPage() {
                             fontSize: 10,
                         }}
                     >
-                        No Image
+                        {t("No Image")}
                     </div>
                 );
             },
         },
         {
-            title: "Name",
+            title: t("Name"),
             dataIndex: "name",
             key: "name",
             sorter: (a, b) => a.name.localeCompare(b.name),
@@ -213,25 +204,25 @@ export default function AdminCategoriesPage() {
             ),
         },
         {
-            title: "Sort Order",
+            title: t("Sort Order"),
             dataIndex: "sort_order",
             key: "sort_order",
             sorter: (a, b) => a.sort_order - b.sort_order,
             width: 120,
         },
         {
-            title: "Featured",
+            title: t("Featured"),
             dataIndex: "is_featured",
             key: "is_featured",
             width: 100,
             render: (is_featured: boolean) => (
                 <Tag color={is_featured ? "gold" : "default"}>
-                    {is_featured ? "Yes" : "No"}
+                    {is_featured ? t("Yes") : t("No")}
                 </Tag>
             ),
         },
         {
-            title: "Action",
+            title: t("Action"),
             key: "action",
             width: 120,
             render: (_: any, record: CategoryRow) => (
@@ -242,19 +233,21 @@ export default function AdminCategoriesPage() {
                         icon={<EditOutlined />}
                         onClick={() => router.push(`/admin/categories/${record.id}/edit`)}
                     >
-                        Edit
+                        {t("Edit")}
                     </Button>
-                    <Popconfirm
-                        title="Delete category"
-                        description={`Are you sure you want to remove "${record.name}"?`}
-                        okText="Yes, delete"
-                        cancelText="Cancel"
-                        onConfirm={() => handleDelete(record)}
-                    >
-                        <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-                            Delete
-                        </Button>
-                    </Popconfirm>
+                    {canDelete && (
+                        <Popconfirm
+                            title={t("Delete category")}
+                            description={t("Are you sure you want to remove \"{name}\"?", { name: record.name })}
+                            okText={t("Yes, delete")}
+                            cancelText={t("Cancel")}
+                            onConfirm={() => handleDelete(record)}
+                        >
+                            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                                {t("Delete")}
+                            </Button>
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         },
@@ -265,9 +258,9 @@ export default function AdminCategoriesPage() {
             <div>
                 <Breadcrumb
                     items={[
-                        { title: <Link href="/admin/dashboard">Dashboard</Link> },
-                        { title: "Categories" },
-                        { title: "List" },
+                        { title: <Link href="/admin/dashboard">{t("Dashboard")}</Link> },
+                        { title: t("Categories") },
+                        { title: t("List") },
                     ]}
                 />
                 <div
@@ -282,32 +275,32 @@ export default function AdminCategoriesPage() {
                 >
                     <div>
                         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-                            Categories
+                            {t("Categories")}
                         </Title>
                         <Text type="secondary">
-                            Manage product categories and organization
+                            {t("Manage product categories and organization")}
                         </Text>
                     </div>
                     <Space>
-                        {selectedRowKeys.length > 0 && (
-                            <Popconfirm
-                                title="Delete selected categories"
-                                description={`Are you sure you want to delete ${selectedRowKeys.length} categor${selectedRowKeys.length > 1 ? 'ies' : 'y'}?`}
-                                okText="Yes, delete"
-                                cancelText="Cancel"
-                                onConfirm={handleBulkDelete}
-                            >
-                                <Button
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    loading={bulkDeleting}
+                        {selectedRowKeys.length > 0 && canDelete && (
+                                <Popconfirm
+                                    title={t("Delete selected categories")}
+                                    description={t("Are you sure you want to delete {count} categor(ies)?", { count: selectedRowKeys.length })}
+                                    okText={t("Yes, delete")}
+                                    cancelText={t("Cancel")}
+                                    onConfirm={handleBulkDelete}
                                 >
-                                    Delete ({selectedRowKeys.length})
-                                </Button>
-                            </Popconfirm>
+                                    <Button
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        loading={bulkDeleting}
+                                    >
+                                        {t("Delete ({count})", { count: selectedRowKeys.length })}
+                                    </Button>
+                                </Popconfirm>
                         )}
                         <Button icon={<ReloadOutlined />} onClick={fetchCategories}>
-                            Refresh
+                            {t("Refresh")}
                         </Button>
                         <Link href="/admin/categories/new">
                             <Button
@@ -316,7 +309,7 @@ export default function AdminCategoriesPage() {
                                 size="large"
                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                             >
-                                Add Category
+                                {t("Add Category")}
                             </Button>
                         </Link>
                     </Space>
@@ -333,7 +326,7 @@ export default function AdminCategoriesPage() {
                     }}
                 >
                     <Input
-                        placeholder="Search categories..."
+                        placeholder={t("Search categories...")}
                         prefix={<SearchOutlined style={{ color: "#bfbfbf" }} />}
                         value={searchTerm}
                         onChange={(event) => setSearchTerm(event.target.value)}
@@ -358,13 +351,13 @@ export default function AdminCategoriesPage() {
                     pagination={{
                         pageSize: 10,
                         showSizeChanger: true,
-                        showTotal: (total) => `Total ${total} categories`,
+                        showTotal: (total) => t("{count} categories", { count: total }),
                     }}
                     locale={{
                         emptyText: (
                             <div style={{ padding: "40px 0", textAlign: "center" }}>
                                 <div style={{ fontSize: 48, color: "#d9d9d9", marginBottom: 16 }}>📁</div>
-                                <div style={{ color: "#999" }}>No categories found</div>
+                                <div style={{ color: "#999" }}>{t("No categories found")}</div>
                             </div>
                         ),
                     }}

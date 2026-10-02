@@ -9,6 +9,7 @@ import StockProgress from "../ui/StockProgress";
 // Sold/in-stock counts are hidden from shoppers for now; set to true to show them again.
 const SHOW_STOCK_PROGRESS = false;
 import AddToCartButton from "../cart/AddToCartButton";
+import { useQuickAdd } from "@/lib/quick-add";
 import type { PromoProduct } from "@/types/product";
 
 interface PromoProductCardProps {
@@ -20,6 +21,7 @@ interface PromoProductCardProps {
 export default function PromoProductCard({ product, locale = 'en', categorySlug = 'all' }: PromoProductCardProps) {
     // Use price_cents if available, otherwise use base_price
     const basePrice = product.price_cents ?? product.base_price ?? 0;
+    const quickAdd = useQuickAdd();
     const discountedPrice = product.discount_percent
         ? basePrice * (1 - product.discount_percent / 100)
         : basePrice;
@@ -98,6 +100,7 @@ export default function PromoProductCard({ product, locale = 'en', categorySlug 
                                 rating: product.rating || 4,
                                 reviewCount: product.review_count || 0
                             }}
+                            onAdd={() => quickAdd({ ...product, base_price: basePrice })}
                             className="w-full"
                         />
                     </div>

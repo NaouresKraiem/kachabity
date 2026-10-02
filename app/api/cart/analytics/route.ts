@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { resilientFetch } from '@/lib/resilient-fetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ function getSupabaseClient() {
         throw new Error('Supabase is not configured');
     }
 
-    return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+    return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: resilientFetch } });
 }
 
 export async function GET(request: NextRequest) {

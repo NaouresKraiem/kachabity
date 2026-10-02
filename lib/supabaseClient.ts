@@ -2,6 +2,7 @@
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { supabaseUrl as configuredUrl, supabasePublishableKey } from "@/lib/supabase-env";
+import { resilientFetch } from "@/lib/resilient-fetch";
 
 const supabaseUrl = configuredUrl || "https://placeholder.supabase.co";
 const supabaseKey = supabasePublishableKey;
@@ -18,6 +19,8 @@ const supabase = createSupabaseClient(
             persistSession: true,
             autoRefreshToken: true,
         },
+        // Server-side reads (pages, catalog cache) retry when the connection can't be opened.
+        global: { fetch: resilientFetch },
     }
 );
 

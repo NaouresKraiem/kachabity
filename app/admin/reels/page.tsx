@@ -8,7 +8,6 @@ import {
     Card,
     Typography,
     Tag,
-    message,
     Modal,
     Form,
     Input,
@@ -17,6 +16,8 @@ import {
     Upload,
     Popconfirm,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
+import { useAdminRole } from "@/lib/admin-role-context";
 import {
     PlusOutlined,
     EditOutlined,
@@ -25,6 +26,7 @@ import {
     PlayCircleOutlined,
 } from "@ant-design/icons";
 import type { UploadFile } from "antd";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -43,6 +45,8 @@ interface Reel {
 }
 
 export default function ReelsPage() {
+    const { t } = useAdminT();
+    const canDelete = useAdminRole().can("delete");
     const [reels, setReels] = useState<Reel[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
@@ -59,11 +63,11 @@ export default function ReelsPage() {
             if (result.success) {
                 setReels(result.data || []);
             } else {
-                message.error("Failed to load reels");
+                message.error(t("Failed to load reels"));
             }
         } catch (error) {
             console.error("Error fetching reels:", error);
-            message.error("Failed to load reels");
+            message.error(t("Failed to load reels"));
         } finally {
             setLoading(false);
         }
@@ -137,7 +141,7 @@ export default function ReelsPage() {
             if (thumbnailFile.length > 0 && thumbnailFile[0].originFileObj) {
                 thumbnailUrl = await handleFileUpload(thumbnailFile[0].originFileObj as File);
             } else if (!editingReel && thumbnailFile.length === 0) {
-                message.error("Please upload a thumbnail");
+                message.error(t("Please upload a thumbnail"));
                 return;
             }
 
@@ -162,15 +166,15 @@ export default function ReelsPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success(editingReel ? "Reel updated!" : "Reel created!");
+                message.success(editingReel ? t("Reel updated!") : t("Reel created!"));
                 closeModal();
                 fetchReels();
             } else {
-                message.error(result.error || "Failed to save reel");
+                message.error(result.error || t("Failed to save reel"));
             }
         } catch (error) {
             console.error("Error saving reel:", error);
-            message.error("Failed to save reel");
+            message.error(t("Failed to save reel"));
         }
     };
 
@@ -186,21 +190,21 @@ export default function ReelsPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success("Reel deleted!");
+                message.success(t("Reel deleted!"));
                 fetchReels();
             } else {
-                message.error(result.error || "Failed to delete reel");
+                message.error(result.error || t("Failed to delete reel"));
             }
         } catch (error) {
             console.error("Error deleting reel:", error);
-            message.error("Failed to delete reel");
+            message.error(t("Failed to delete reel"));
         }
     };
 
     // Table columns
     const columns = [
         {
-            title: "Preview",
+            title: t("Preview"),
             key: "preview",
             width: 100,
             render: (_: any, record: Reel) => (
@@ -217,48 +221,48 @@ export default function ReelsPage() {
             ),
         },
         {
-            title: "Title",
+            title: t("Title"),
             dataIndex: "title",
             key: "title",
         },
         {
-            title: "Username",
+            title: t("Username"),
             dataIndex: "username",
             key: "username",
             render: (username: string) => <Text type="secondary">{username}</Text>,
         },
         {
-            title: "Description",
+            title: t("Description"),
             dataIndex: "description",
             key: "description",
             render: (text: string) => text || "—",
         },
         {
-            title: "Order",
+            title: t("Order"),
             dataIndex: "sort_order",
             key: "sort_order",
             width: 80,
         },
         {
-            title: "Status",
+            title: t("Status"),
             dataIndex: "active",
             key: "active",
             render: (active: boolean) => (
                 <Tag color={active ? "green" : "red"}>
-                    {active ? "Active" : "Inactive"}
+                    {active ? t("Active") : t("Inactive")}
                 </Tag>
             ),
         },
         {
-            title: "Badge",
+            title: t("Badge"),
             dataIndex: "is_new",
             key: "is_new",
             render: (is_new: boolean) => (
-                is_new ? <Tag color="gold">✨ NEW</Tag> : "—"
+                is_new ? <Tag color="gold">{t("✨ NEW")}</Tag> : "—"
             ),
         },
         {
-            title: "Actions",
+            title: t("Actions"),
             key: "actions",
             render: (_: any, record: Reel) => (
                 <Space>
@@ -267,20 +271,22 @@ export default function ReelsPage() {
                         icon={<EditOutlined />}
                         onClick={() => openModal(record)}
                     >
-                        Edit
+                        {t("Edit")}
                     </Button>
-                    <Popconfirm
-                        title="Delete reel?"
-                        description="This action cannot be undone."
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Delete"
-                        cancelText="Cancel"
-                        okButtonProps={{ danger: true }}
-                    >
-                        <Button type="text" danger icon={<DeleteOutlined />}>
-                            Delete
-                        </Button>
-                    </Popconfirm>
+                    {canDelete && (
+                        <Popconfirm
+                            title={t("Delete reel?")}
+                            description={t("This action cannot be undone.")}
+                            onConfirm={() => handleDelete(record.id)}
+                            okText={t("Delete")}
+                            cancelText={t("Cancel")}
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Button type="text" danger icon={<DeleteOutlined />}>
+                                {t("Delete")}
+                            </Button>
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         },
@@ -291,7 +297,7 @@ export default function ReelsPage() {
             <Card>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                     <Title level={2} style={{ margin: 0 }}>
-                        Video Reels
+                        {t("Video Reels")}
                     </Title>
                     <Button
                         type="primary"
@@ -300,7 +306,7 @@ export default function ReelsPage() {
                         size="large"
                         style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                     >
-                        Create Reel
+                        {t("Create Reel")}
                     </Button>
                 </div>
 
@@ -315,12 +321,12 @@ export default function ReelsPage() {
 
             {/* Create/Edit Modal */}
             <Modal
-                title={editingReel ? "Edit Reel" : "Create Reel"}
+                title={editingReel ? t("Edit Reel") : t("Create Reel")}
                 open={modalVisible}
                 onCancel={closeModal}
                 onOk={() => form.submit()}
-                okText="Save"
-                cancelText="Cancel"
+                okText={t("Save")}
+                cancelText={t("Cancel")}
                 width={700}
             >
                 <Form
@@ -330,9 +336,9 @@ export default function ReelsPage() {
                     initialValues={{ active: true, sort_order: 0, username: '@kachabiti', is_new: false }}
                 >
                     <Form.Item
-                        label="Thumbnail Image"
+                        label={t("Thumbnail Image")}
                         required
-                        help="Upload a thumbnail for the video (9:16 ratio recommended)"
+                        help={t("Upload a thumbnail for the video (9:16 ratio recommended)")}
                     >
                         <Upload
                             listType="picture-card"
@@ -345,63 +351,63 @@ export default function ReelsPage() {
                             {thumbnailFile.length === 0 && (
                                 <div>
                                     <UploadOutlined />
-                                    <div style={{ marginTop: 8 }}>Upload Thumbnail</div>
+                                    <div style={{ marginTop: 8 }}>{t("Upload Thumbnail")}</div>
                                 </div>
                             )}
                         </Upload>
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                            Recommended: 1080x1920px (9:16 vertical)
+                            {t("Recommended: 1080x1920px (9:16 vertical)")}
                         </Text>
                     </Form.Item>
 
                     <Form.Item
-                        label="Video URL"
+                        label={t("Video URL")}
                         name="video_url"
-                        rules={[{ required: true, message: "Please enter video URL" }]}
-                        help="Paste YouTube, Instagram, TikTok, or Facebook video link"
+                        rules={[{ required: true, message: t("Please enter video URL") }]}
+                        help={t("Paste YouTube, Instagram, TikTok, or Facebook video link")}
                     >
                         <Input
-                            placeholder="e.g., https://www.youtube.com/watch?v=xxxxx or https://www.instagram.com/reel/xxxxx"
+                            placeholder={t("e.g., https://www.youtube.com/watch?v=xxxxx or https://www.instagram.com/reel/xxxxx")}
                             size="large"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        label="Title"
+                        label={t("Title")}
                         name="title"
-                        rules={[{ required: true, message: "Please enter title" }]}
+                        rules={[{ required: true, message: t("Please enter title") }]}
                     >
                         <Input
-                            placeholder="e.g., منتجات جديدة or عروض حصرية"
+                            placeholder={t("e.g., منتجات جديدة or عروض حصرية")}
                             size="large"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        label="Description"
+                        label={t("Description")}
                         name="description"
                     >
                         <TextArea
-                            placeholder="e.g., تعرف على أحدث منتجاتنا 🔥"
+                            placeholder={t("e.g., تعرف على أحدث منتجاتنا 🔥")}
                             rows={3}
                             size="large"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        label="Username"
+                        label={t("Username")}
                         name="username"
                     >
                         <Input
-                            placeholder="@kachabiti"
+                            placeholder={t("@kachabiti")}
                             size="large"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        label="Sort Order"
+                        label={t("Sort Order")}
                         name="sort_order"
-                        help="Lower numbers appear first"
+                        help={t("Lower numbers appear first")}
                     >
                         <InputNumber
                             style={{ width: "100%" }}
@@ -412,7 +418,7 @@ export default function ReelsPage() {
                     </Form.Item>
 
                     <Form.Item
-                        label="Active"
+                        label={t("Active")}
                         name="active"
                         valuePropName="checked"
                     >
@@ -420,10 +426,10 @@ export default function ReelsPage() {
                     </Form.Item>
 
                     <Form.Item
-                        label="Show 'NEW' Badge"
+                        label={t("Show 'NEW' Badge")}
                         name="is_new"
                         valuePropName="checked"
-                        help="Display ✨ NEW badge on this video"
+                        help={t("Display \u2728 NEW badge on this video")}
                     >
                         <Switch />
                     </Form.Item>

@@ -8,7 +8,6 @@ import {
     Card,
     Breadcrumb,
     Input,
-    message,
     Popconfirm,
     Select,
     Table,
@@ -17,6 +16,8 @@ import {
     Space,
     Image,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
+import { useAdminRole } from "@/lib/admin-role-context";
 import type { ColumnsType } from "antd/es/table";
 import {
     DeleteOutlined,
@@ -25,6 +26,7 @@ import {
     SearchOutlined,
     ReloadOutlined,
 } from "@ant-design/icons";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 
@@ -71,6 +73,8 @@ interface ProductRow {
 }
 
 export default function AdminProductsPage() {
+    const { t } = useAdminT();
+    const canDelete = useAdminRole().can("delete");
     const router = useRouter();
     const [products, setProducts] = useState<ProductRow[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -91,7 +95,7 @@ export default function AdminProductsPage() {
             if (!response.ok) {
                 const text = await response.text();
                 console.error("API Error:", response.status, text);
-                message.error(`Failed to load products: ${response.status}`);
+                message.error(t("Failed to load products: {status}", { status: response.status }));
                 return;
             }
 
@@ -99,7 +103,7 @@ export default function AdminProductsPage() {
             if (!contentType || !contentType.includes("application/json")) {
                 const text = await response.text();
                 console.error("Expected JSON but got:", contentType, text.substring(0, 100));
-                message.error("Server returned invalid response");
+                message.error(t("Server returned invalid response"));
                 return;
             }
 
@@ -107,11 +111,11 @@ export default function AdminProductsPage() {
             if (result.success) {
                 setProducts(result.data || []);
             } else {
-                message.error(result.error || "Unable to load products");
+                message.error(result.error || t("Unable to load products"));
             }
         } catch (error: any) {
             console.error("Fetch error:", error);
-            message.error(`Failed to fetch products: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to fetch products: {error}", { error: error.message || t("Unknown error") }));
         } finally {
             setLoading(false);
         }
@@ -187,7 +191,7 @@ export default function AdminProductsPage() {
             if (!response.ok) {
                 const text = await response.text();
                 console.error("Delete API Error:", response.status, text);
-                message.error(`Failed to delete: ${response.status}`);
+                message.error(t("Failed to delete: {status}", { status: response.status }));
                 return;
             }
 
@@ -195,65 +199,52 @@ export default function AdminProductsPage() {
             if (!contentType || !contentType.includes("application/json")) {
                 const text = await response.text();
                 console.error("Expected JSON but got:", contentType, text.substring(0, 100));
-                message.error("Server returned invalid response");
+                message.error(t("Server returned invalid response"));
                 return;
             }
 
             const result = await response.json();
             if (result.success) {
-                message.success(`Deleted ${product.name}`);
+                message.success(t("Deleted {name}", { name: product.name }));
                 fetchProducts();
             } else {
-                message.error(result.error || "Unable to delete product");
+                message.error(result.error || t("Unable to delete product"));
             }
         } catch (error: any) {
             console.error("Delete error:", error);
-            message.error(`Failed to delete product: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to delete product: {error}", { error: error.message || t("Unknown error") }));
         }
     };
 
     const handleBulkDelete = async () => {
         if (selectedRowKeys.length === 0) {
-            message.warning("No products selected");
+            message.warning(t("No products selected"));
             return;
         }
 
         setBulkDeleting(true);
         try {
-            const deletePromises = selectedRowKeys.map(id =>
-                fetch(`/api/products?id=${id}`, { method: "DELETE" })
-            );
-
-            const results = await Promise.all(deletePromises);
-
-            let successCount = 0;
-            let failCount = 0;
-
-            for (const response of results) {
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        successCount++;
-                    } else {
-                        failCount++;
-                    }
-                } else {
-                    failCount++;
-                }
+            // One request: the server deletes all selected products in a single transaction, or none.
+            const response = await fetch(`/api/products?ids=${selectedRowKeys.join(",")}`, { method: "DELETE" });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result?.success) {
+                throw new Error(result?.error || "Delete failed");
             }
+            const successCount = selectedRowKeys.length;
+            const failCount = 0;
 
             if (successCount > 0) {
-                message.success(`Successfully deleted ${successCount} product${successCount > 1 ? 's' : ''}`);
+                message.success(t("Successfully deleted {count} product(s)", { count: successCount }));
             }
             if (failCount > 0) {
-                message.error(`Failed to delete ${failCount} product${failCount > 1 ? 's' : ''}`);
+                message.error(t("Failed to delete {count} product(s)", { count: failCount }));
             }
 
             setSelectedRowKeys([]);
             fetchProducts();
         } catch (error: any) {
             console.error("Bulk delete error:", error);
-            message.error(`Failed to delete products: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to delete products: {error}", { error: error.message || t("Unknown error") }));
         } finally {
             setBulkDeleting(false);
         }
@@ -273,7 +264,7 @@ export default function AdminProductsPage() {
 
     const columns: ColumnsType<ProductRow> = [
         {
-            title: "Image",
+            title: t("Image"),
             key: "image",
             width: 100,
             render: (_: any, record: ProductRow) => {
@@ -301,13 +292,13 @@ export default function AdminProductsPage() {
                             fontSize: 10,
                         }}
                     >
-                        No Image
+                        {t("No Image")}
                     </div>
                 );
             },
         },
         {
-            title: "Product Name",
+            title: t("Product Name"),
             dataIndex: "name",
             key: "name",
             sorter: (a, b) => a.name.localeCompare(b.name),
@@ -319,21 +310,21 @@ export default function AdminProductsPage() {
             ),
         },
         {
-            title: "Category",
+            title: t("Category"),
             dataIndex: ["categories", "name"],
             key: "category",
             sorter: (a, b) => (a.categories?.name || "").localeCompare(b.categories?.name || ""),
             render: (_: any, record) => record.categories?.name || "—",
         },
         {
-            title: "Base Price",
+            title: t("Base Price"),
             dataIndex: "base_price",
             key: "base_price",
             sorter: (a, b) => a.base_price - b.base_price,
             render: (basePrice: number) => `${basePrice} DT`,
         },
         {
-            title: "Status",
+            title: t("Status"),
             dataIndex: "status",
             key: "status",
             sorter: (a, b) => a.status.localeCompare(b.status),
@@ -345,13 +336,13 @@ export default function AdminProductsPage() {
                 };
                 return (
                     <Tag color={colorMap[status] || "default"}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {t(status.charAt(0).toUpperCase() + status.slice(1))}
                     </Tag>
                 );
             },
         },
         {
-            title: "Variants",
+            title: t("Variants"),
             dataIndex: "variant_count",
             key: "variants",
             render: (count: number = 0) => (
@@ -359,7 +350,7 @@ export default function AdminProductsPage() {
             ),
         },
         {
-            title: "Action",
+            title: t("Action"),
             key: "action",
             width: 120,
             render: (_: any, record: ProductRow) => (
@@ -370,19 +361,21 @@ export default function AdminProductsPage() {
                         icon={<EditOutlined />}
                         onClick={() => router.push(`/admin/products/${record.id}/edit`)}
                     >
-                        Edit
+                        {t("Edit")}
                     </Button>
-                    <Popconfirm
-                        title="Delete product"
-                        description={`Are you sure you want to remove "${record.name}"?`}
-                        okText="Yes, delete"
-                        cancelText="Cancel"
-                        onConfirm={() => handleDelete(record)}
-                    >
-                        <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-                            Delete
-                        </Button>
-                    </Popconfirm>
+                    {canDelete && (
+                        <Popconfirm
+                            title={t("Delete product")}
+                            description={t("Are you sure you want to remove \"{name}\"?", { name: record.name })}
+                            okText={t("Yes, delete")}
+                            cancelText={t("Cancel")}
+                            onConfirm={() => handleDelete(record)}
+                        >
+                            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                                {t("Delete")}
+                            </Button>
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         },
@@ -393,9 +386,9 @@ export default function AdminProductsPage() {
             <div>
                 <Breadcrumb
                     items={[
-                        { title: <Link href="/admin/dashboard">Dashboard</Link> },
-                        { title: "Products" },
-                        { title: "List" },
+                        { title: <Link href="/admin/dashboard">{t("Dashboard")}</Link> },
+                        { title: t("Products") },
+                        { title: t("List") },
                     ]}
                 />
                 <div
@@ -410,32 +403,32 @@ export default function AdminProductsPage() {
                 >
                     <div>
                         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-                            Product catalog
+                            {t("Product catalog")}
                         </Title>
                         <Text type="secondary">
-                            Monitor stock levels and pricing across your entire inventory.
+                            {t("Monitor stock levels and pricing across your entire inventory.")}
                         </Text>
                     </div>
                     <Space>
-                        {selectedRowKeys.length > 0 && (
-                            <Popconfirm
-                                title="Delete selected products"
-                                description={`Are you sure you want to delete ${selectedRowKeys.length} product${selectedRowKeys.length > 1 ? 's' : ''}?`}
-                                okText="Yes, delete"
-                                cancelText="Cancel"
-                                onConfirm={handleBulkDelete}
-                            >
-                                <Button
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    loading={bulkDeleting}
+                        {selectedRowKeys.length > 0 && canDelete && (
+                                <Popconfirm
+                                    title={t("Delete selected products")}
+                                    description={t("Are you sure you want to delete {count} product(s)?", { count: selectedRowKeys.length })}
+                                    okText={t("Yes, delete")}
+                                    cancelText={t("Cancel")}
+                                    onConfirm={handleBulkDelete}
                                 >
-                                    Delete ({selectedRowKeys.length})
-                                </Button>
-                            </Popconfirm>
+                                    <Button
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        loading={bulkDeleting}
+                                    >
+                                        {t("Delete ({count})", { count: selectedRowKeys.length })}
+                                    </Button>
+                                </Popconfirm>
                         )}
                         <Button icon={<ReloadOutlined />} onClick={fetchProducts}>
-                            Refresh
+                            {t("Refresh")}
                         </Button>
                         <Link href="/admin/products/new">
                             <Button
@@ -444,7 +437,7 @@ export default function AdminProductsPage() {
                                 size="large"
                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                             >
-                                Add Product
+                                {t("Add Product")}
                             </Button>
                         </Link>
                     </Space>
@@ -464,16 +457,16 @@ export default function AdminProductsPage() {
                         value={statusFilter}
                         onChange={(value) => setStatusFilter(value)}
                         options={[
-                            { value: "all", label: "All status" },
-                            { value: "active", label: "Active" },
-                            { value: "inactive", label: "Inactive" },
-                            { value: "archived", label: "Archived" },
+                            { value: "all", label: t("All status") },
+                            { value: "active", label: t("Active") },
+                            { value: "inactive", label: t("Inactive") },
+                            { value: "archived", label: t("Archived") },
                         ]}
                         style={{ width: 160 }}
                     />
                     <Select
                         allowClear
-                        placeholder="Category"
+                        placeholder={t("Category")}
                         value={categoryFilter}
                         onChange={(value) => setCategoryFilter(value)}
                         options={categories.map((category) => ({
@@ -483,7 +476,7 @@ export default function AdminProductsPage() {
                         style={{ width: 200 }}
                     />
                     <Input
-                        placeholder="Search products..."
+                        placeholder={t("Search products...")}
                         prefix={<SearchOutlined style={{ color: "#bfbfbf" }} />}
                         value={searchTerm}
                         onChange={(event) => setSearchTerm(event.target.value)}
@@ -508,13 +501,13 @@ export default function AdminProductsPage() {
                     pagination={{
                         pageSize: 10,
                         showSizeChanger: true,
-                        showTotal: (total) => `Total ${total} products`,
+                        showTotal: (total) => t("{count} products", { count: total }),
                     }}
                     locale={{
                         emptyText: (
                             <div style={{ padding: "40px 0", textAlign: "center" }}>
                                 <div style={{ fontSize: 48, color: "#d9d9d9", marginBottom: 16 }}>📦</div>
-                                <div style={{ color: "#999" }}>No products found</div>
+                                <div style={{ color: "#999" }}>{t("No products found")}</div>
                             </div>
                         ),
                     }}

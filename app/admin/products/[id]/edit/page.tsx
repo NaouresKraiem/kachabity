@@ -11,7 +11,6 @@ import {
     InputNumber,
     Switch,
     Upload,
-    message,
     Card,
     Breadcrumb,
     Typography,
@@ -21,6 +20,7 @@ import {
     Col,
     Spin,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
 import ProductTranslationFields from "@/components/admin/ProductTranslationFields";
 import {
     SaveOutlined,
@@ -29,6 +29,10 @@ import {
     DeleteOutlined
 } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
+import { searchByText } from "@/components/admin/select-search";
+import ProductStockFields, { loadProductCost, saveProductCost } from "@/components/admin/ProductStockFields";
+import { useAdminRole } from "@/lib/admin-role-context";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -53,21 +57,25 @@ interface Color {
 }
 
 interface Variant {
+    id?: string;
     size_id?: string;
     color_id?: string;
     sku?: string;
     price?: number;
     stock: number;
+    reorder_point?: number;
     is_available: boolean;
     images?: UploadFile[];
 }
 
 export default function EditProductPage() {
+    const { t } = useAdminT();
     const router = useRouter();
     const params = useParams();
     const id = params?.id as string;
 
     const [form] = Form.useForm();
+    const canSeeCosts = useAdminRole().can("costs");
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -99,7 +107,7 @@ export default function EditProductPage() {
                 if (colorData.success) setColors(colorData.data || []);
             } catch (error) {
                 console.error("Error fetching dependencies:", error);
-                message.error("Failed to load some form data");
+                message.error(t("Failed to load some form data"));
             }
         };
         fetchData();
@@ -131,7 +139,12 @@ export default function EditProductPage() {
                         category_id: product.category_id,
                         status: product.status,
                         base_price: product.base_price,
+                        code: product.code,
+                        supplier_id: product.supplier_id,
+                        collection_id: product.collection_id,
+                        stock_tracked: !!product.stock_tracked,
                     });
+                    loadProductCost(id).then((cost) => form.setFieldValue("cost", cost)).catch(() => undefined);
 
                     // Populate images
                     if (product.product_images && product.product_images.length > 0) {
@@ -151,6 +164,8 @@ export default function EditProductPage() {
                     // Populate variants
                     if (product.product_variants && product.product_variants.length > 0) {
                         const formattedVariants = product.product_variants.map((v: any) => ({
+                            id: v.id,
+                            reorder_point: v.reorder_point,
                             size_id: v.size_id,
                             color_id: v.color_id,
                             sku: v.sku,
@@ -167,12 +182,12 @@ export default function EditProductPage() {
                         setVariants(formattedVariants);
                     }
                 } else {
-                    message.error("Product not found");
+                    message.error(t("Product not found"));
                     router.push("/admin/products");
                 }
             } catch (error) {
                 console.error("Error fetching product:", error);
-                message.error("Failed to load product details");
+                message.error(t("Failed to load product details"));
             } finally {
                 setFetching(false);
             }
@@ -234,6 +249,10 @@ export default function EditProductPage() {
                 category_id: values.category_id || null,
                 base_price: parseFloat(values.base_price),
                 status: values.status || "active",
+                code: values.code || null,
+                supplier_id: values.supplier_id || null,
+                collection_id: values.collection_id || null,
+                stock_tracked: !!values.stock_tracked,
                 images: productImageUrls.map((url, index) => ({
                     url,
                     is_main: index === 0,
@@ -254,12 +273,14 @@ export default function EditProductPage() {
                             }
                         }
 
+                        // Stock is not sent: it only changes through stock movements.
                         return {
+                            id: variant.id,
                             size_id: variant.size_id || null,
                             color_id: variant.color_id || null,
                             sku: variant.sku || null,
                             price: variant.price || null,
-                            stock: variant.stock || 0,
+                            reorder_point: variant.reorder_point,
                             is_available: variant.is_available !== false,
                             is_active: variant.is_available !== false,
                             images: variantImageUrls.map((url, index) => ({
@@ -283,14 +304,17 @@ export default function EditProductPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success("Product updated successfully!");
+                if (canSeeCosts && form.isFieldTouched("cost")) {
+                    await saveProductCost(id, values.cost).catch((e) => message.warning(e.message));
+                }
+                message.success(t("Product updated successfully!"));
                 router.push("/admin/products");
             } else {
-                message.error(result.error || "Failed to update product");
+                message.error(result.error || t("Failed to update product"));
             }
         } catch (error: any) {
             console.error("Error updating product:", error);
-            message.error(error.message || "Failed to update product");
+            message.error(error.message || t("Failed to update product"));
         } finally {
             setLoading(false);
         }
@@ -369,7 +393,7 @@ export default function EditProductPage() {
 
         if (newVariants.length > 0) {
             setVariants([...variants, ...newVariants]);
-            message.success(`Added ${newVariants.length} variant(s)`);
+            message.success(t("Added {length} variant(s)", { length: newVariants.length }));
             // Clear selections
             setQuickColorId(undefined);
             setQuickSizeIds([]);
@@ -379,22 +403,22 @@ export default function EditProductPage() {
     };
 
     return (
-        <Spin size="large" tip="Loading product details..." spinning={fetching}>
+        <Spin size="large" description={t("Loading product details...")} spinning={fetching}>
             <div style={{ padding: 24, background: "#fff", minHeight: "100vh" }}>
                 <Breadcrumb
                     items={[
-                        { title: <Link href="/admin/dashboard">Dashboard</Link> },
-                        { title: <Link href="/admin/products">Products</Link> },
-                        { title: "Edit" },
+                        { title: <Link href="/admin/dashboard">{t("Dashboard")}</Link> },
+                        { title: <Link href="/admin/products">{t("Products")}</Link> },
+                        { title: t("Edit") },
                     ]}
                 />
 
                 <div style={{ marginTop: 24, marginBottom: 24 }}>
                     <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-                        Edit Product
+                        {t("Edit Product")}
                     </Title>
                     <Text type="secondary">
-                        Update product details and inventory
+                        {t("Update product details and inventory")}
                     </Text>
                 </div>
 
@@ -408,24 +432,24 @@ export default function EditProductPage() {
                         }}
                     >
                         {/* Basic Information */}
-                        <Title level={4}>Basic Information</Title>
+                        <Title level={4}>{t("Basic Information")}</Title>
                         <Row gutter={16}>
                             <Col xs={24} md={12}>
                                 <Form.Item
-                                    label="Product Name"
+                                    label={t("Product Name")}
                                     name="name"
                                     rules={[
-                                        { required: true, message: "Please enter product name" },
+                                        { required: true, message: t("Please enter product name") },
                                     ]}
                                 >
-                                    <Input placeholder="Enter product name" />
+                                    <Input placeholder={t("Enter product name")} />
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={12}>
                                 <Form.Item
-                                    label="Slug"
+                                    label={t("Slug")}
                                     name="slug"
-                                    tooltip="URL-friendly identifier"
+                                    tooltip={t("URL-friendly identifier")}
                                 >
                                     <Input placeholder="product-slug" />
                                 </Form.Item>
@@ -433,25 +457,29 @@ export default function EditProductPage() {
                         </Row>
 
                         <Form.Item
-                            label="Description"
+                            label={t("Description")}
                             name="description"
                         >
                             <TextArea
                                 rows={4}
-                                placeholder="Enter product description"
+                                placeholder={t("Enter product description")}
                             />
                         </Form.Item>
 
                         <ProductTranslationFields />
 
+                        <Divider />
+                        <Title level={4}>{t("Stock")}</Title>
+                        <ProductStockFields />
+
                         <Row gutter={16}>
                             <Col xs={24} md={12}>
                                 <Form.Item
-                                    label="Category"
+                                    label={t("Category")}
                                     name="category_id"
                                 >
                                     <Select
-                                        placeholder={categories.length === 0 ? "No categories available" : "Select category"}
+                                        placeholder={categories.length === 0 ? t("No categories available") : t("Select category")}
                                         allowClear
                                         showSearch
                                         optionFilterProp="children"
@@ -466,19 +494,19 @@ export default function EditProductPage() {
                                 </Form.Item>
                                 {categories.length === 0 && (
                                     <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
-                                        No categories available. Please create categories in the database first.
+                                        {t("No categories available. Please create categories in the database first.")}
                                     </Text>
                                 )}
                             </Col>
                             <Col xs={24} md={12}>
                                 <Form.Item
-                                    label="Status"
+                                    label={t("Status")}
                                     name="status"
                                 >
                                     <Select>
-                                        <Option value="active">Active</Option>
-                                        <Option value="inactive">Inactive</Option>
-                                        <Option value="archived">Archived</Option>
+                                        <Option value="active">{t("Active")}</Option>
+                                        <Option value="inactive">{t("Inactive")}</Option>
+                                        <Option value="archived">{t("Archived")}</Option>
                                     </Select>
                                 </Form.Item>
                             </Col>
@@ -487,15 +515,15 @@ export default function EditProductPage() {
                         <Divider />
 
                         {/* Pricing */}
-                        <Title level={4}>Pricing</Title>
+                        <Title level={4}>{t("Pricing")}</Title>
                         <Row gutter={16}>
                             <Col xs={24} md={12}>
-                                <Form.Item label="Base Price" required>
+                                <Form.Item label={t("Base Price")} required>
                                     <Space.Compact style={{ width: "100%" }}>
                                         {/* noStyle binds the value to InputNumber; the outer item only renders the label */}
                                         <Form.Item name="base_price" noStyle rules={[
-                                            { required: true, message: "Please enter base price" },
-                                            { type: "number", min: 0, message: "Price must be positive" },
+                                            { required: true, message: t("Please enter base price") },
+                                            { type: "number", min: 0, message: t("Price must be positive") },
                                         ]}>
                                             <InputNumber
                                                 style={{ width: "100%" }}
@@ -518,7 +546,7 @@ export default function EditProductPage() {
                         <Divider />
 
                         {/* Images */}
-                        <Title level={4}>Product Images</Title>
+                        <Title level={4}>{t("Product Images")}</Title>
                         <Form.Item>
                             <Upload
                                 listType="picture-card"
@@ -530,12 +558,12 @@ export default function EditProductPage() {
                                 {imageFiles.length < 10 && (
                                     <div>
                                         <PlusOutlined />
-                                        <div style={{ marginTop: 8 }}>Upload</div>
+                                        <div style={{ marginTop: 8 }}>{t("Upload")}</div>
                                     </div>
                                 )}
                             </Upload>
                             <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
-                                Upload up to 10 images. First image will be set as main.
+                                {t("Upload up to 10 images. First image will be set as main.")}
                             </Text>
                         </Form.Item>
 
@@ -544,19 +572,21 @@ export default function EditProductPage() {
                         {/* Quick Add Variants */}
                         <Card
                             style={{ marginBottom: 24, background: '#fafafa' }}
-                            title={<Title level={4} style={{ margin: 0 }}>Quick Add Variants</Title>}
+                            title={<Title level={4} style={{ margin: 0 }}>{t("Quick Add Variants")}</Title>}
                         >
                             <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                                Select a color and multiple sizes to quickly add variants
+                                {t("Select a color and multiple sizes to quickly add variants")}
                             </Text>
                             <Row gutter={16}>
                                 <Col xs={24} md={8}>
                                     <Text strong style={{ fontSize: 13, color: "#595959", display: "block", marginBottom: 8 }}>
-                                        Color (Optional)
+                                        {t("Color (Optional)")}
                                     </Text>
                                     <Select
                                         style={{ width: "100%" }}
-                                        placeholder="Select a color"
+                                        showSearch
+                                        filterOption={searchByText}
+                                        placeholder={t("Select a color")}
                                         value={quickColorId}
                                         onChange={setQuickColorId}
                                         size="large"
@@ -567,6 +597,7 @@ export default function EditProductPage() {
                                             <Option
                                                 key={color.id}
                                                 value={color.id}
+                                                searchtext={color.display_name || color.name}
                                                 label={color.display_name || color.name}
                                             >
                                                 <Space>
@@ -590,18 +621,20 @@ export default function EditProductPage() {
                                 </Col>
                                 <Col xs={24} md={16}>
                                     <Text strong style={{ fontSize: 13, color: "#595959", display: "block", marginBottom: 8 }}>
-                                        Sizes (Select multiple)
+                                        {t("Sizes (Select multiple)")}
                                     </Text>
                                     <Select
                                         mode="multiple"
                                         style={{ width: "100%" }}
-                                        placeholder="Select one or more sizes"
+                                        showSearch
+                                        filterOption={searchByText}
+                                        placeholder={t("Select one or more sizes")}
                                         value={quickSizeIds}
                                         onChange={setQuickSizeIds}
                                         size="large"
                                     >
                                         {sizes.map((size) => (
-                                            <Option key={size.id} value={size.id}>
+                                            <Option key={size.id} value={size.id} searchtext={size.display_name || size.name}>
                                                 {size.display_name || size.name}
                                             </Option>
                                         ))}
@@ -615,18 +648,18 @@ export default function EditProductPage() {
                                 style={{ marginTop: 16 }}
                                 size="large"
                             >
-                                Add Variants ({quickSizeIds.length || 1} variant{quickSizeIds.length > 1 ? 's' : ''})
+                                {t("Add variants ({count})", { count: quickSizeIds.length || 1 })}
                             </Button>
                         </Card>
 
                         {/* Variants List */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                            <Title level={4} style={{ margin: 0 }}>Product Variants ({variants.length})</Title>
+                            <Title level={4} style={{ margin: 0 }}>{t("Product Variants ({count})", { count: variants.length })}</Title>
                         </div>
 
                         {variants.length === 0 && (
                             <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                                No variants added. Click "Add Variant" to create size/color combinations.
+                                {t("No variants added. Click \"Add Variant\" to create size/color combinations.")}
                             </Text>
                         )}
 
@@ -635,7 +668,7 @@ export default function EditProductPage() {
                                 key={index}
                                 size="small"
                                 style={{ marginBottom: 16 }}
-                                title={`Variant ${index + 1}`}
+                                title={t("Variant {number}", { number: index + 1 })}
                                 extra={
                                     <Button
                                         type="text"
@@ -643,16 +676,18 @@ export default function EditProductPage() {
                                         icon={<DeleteOutlined />}
                                         onClick={() => removeVariant(index)}
                                     >
-                                        Remove
+                                        {t("Remove")}
                                     </Button>
                                 }
                             >
                                 <Row gutter={16}>
                                     <Col xs={24} md={12}>
-                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>Color</Text>
+                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>{t("Color")}</Text>
                                         <Select
                                             style={{ width: "100%", marginTop: 8 }}
-                                            placeholder="Select color"
+                                            showSearch
+                                            filterOption={searchByText}
+                                            placeholder={t("Select color")}
                                             allowClear
                                             size="large"
                                             value={variant.color_id}
@@ -663,6 +698,7 @@ export default function EditProductPage() {
                                                 <Option
                                                     key={color.id}
                                                     value={color.id}
+                                                    searchtext={color.display_name || color.name}
                                                     label={
                                                         <Space>
                                                             {color.hex_code && (
@@ -703,17 +739,19 @@ export default function EditProductPage() {
                                         </Select>
                                     </Col>
                                     <Col xs={24} md={12}>
-                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>Size</Text>
+                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>{t("Size")}</Text>
                                         <Select
                                             style={{ width: "100%", marginTop: 8 }}
-                                            placeholder="Select size"
+                                            showSearch
+                                            filterOption={searchByText}
+                                            placeholder={t("Select size")}
                                             allowClear
                                             size="large"
                                             value={variant.size_id}
                                             onChange={(value) => updateVariant(index, "size_id", value)}
                                         >
                                             {sizes.map((size) => (
-                                                <Option key={size.id} value={size.id}>
+                                                <Option key={size.id} value={size.id} searchtext={size.display_name || size.name}>
                                                     <span style={{ fontWeight: 500 }}>
                                                         {size.display_name || size.name}
                                                     </span>
@@ -724,22 +762,22 @@ export default function EditProductPage() {
                                 </Row>
                                 <Row gutter={16} style={{ marginTop: 16 }}>
                                     <Col xs={24} md={12}>
-                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>SKU (optional)</Text>
+                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>{t("SKU (optional)")}</Text>
                                         <Input
                                             style={{ marginTop: 8 }}
                                             size="large"
-                                            placeholder="e.g., TSHIRT-RED-M"
+                                            placeholder={t("e.g., TSHIRT-RED-M")}
                                             value={variant.sku}
                                             onChange={(e) => updateVariant(index, "sku", e.target.value)}
                                         />
                                     </Col>
                                     <Col xs={24} md={12}>
-                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>Price Override (optional)</Text>
+                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>{t("Price Override (optional)")}</Text>
                                         <Space.Compact style={{ width: "100%", marginTop: 8 }}>
                                             <InputNumber
                                                 style={{ width: "100%" }}
                                                 size="large"
-                                                placeholder="Leave empty to use base price"
+                                                placeholder={t("Leave empty to use base price")}
                                                 min={0}
                                                 step={0.01}
                                                 precision={2}
@@ -756,26 +794,32 @@ export default function EditProductPage() {
                                     </Col>
                                 </Row>
                                 <Row gutter={16} style={{ marginTop: 16 }}>
-                                    <Col xs={24} md={12}>
-                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>Stock Quantity</Text>
+                                    <Col xs={12} md={6}>
+                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>{t("Stock (online)")}</Text>
+                                        <div style={{ marginTop: 8, fontSize: 20, fontWeight: 600 }}>{variant.id ? variant.stock : 0}</div>
+                                        <Link href="/admin/stock" style={{ fontSize: 12 }}>{t("Change in Inventory")}</Link>
+                                    </Col>
+                                    <Col xs={12} md={6}>
+                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>{t("Reorder point")}</Text>
                                         <InputNumber
                                             style={{ width: "100%", marginTop: 8 }}
                                             size="large"
-                                            placeholder="0"
+                                            placeholder="5"
                                             min={0}
-                                            value={variant.stock}
-                                            onChange={(value) => updateVariant(index, "stock", value || 0)}
+                                            precision={0}
+                                            value={variant.reorder_point}
+                                            onChange={(value) => updateVariant(index, "reorder_point", value ?? undefined)}
                                         />
                                     </Col>
                                     <Col xs={24} md={12}>
-                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>Status</Text>
+                                        <Text strong style={{ fontSize: 13, color: "#595959" }}>{t("Status")}</Text>
                                         <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 12 }}>
                                             <Switch
                                                 checked={variant.is_available}
                                                 onChange={(checked) => updateVariant(index, "is_available", checked)}
                                             />
                                             <span style={{ color: variant.is_available ? "#52c41a" : "#8c8c8c" }}>
-                                                {variant.is_available ? "Available" : "Unavailable"}
+                                                {variant.is_available ? t("Available") : t("Unavailable")}
                                             </span>
                                         </div>
                                     </Col>
@@ -785,10 +829,10 @@ export default function EditProductPage() {
                                 <Divider style={{ margin: "16px 0" }} />
                                 <div>
                                     <Text strong style={{ display: "block", marginBottom: 8 }}>
-                                        Variant Images (optional)
+                                        {t("Variant Images (optional)")}
                                     </Text>
                                     <Text type="secondary" style={{ display: "block", marginBottom: 8, fontSize: 12 }}>
-                                        Upload images specific to this color/size combination
+                                        {t("Upload images specific to this color/size combination")}
                                     </Text>
                                     <Upload
                                         listType="picture-card"
@@ -800,7 +844,7 @@ export default function EditProductPage() {
                                         {(variant.images?.length || 0) < 5 && (
                                             <div>
                                                 <PlusOutlined />
-                                                <div style={{ marginTop: 8 }}>Upload</div>
+                                                <div style={{ marginTop: 8 }}>{t("Upload")}</div>
                                             </div>
                                         )}
                                     </Upload>
@@ -821,13 +865,13 @@ export default function EditProductPage() {
                                     size="large"
                                     style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                                 >
-                                    Update Product
+                                    {t("Update Product")}
                                 </Button>
                                 <Button
                                     icon={<ArrowLeftOutlined />}
                                     onClick={() => router.push("/admin/products")}
                                 >
-                                    Cancel
+                                    {t("Cancel")}
                                 </Button>
                             </Space>
                         </Form.Item>

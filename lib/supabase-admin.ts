@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import defaultSupabase from '@/lib/supabaseClient';
 import { supabaseUrl } from '@/lib/supabase-env';
+import { resilientFetch } from '@/lib/resilient-fetch';
 
 // Service-role client for API routes. It bypasses RLS, so only use it in route
 // handlers that middleware.ts gates as admin-only, or that validate their own input.
@@ -11,7 +12,10 @@ if (!serviceRoleKey) {
 }
 
 const supabaseAdmin = serviceRoleKey
-    ? createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } })
+    ? createClient(supabaseUrl, serviceRoleKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+          global: { fetch: resilientFetch },
+      })
     : defaultSupabase;
 
 export default supabaseAdmin;

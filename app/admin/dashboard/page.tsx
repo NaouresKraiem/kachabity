@@ -10,6 +10,8 @@
  * - Popular products in carts
  */
 
+import StockOverview from "@/components/admin/stock/StockOverview";
+import { useAdminRole } from "@/lib/admin-role-context";
 import { useEffect, useState } from 'react';
 import { Card, Statistic, Row, Col, Table, Spin, DatePicker, Button } from 'antd';
 import {
@@ -20,6 +22,7 @@ import {
     ReloadOutlined
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { RangePicker } = DatePicker;
 
@@ -48,6 +51,9 @@ interface AbandonedCart {
 }
 
 export default function CartAnalyticsPage() {
+    const { t } = useAdminT();
+    const { can, loading: permissionsLoading } = useAdminRole();
+    const showAnalytics = can('analytics');
     const [analytics, setAnalytics] = useState<CartAnalytics[]>([]);
     const [abandonedCarts, setAbandonedCarts] = useState<AbandonedCart[]>([]);
     const [loading, setLoading] = useState(true);
@@ -108,8 +114,8 @@ export default function CartAnalyticsPage() {
     };
 
     useEffect(() => {
-        fetchAnalytics();
-    }, [dateRange]);
+        if (showAnalytics) fetchAnalytics();
+    }, [dateRange, showAnalytics]);
 
     // Calculate summary statistics
     const totalCarts = analytics.reduce((sum, day) => sum + (day.total_carts || 0), 0);
@@ -207,7 +213,7 @@ export default function CartAnalyticsPage() {
             key: 'action',
             render: () => (
                 <Button type="link" size="small">
-                    Send Recovery Email
+                    {t("Send Recovery Email")}
                 </Button>
             ),
         },
@@ -218,9 +224,9 @@ export default function CartAnalyticsPage() {
             <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
                 <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>
-                        🛒 Cart Analytics Dashboard
+                        {t("Dashboard")}
                     </h1>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {showAnalytics && <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <RangePicker
                             value={dateRange}
                             onChange={(dates) => {
@@ -233,12 +239,23 @@ export default function CartAnalyticsPage() {
                             icon={<ReloadOutlined />}
                             onClick={fetchAnalytics}
                         >
-                            Refresh
+                            {t("Refresh")}
                         </Button>
-                    </div>
+                    </div>}
                 </div>
 
-                {loading ? (
+                {can('stock') && (
+                    <>
+                        <h2 style={{ fontSize: '20px', fontWeight: 600, margin: '0 0 16px' }}>{t("Stock")}</h2>
+                        <StockOverview />
+                    </>
+                )}
+                {!permissionsLoading && !can('stock') && !showAnalytics && (
+                    <Card>{t("Use the menu to get to your work. Ask an admin if you need access to more sections.")}</Card>
+                )}
+                {showAnalytics && <h2 style={{ fontSize: '20px', fontWeight: 600, margin: '0 0 16px' }}>{t("Carts")}</h2>}
+
+                {!showAnalytics ? null : loading ? (
                     <div style={{ textAlign: 'center', padding: '100px 0' }}>
                         <Spin size="large" />
                     </div>
@@ -249,7 +266,7 @@ export default function CartAnalyticsPage() {
                             <Col xs={24} sm={12} lg={6}>
                                 <Card>
                                     <Statistic
-                                        title="Total Carts"
+                                        title={t("Total Carts")}
                                         value={totalCarts}
                                         prefix={<ShoppingCartOutlined />}
                                         styles={{ content: { color: '#1890ff' } }}
@@ -259,7 +276,7 @@ export default function CartAnalyticsPage() {
                             <Col xs={24} sm={12} lg={6}>
                                 <Card>
                                     <Statistic
-                                        title="Converted"
+                                        title={t("Converted")}
                                         value={totalConverted}
                                         prefix={<CheckCircleOutlined />}
                                         styles={{ content: { color: '#52c41a' } }}
@@ -269,7 +286,7 @@ export default function CartAnalyticsPage() {
                             <Col xs={24} sm={12} lg={6}>
                                 <Card>
                                     <Statistic
-                                        title="Conversion Rate"
+                                        title={t("Conversion Rate")}
                                         value={conversionRate}
                                         suffix="%"
                                         styles={{ content: { color: '#722ed1' } }}
@@ -279,7 +296,7 @@ export default function CartAnalyticsPage() {
                             <Col xs={24} sm={12} lg={6}>
                                 <Card>
                                     <Statistic
-                                        title="Avg Cart Value"
+                                        title={t("Avg Cart Value")}
                                         value={avgCartValue}
                                         prefix="$"
                                         styles={{ content: { color: '#fa8c16' } }}
@@ -293,7 +310,7 @@ export default function CartAnalyticsPage() {
                             <Col xs={24} sm={12}>
                                 <Card>
                                     <Statistic
-                                        title="Abandoned Carts"
+                                        title={t("Abandoned Carts")}
                                         value={totalAbandoned}
                                         prefix={<CloseCircleOutlined />}
                                         styles={{ content: { color: '#ff4d4f' } }}
@@ -303,13 +320,13 @@ export default function CartAnalyticsPage() {
                             <Col xs={24} sm={12}>
                                 <Card>
                                     <Statistic
-                                        title="Abandoned Revenue"
+                                        title={t("Abandoned Revenue")}
                                         value={abandonedRevenue.toFixed(2)}
                                         prefix={<DollarOutlined />}
                                         styles={{ content: { color: '#ff7a45' } }}
                                     />
                                     <p style={{ marginTop: '8px', color: '#666', fontSize: '12px' }}>
-                                        Potential revenue from abandoned carts
+                                        {t("Potential revenue from abandoned carts")}
                                     </p>
                                 </Card>
                             </Col>
@@ -317,7 +334,7 @@ export default function CartAnalyticsPage() {
 
                         {/* Daily Analytics Table */}
                         <Card
-                            title="📊 Daily Cart Statistics"
+                            title={t("📊 Daily Cart Statistics")}
                             style={{ marginBottom: '24px' }}
                         >
                             <Table
@@ -329,9 +346,9 @@ export default function CartAnalyticsPage() {
                         </Card>
 
                         {/* Abandoned Carts Table */}
-                        <Card title="⚠️ Recent Abandoned Carts (Last 24 hours)">
+                        <Card title={t("⚠️ Recent Abandoned Carts (Last 24 hours)")}>
                             <p style={{ marginBottom: '16px', color: '#666' }}>
-                                These customers left items in their cart. Send them a recovery email to bring them back!
+                                {t("These customers left items in their cart. Send them a recovery email to bring them back!")}
                             </p>
                             <Table
                                 dataSource={abandonedCarts}

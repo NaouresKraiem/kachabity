@@ -18,6 +18,11 @@ GMAIL_APP_PASSWORD=your-16-character-app-password
 ## Optional Variables
 
 ```env
+# Public JWT signing keys, copied from https://<project>.supabase.co/auth/v1/.well-known/jwks.json
+# (one line of JSON). Middleware verifies admin sessions with them instead of downloading them
+# on each new server instance. Update it if you rotate the project's signing keys.
+SUPABASE_JWKS={"keys":[...]}
+
 # Custom recipient for contact forms (defaults to GMAIL_USER)
 CONTACT_TO_EMAIL=business@yourdomain.com
 

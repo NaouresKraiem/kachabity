@@ -2,8 +2,10 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAdminT } from "@/lib/admin-i18n";
 
 export default function AdminPage() {
+    const { t } = useAdminT();
     const router = useRouter();
 
     useEffect(() => {
@@ -18,7 +20,7 @@ export default function AdminPage() {
             alignItems: "center", 
             minHeight: "100vh" 
         }}>
-            <p>Redirecting to admin dashboard...</p>
+            <p>{t("Redirecting to admin dashboard...")}</p>
         </div>
     );
 }

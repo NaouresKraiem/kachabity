@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useLanguage } from "@/lib/language-context";
+import { cartLineKey } from "@/lib/cart-context";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400";
 
@@ -11,6 +12,8 @@ interface CartItemProps {
         name: string;
         name_ar?: string;
         name_fr?: string;
+        variantId?: string;
+        variantLabel?: string;
         price: number;
         image: string;
         quantity: number;
@@ -65,10 +68,11 @@ console.log(item);
                         <div className="flex justify-between items-start mb-1">
                             <h3 className="text-[13px] font-normal text-[#50555C] pr-8">
                                 {itemName}
+                                {item.variantLabel && <span className="block text-[12px] text-gray-400 mt-0.5">{item.variantLabel}</span>}
                             </h3>
                             {onRemove && (
                                 <button
-                                    onClick={() => onRemove(item.id)}
+                                    onClick={() => onRemove(cartLineKey(item))}
                                     className="text-gray-400 hover:text-red-500 transition shrink-0"
                                 >
                                     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -118,7 +122,7 @@ console.log(item);
                         {onUpdateQuantity && (
                             <div className="flex items-center">
                                 <button
-                                    onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                                    onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity - 1)}
                                     className="text-[#4F4F4F] w-8 h-8 border border-[#B2BCCA] rounded-[3px] flex items-center justify-center hover:bg-gray-50 transition text-xl font-bold"
                                 >
                                     −
@@ -127,7 +131,7 @@ console.log(item);
                                     {item.quantity}
                                 </span>
                                 <button
-                                    onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                                    onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity + 1)}
                                     className="text-[#4F4F4F] text-xl font-bold w-8 h-8 border border-[#B2BCCA] rounded-[3px] flex items-center justify-center hover:bg-gray-50 transition"
                                 >
                                     +
@@ -160,10 +164,11 @@ console.log(item);
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="text-[13px] font-normal text-[#50555C] pr-8">
                                     {itemName}
+                                    {item.variantLabel && <span className="block text-[12px] text-gray-400 mt-0.5">{item.variantLabel}</span>}
                                 </h3>
                                 {onRemove && (
                                     <button
-                                        onClick={() => onRemove(item.id)}
+                                        onClick={() => onRemove(cartLineKey(item))}
                                         className="text-gray-400 hover:text-red-500 transition shrink-0"
                                     >
                                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -209,7 +214,7 @@ console.log(item);
                             {onUpdateQuantity && (
                                 <div className="flex items-center">
                                     <button
-                                        onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                                        onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity - 1)}
                                         className="text-[#4F4F4F] w-8 h-8 border border-[#B2BCCA] rounded-[3px] flex items-center justify-center hover:bg-gray-50 transition text-xl font-bold"
                                     >
                                         −
@@ -218,7 +223,7 @@ console.log(item);
                                         {item.quantity}
                                     </span>
                                     <button
-                                        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                                        onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity + 1)}
                                         className="text-[#4F4F4F] text-xl font-bold w-8 h-8 border border-[#B2BCCA] rounded-[3px] flex items-center justify-center hover:bg-gray-50 transition"
                                     >
                                         +
@@ -250,6 +255,7 @@ console.log(item);
                     <h3 className="text-lg font-medium text-gray-900">
                         {itemName}
                     </h3>
+                    {item.variantLabel && <p className="text-sm text-gray-500 mt-0.5">{item.variantLabel}</p>}
                     {item.rating && (
                         <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
                             <div className="flex">
@@ -279,7 +285,7 @@ console.log(item);
             {onUpdateQuantity ? (
                 <div className="flex items-center gap-2 mt-4 md:mt-0">
                     <button
-                        onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity - 1)}
                         className="w-8 h-8 border border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-50 transition text-lg font-bold"
                     >
                         −
@@ -288,7 +294,7 @@ console.log(item);
                         {item.quantity}
                     </span>
                     <button
-                        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity + 1)}
                         className="w-8 h-8 border border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-50 transition text-lg font-bold"
                     >
                         +
@@ -310,7 +316,7 @@ console.log(item);
             {/* Remove Button */}
             {onRemove && (
                 <button
-                    onClick={() => onRemove(item.id)}
+                    onClick={() => onRemove(cartLineKey(item))}
                     className="text-gray-400 hover:text-red-500 transition mt-4 md:mt-0"
                 >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

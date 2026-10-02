@@ -7,6 +7,10 @@ export interface CartItem {
     name: string;
     name_ar?: string;
     name_fr?: string;
+    /** Chosen size/color; lines of the same product with different variants stay separate. */
+    variantId?: string;
+    /** e.g. "Black / XL", shown in the cart and checkout. */
+    variantLabel?: string;
     price: number;
     image: string;
     quantity: number;
@@ -17,8 +21,8 @@ export interface CartItem {
 interface CartContextType {
     items: CartItem[];
     addItem: (item: Omit<CartItem, "quantity">) => void;
-    removeItem: (id: string) => void;
-    updateQuantity: (id: string, quantity: number) => void;
+    removeItem: (key: string) => void;
+    updateQuantity: (key: string, quantity: number) => void;
     clearCart: () => void;
     totalItems: number;
     subtotal: number;
@@ -26,6 +30,11 @@ interface CartContextType {
     openCart: () => void;
     closeCart: () => void;
     isCartLoaded: boolean;
+}
+
+/** Identifies a cart line: product plus variant. */
+export function cartLineKey(item: Pick<CartItem, "id" | "variantId">): string {
+    return item.variantId ? `${item.id}:${item.variantId}` : item.id;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -68,10 +77,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const addItem = (item: Omit<CartItem, "quantity">) => {
         setItems((currentItems) => {
-            const existingItem = currentItems.find((i) => i.id === item.id);
+            const key = cartLineKey(item);
+            const existingItem = currentItems.find((i) => cartLineKey(i) === key);
             if (existingItem) {
                 return currentItems.map((i) =>
-                    i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+                    cartLineKey(i) === key ? { ...i, quantity: i.quantity + 1 } : i
                 );
             }
             return [...currentItems, { ...item, quantity: 1 }];
@@ -79,18 +89,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsCartOpen(true);
     };
 
-    const removeItem = (id: string) => {
-        setItems((currentItems) => currentItems.filter((item) => item.id !== id));
+    // Both take a line key from cartLineKey().
+    const removeItem = (key: string) => {
+        setItems((currentItems) => currentItems.filter((item) => cartLineKey(item) !== key));
     };
 
-    const updateQuantity = (id: string, quantity: number) => {
+    const updateQuantity = (key: string, quantity: number) => {
         if (quantity < 1) {
-            removeItem(id);
+            removeItem(key);
             return;
         }
         setItems((currentItems) =>
             currentItems.map((item) =>
-                item.id === id ? { ...item, quantity } : item
+                cartLineKey(item) === key ? { ...item, quantity } : item
             )
         );
     };

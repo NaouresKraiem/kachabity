@@ -10,6 +10,8 @@ interface AddToCartButtonProps {
         name: string;
         name_ar?: string;
         name_fr?: string;
+        variantId?: string;
+        variantLabel?: string;
         price: number;
         image: string;
         rating?: number;
@@ -18,6 +20,10 @@ interface AddToCartButtonProps {
     quantity?: number;
     variant?: "default" | "icon" | "small";
     className?: string;
+    /** e.g. out of stock */
+    disabled?: boolean;
+    /** Replaces the default add, e.g. product cards that must pick a variant first. */
+    onAdd?: () => void | Promise<void>;
 }
 
 const content = {
@@ -38,7 +44,7 @@ const content = {
     }
 };
 
-export default function AddToCartButton({ product, quantity = 1, variant = "default", className = "" }: AddToCartButtonProps) {
+export default function AddToCartButton({ product, quantity = 1, variant = "default", className = "", disabled = false, onAdd }: AddToCartButtonProps) {
     const { addItem } = useCart();
     const { locale } = useLanguage();
     const [isAdding, setIsAdding] = useState(false);
@@ -48,9 +54,13 @@ export default function AddToCartButton({ product, quantity = 1, variant = "defa
     const handleAddToCart = () => {
         setIsAdding(true);
 
-        // Add the item multiple times based on quantity
-        for (let i = 0; i < quantity; i++) {
-            addItem(product);
+        if (onAdd) {
+            void onAdd();
+        } else {
+            // Add the item multiple times based on quantity
+            for (let i = 0; i < quantity; i++) {
+                addItem(product);
+            }
         }
 
         setTimeout(() => {
@@ -67,7 +77,7 @@ export default function AddToCartButton({ product, quantity = 1, variant = "defa
         return (
             <button
                 onClick={handleAddToCart}
-                disabled={isAdding || justAdded}
+                disabled={disabled || isAdding || justAdded}
                 className={`cursor-pointer rounded-[9px] py-2 px-4 border border-[#E3E3E3] flex items-center gap-2 text-sm text-black hover:text-[#5e2d23] font-medium transition disabled:opacity-50 ${className}`}
                 aria-label={text.addToCart}
             >
@@ -95,7 +105,7 @@ export default function AddToCartButton({ product, quantity = 1, variant = "defa
         return (
             <button
                 onClick={handleAddToCart}
-                disabled={isAdding || justAdded}
+                disabled={disabled || isAdding || justAdded}
                 className={`px-4 py-2 bg-[#842E1B] text-white text-sm rounded-lg hover:bg-[#6b2516] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${className}`}
             >
                 {!justAdded && (
@@ -111,7 +121,7 @@ export default function AddToCartButton({ product, quantity = 1, variant = "defa
     return (
         <button
             onClick={handleAddToCart}
-            disabled={isAdding || justAdded}
+            disabled={disabled || isAdding || justAdded}
             className={`w-full py-3 px-6 bg-[#842E1B] text-white rounded-lg hover:bg-[#6b2516] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${className}`}
         >
             {!justAdded && (

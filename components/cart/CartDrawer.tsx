@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useCart } from "@/lib/cart-context";
+import { cartLineKey, useCart } from "@/lib/cart-context";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 import { isRTL } from "@/lib/language-utils";
@@ -102,7 +102,7 @@ console.log(items);
                         ) : (
                             <div className="space-y-8">
                                 {items.map((item) => (
-                                    <React.Fragment key={item.id}>
+                                    <React.Fragment key={cartLineKey(item)}>
                                         <CartItem
                                             item={item}
                                             onUpdateQuantity={updateQuantity}

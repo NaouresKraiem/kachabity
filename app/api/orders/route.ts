@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import defaultSupabase from '@/lib/supabaseClient';
-import { createClient } from '@supabase/supabase-js';
+import supabase from '@/lib/supabase-admin';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { priceOrder } from '@/lib/order-pricing';
 import { sendOrderConfirmationEmail } from '@/lib/order-confirmation-email';
-
-// Use Service Role Key if available to bypass RLS for admin operations
-const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY)
-    : defaultSupabase;
-
-// Warn if service role key is not set
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('⚠️  SUPABASE_SERVICE_ROLE_KEY not set. Admin order operations may fail due to RLS policies.');
-}
+import type { Order, OrderItem } from '@/lib/orders';
+import { getAdminActor } from '@/lib/admin-auth';
+import { invalidateCatalog } from '@/lib/catalog-cache';
+import { stockErrorMessage } from '@/lib/stock';
 
 const orderItemSchema = z.object({
     id: z.guid(),
+    variantId: z.guid().optional().nullable(),
     name: z.string().optional(),
     name_ar: z.string().optional().nullable(),
     name_fr: z.string().optional().nullable(),
@@ -82,9 +76,9 @@ export async function POST(request: NextRequest) {
         const { pricing } = priced;
         const userId = await getUserIdFromRequest(request);
 
-        const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .insert({
+        // The order and its lines are written in one transaction (create_order).
+        const { data: created, error: createError } = await supabase.rpc('create_order', {
+            p_order: {
                 order_number: generateOrderNumber(),
                 user_id: userId,
                 customer_email: orderData.customerEmail || null,
@@ -100,21 +94,14 @@ export async function POST(request: NextRequest) {
                 shipping_cost: pricing.shippingCost,
                 total: pricing.total,
                 order_notes: orderData.orderNotes || null,
-                status: 'pending',
-                payment_status: 'pending',
-            })
-            .select()
-            .single();
-
-        if (orderError) throw orderError;
-
-        const { data: orderItems, error: itemsError } = await supabase
-            .from('order_items')
-            .insert(orderData.items.map((item) => {
+            },
+            p_items: orderData.items.map((item, index) => {
                 const product = pricing.products.get(item.id)!;
+                const variant = pricing.variants[index];
                 return {
-                    order_id: order.id,
                     product_id: item.id,
+                    variant_id: variant?.id ?? null,
+                    variant_label: variant?.label || null,
                     product_name: product.name,
                     product_name_ar: product.name_ar,
                     product_name_fr: product.name_fr,
@@ -123,13 +110,10 @@ export async function POST(request: NextRequest) {
                     price: item.price,
                     subtotal: item.price * item.quantity,
                 };
-            }))
-            .select();
-
-        if (itemsError) {
-            await supabase.from('orders').delete().eq('id', order.id);
-            throw itemsError;
-        }
+            }),
+        });
+        if (createError) throw createError;
+        const { order, items: orderItems } = created as { order: Order; items: OrderItem[] };
 
         // Sent from stored data only; a failed email never fails the order.
         if (order.customer_email) {
@@ -161,9 +145,10 @@ export async function GET(request: NextRequest) {
         const status = searchParams.get('status');
 
         // Build query
+        // A single order embeds its items, so the detail page needs one round trip.
         let query = supabase
             .from('orders')
-            .select('*')
+            .select(id ? '*, items:order_items(*)' : '*')
             .order('created_at', { ascending: false });
 
         // Filter by ID if provided
@@ -180,22 +165,8 @@ export async function GET(request: NextRequest) {
 
         if (error) throw error;
 
-        // If fetching by ID, also fetch order items
         if (id && orders && orders.length > 0) {
-            const { data: items, error: itemsError } = await supabase
-                .from('order_items')
-                .select('*')
-                .eq('order_id', id);
-
-            if (itemsError) throw itemsError;
-
-            return NextResponse.json({
-                success: true,
-                data: {
-                    ...orders[0],
-                    items: items || []
-                }
-            });
+            return NextResponse.json({ success: true, data: orders[0] });
         }
 
         return NextResponse.json({ success: true, data: orders || [] });
@@ -208,90 +179,80 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// PUT - Update order status
+// Maps database errors from the order functions to API responses.
+function orderErrorResponse(error: { message?: string; code?: string }) {
+    if (error.message?.includes('order_not_found')) {
+        return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
+    }
+    if (error.message?.includes('insufficient_stock') || error.message?.includes('no_online_location')) {
+        return NextResponse.json({ success: false, error: stockErrorMessage(error), code: 'STOCK' }, { status: 409 });
+    }
+    return null;
+}
+
+// PUT - Update order status, payment status or notes.
+// Validated (processing), shipped and delivered orders take their tracked items out of the
+// online location; pending and cancelled ones give them back. The status change and the
+// stock movement run in one transaction (set_order_status): a shortage changes nothing.
 export async function PUT(request: NextRequest) {
     try {
         const body = await request.json();
-
         if (!body.id) {
-            return NextResponse.json(
-                { success: false, error: 'Order ID is required' },
-                { status: 400 }
-            );
+            return NextResponse.json({ success: false, error: 'Order ID is required' }, { status: 400 });
         }
 
-        const updateData: any = {};
-        if (body.status !== undefined) updateData.status = body.status;
-        if (body.payment_status !== undefined) updateData.payment_status = body.payment_status;
-        if (body.order_notes !== undefined) updateData.order_notes = body.order_notes;
-
-        const { data: orders, error } = await supabase
-            .from('orders')
-            .update(updateData)
-            .eq('id', body.id)
-            .select();
-
+        const changes: Record<string, unknown> = {};
+        for (const field of ['status', 'payment_status', 'order_notes']) {
+            if (body[field] !== undefined) changes[field] = body[field];
+        }
+        const actor = getAdminActor(request.headers);
+        const { data: order, error } = await supabase.rpc('set_order_status', {
+            p_order_id: body.id,
+            p_changes: changes,
+            p_actor: actor.userId,
+            p_actor_email: actor.email,
+        });
         if (error) {
-            console.error('Error updating order:', error);
-            if (error.code === '42501') {
-                throw new Error('Permission denied to update orders. Set SUPABASE_SERVICE_ROLE_KEY in environment or add RLS policy to allow updates.');
-            }
+            const response = orderErrorResponse(error);
+            if (response) return response;
             throw error;
         }
 
-        if (!orders || orders.length === 0) {
-            return NextResponse.json(
-                { success: false, error: 'Order not found or no permission to update' },
-                { status: 404 }
-            );
-        }
-
-        return NextResponse.json({ success: true, data: orders[0] });
+        if (changes.status) invalidateCatalog(); // shop availability may have changed
+        return NextResponse.json({ success: true, data: order });
     } catch (error: any) {
         console.error('Error updating order:', error);
-        return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 
-// DELETE - Delete an order
+// DELETE ?id= or ?ids=a,b - Delete orders after returning the stock they took.
+// Several orders are deleted together or not at all (delete_orders).
 export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const id = searchParams.get('id');
-
-        if (!id) {
-            return NextResponse.json(
-                { success: false, error: 'Order ID is required' },
-                { status: 400 }
-            );
+        const ids = (searchParams.get('ids') ?? searchParams.get('id') ?? '').split(',').map((id) => id.trim()).filter(Boolean);
+        if (ids.length === 0) {
+            return NextResponse.json({ success: false, error: 'Order ID is required' }, { status: 400 });
         }
 
-        // Delete order items first
-        const { error: itemsError } = await supabase
-            .from('order_items')
-            .delete()
-            .eq('order_id', id);
+        const actor = getAdminActor(request.headers);
+        const { data: deleted, error } = await supabase.rpc('delete_orders', {
+            p_order_ids: ids,
+            p_actor: actor.userId,
+            p_actor_email: actor.email,
+        });
+        if (error) {
+            const response = orderErrorResponse(error);
+            if (response) return response;
+            throw error;
+        }
 
-        if (itemsError) throw itemsError;
-
-        // Delete order
-        const { error: orderError } = await supabase
-            .from('orders')
-            .delete()
-            .eq('id', id);
-
-        if (orderError) throw orderError;
-
-        return NextResponse.json({ success: true });
+        invalidateCatalog();
+        return NextResponse.json({ success: true, data: { deleted } });
     } catch (error: any) {
         console.error('Error deleting order:', error);
-        return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 

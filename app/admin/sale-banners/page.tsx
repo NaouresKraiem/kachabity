@@ -8,7 +8,6 @@ import {
     Card,
     Typography,
     Tag,
-    message,
     Modal,
     Form,
     Input,
@@ -18,6 +17,8 @@ import {
     Upload,
     Popconfirm,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
+import { useAdminRole } from "@/lib/admin-role-context";
 import {
     PlusOutlined,
     EditOutlined,
@@ -27,6 +28,7 @@ import {
 } from "@ant-design/icons";
 import type { UploadFile } from "antd";
 import dayjs from "dayjs";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -46,6 +48,8 @@ interface SaleBanner {
 }
 
 export default function SaleBannersPage() {
+    const { t } = useAdminT();
+    const canDelete = useAdminRole().can("delete");
     const [banners, setBanners] = useState<SaleBanner[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
@@ -62,11 +66,11 @@ export default function SaleBannersPage() {
             if (result.success) {
                 setBanners(result.data || []);
             } else {
-                message.error("Failed to load sale banners");
+                message.error(t("Failed to load sale banners"));
             }
         } catch (error) {
             console.error("Error fetching banners:", error);
-            message.error("Failed to load sale banners");
+            message.error(t("Failed to load sale banners"));
         } finally {
             setLoading(false);
         }
@@ -141,7 +145,7 @@ export default function SaleBannersPage() {
             if (imageFile.length > 0 && imageFile[0].originFileObj) {
                 imageUrl = await handleImageUpload(imageFile[0].originFileObj as File);
             } else if (!editingBanner && imageFile.length === 0) {
-                message.error("Please upload an image");
+                message.error(t("Please upload an image"));
                 return;
             }
 
@@ -166,15 +170,15 @@ export default function SaleBannersPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success(editingBanner ? "Banner updated!" : "Banner created!");
+                message.success(editingBanner ? t("Banner updated!") : t("Banner created!"));
                 closeModal();
                 fetchBanners();
             } else {
-                message.error(result.error || "Failed to save banner");
+                message.error(result.error || t("Failed to save banner"));
             }
         } catch (error) {
             console.error("Error saving banner:", error);
-            message.error("Failed to save banner");
+            message.error(t("Failed to save banner"));
         }
     };
 
@@ -190,21 +194,21 @@ export default function SaleBannersPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success("Banner deleted!");
+                message.success(t("Banner deleted!"));
                 fetchBanners();
             } else {
-                message.error(result.error || "Failed to delete banner");
+                message.error(result.error || t("Failed to delete banner"));
             }
         } catch (error) {
             console.error("Error deleting banner:", error);
-            message.error("Failed to delete banner");
+            message.error(t("Failed to delete banner"));
         }
     };
 
     // Table columns
     const columns = [
         {
-            title: "Banner",
+            title: t("Banner"),
             key: "preview",
             width: 120,
             render: (_: any, record: SaleBanner) => (
@@ -216,18 +220,18 @@ export default function SaleBannersPage() {
             ),
         },
         {
-            title: "Title",
+            title: t("Title"),
             dataIndex: "title",
             key: "title",
         },
         {
-            title: "Subtitle",
+            title: t("Subtitle"),
             dataIndex: "subtitle",
             key: "subtitle",
             render: (text: string) => text || "—",
         },
         {
-            title: "Discount",
+            title: t("Discount"),
             dataIndex: "discount_percent",
             key: "discount",
             render: (percent: number) => (
@@ -237,21 +241,21 @@ export default function SaleBannersPage() {
             ),
         },
         {
-            title: "Badge Text",
+            title: t("Badge Text"),
             dataIndex: "badge_text",
             key: "badge_text",
             render: (text: string) => text || "—",
         },
         {
-            title: "Duration",
+            title: t("Duration"),
             key: "duration",
             render: (_: any, record: SaleBanner) => {
                 if (!record.starts_at && !record.ends_at) {
-                    return <span style={{ color: '#999' }}>Indefinite</span>;
+                    return <span style={{ color: '#999' }}>{t("Indefinite")}</span>;
                 }
                 return (
                     <div>
-                        <div>{record.starts_at ? dayjs(record.starts_at).format("MMM DD, YYYY") : <span style={{ color: '#999' }}>Immediate</span>}</div>
+                        <div>{record.starts_at ? dayjs(record.starts_at).format("MMM DD, YYYY") : <span style={{ color: '#999' }}>{t("Immediate")}</span>}</div>
                         <div style={{ color: '#999' }}>
                             to {record.ends_at ? dayjs(record.ends_at).format("MMM DD, YYYY") : 'No End Date'}
                         </div>
@@ -260,7 +264,7 @@ export default function SaleBannersPage() {
             },
         },
         {
-            title: "Status",
+            title: t("Status"),
             dataIndex: "active",
             key: "active",
             render: (active: boolean, record: SaleBanner) => {
@@ -269,16 +273,16 @@ export default function SaleBannersPage() {
                 const notStarted = record.starts_at && new Date(record.starts_at) > now;
                 const isIndefinite = !record.ends_at && !record.starts_at;
 
-                if (isExpired) return <Tag color="default">Expired</Tag>;
-                if (notStarted) return <Tag color="blue">Scheduled</Tag>;
-                if (active && isIndefinite) return <Tag color="purple">Active (Ongoing)</Tag>;
-                if (active && !record.ends_at) return <Tag color="purple">Active (No End)</Tag>;
-                if (active) return <Tag color="green">Active</Tag>;
-                return <Tag color="red">Inactive</Tag>;
+                if (isExpired) return <Tag color="default">{t("Expired")}</Tag>;
+                if (notStarted) return <Tag color="blue">{t("Scheduled")}</Tag>;
+                if (active && isIndefinite) return <Tag color="purple">{t("Active (Ongoing)")}</Tag>;
+                if (active && !record.ends_at) return <Tag color="purple">{t("Active (No End)")}</Tag>;
+                if (active) return <Tag color="green">{t("Active")}</Tag>;
+                return <Tag color="red">{t("Inactive")}</Tag>;
             },
         },
         {
-            title: "Actions",
+            title: t("Actions"),
             key: "actions",
             render: (_: any, record: SaleBanner) => (
                 <Space>
@@ -287,20 +291,22 @@ export default function SaleBannersPage() {
                         icon={<EditOutlined />}
                         onClick={() => openModal(record)}
                     >
-                        Edit
+                        {t("Edit")}
                     </Button>
-                    <Popconfirm
-                        title="Delete banner?"
-                        description="This action cannot be undone."
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Delete"
-                        cancelText="Cancel"
-                        okButtonProps={{ danger: true }}
-                    >
-                        <Button type="text" danger icon={<DeleteOutlined />}>
-                            Delete
-                        </Button>
-                    </Popconfirm>
+                    {canDelete && (
+                        <Popconfirm
+                            title={t("Delete banner?")}
+                            description={t("This action cannot be undone.")}
+                            onConfirm={() => handleDelete(record.id)}
+                            okText={t("Delete")}
+                            cancelText={t("Cancel")}
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Button type="text" danger icon={<DeleteOutlined />}>
+                                {t("Delete")}
+                            </Button>
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         },
@@ -311,7 +317,7 @@ export default function SaleBannersPage() {
             <Card>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                     <Title level={2} style={{ margin: 0 }}>
-                        Sale Banners
+                        {t("Sale Banners")}
                     </Title>
                     <Button
                         type="primary"
@@ -320,7 +326,7 @@ export default function SaleBannersPage() {
                         size="large"
                         style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                     >
-                        Create Banner
+                        {t("Create Banner")}
                     </Button>
                 </div>
 
@@ -335,12 +341,12 @@ export default function SaleBannersPage() {
 
             {/* Create/Edit Modal */}
             <Modal
-                title={editingBanner ? "Edit Sale Banner" : "Create Sale Banner"}
+                title={editingBanner ? t("Edit Sale Banner") : t("Create Sale Banner")}
                 open={modalVisible}
                 onCancel={closeModal}
                 onOk={() => form.submit()}
-                okText="Save"
-                cancelText="Cancel"
+                okText={t("Save")}
+                cancelText={t("Cancel")}
                 width={700}
             >
                 <Form
@@ -350,9 +356,9 @@ export default function SaleBannersPage() {
                     initialValues={{ active: true, discount_percent: 0 }}
                 >
                     <Form.Item
-                        label="Banner Image"
+                        label={t("Banner Image")}
                         required
-                        help="Upload the main banner image"
+                        help={t("Upload the main banner image")}
                     >
                         <Upload
                             listType="picture-card"
@@ -364,51 +370,51 @@ export default function SaleBannersPage() {
                             {imageFile.length === 0 && (
                                 <div>
                                     <UploadOutlined />
-                                    <div style={{ marginTop: 8 }}>Upload Image</div>
+                                    <div style={{ marginTop: 8 }}>{t("Upload Image")}</div>
                                 </div>
                             )}
                         </Upload>
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                            Recommended: 1280x720px (16:9 aspect ratio)
+                            {t("Recommended: 1280x720px (16:9 aspect ratio)")}
                         </Text>
                     </Form.Item>
 
                     <Form.Item
-                        label="Banner Title"
+                        label={t("Banner Title")}
                         name="title"
-                        rules={[{ required: true, message: "Please enter banner title" }]}
-                        help="Main title for the banner"
+                        rules={[{ required: true, message: t("Please enter banner title") }]}
+                        help={t("Main title for the banner")}
                     >
                         <Input
-                            placeholder="e.g., Summer Sale or خصم كبير"
+                            placeholder={t("e.g., Summer Sale or خصم كبير")}
                             size="large"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        label="Subtitle"
+                        label={t("Subtitle")}
                         name="subtitle"
-                        help="Brief description or additional text"
+                        help={t("Brief description or additional text")}
                     >
                         <TextArea
-                            placeholder="e.g., Get up to 50% off on selected items"
+                            placeholder={t("e.g., Get up to 50% off on selected items")}
                             rows={2}
                             size="large"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        label="Badge Text (Optional)"
+                        label={t("Badge Text (Optional)")}
                         name="badge_text"
-                        help="Optional badge to highlight the offer (e.g., HOT, LIMITED)"
+                        help={t("Optional badge to highlight the offer (e.g., HOT, LIMITED)")}
                     >
                         <Input
-                            placeholder="e.g., عرض حصري or LIMITED OFFER"
+                            placeholder={t("e.g., عرض حصري or LIMITED OFFER")}
                             size="large"
                         />
                     </Form.Item>
 
-                    <Form.Item label="Discount Percentage">
+                    <Form.Item label={t("Discount Percentage")}>
                         <Space.Compact style={{ width: "100%" }}>
                             {/* noStyle binds the value to InputNumber; the outer item only renders the label */}
                             <Form.Item name="discount_percent" noStyle rules={[
@@ -421,7 +427,7 @@ export default function SaleBannersPage() {
                             ]}>
                                 <InputNumber
                                     style={{ width: "100%" }}
-                                    placeholder="e.g., 50"
+                                    placeholder={t("e.g., 50")}
                                     min={0}
                                     max={100}
                                     size="large"
@@ -432,9 +438,9 @@ export default function SaleBannersPage() {
                     </Form.Item>
 
                     <Form.Item
-                        label="Sale Duration (Optional)"
+                        label={t("Sale Duration (Optional)")}
                         name="date_range"
-                        help="Set start and end dates for time-limited sales. Leave empty for permanent banners."
+                        help={t("Set start and end dates for time-limited sales. Leave empty for permanent banners.")}
                     >
                         <RangePicker
                             style={{ width: "100%" }}
@@ -446,7 +452,7 @@ export default function SaleBannersPage() {
                     </Form.Item>
 
                     <Form.Item
-                        label="Active"
+                        label={t("Active")}
                         name="active"
                         valuePropName="checked"
                     >

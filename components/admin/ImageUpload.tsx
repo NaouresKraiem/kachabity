@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { message } from "antd";
+import {  } from "antd";
+import { message } from "@/components/admin/antd-app";
+import { useAdminT } from "@/lib/admin-i18n";
 
 interface ImageUploadProps {
     label: string;
@@ -11,6 +13,7 @@ interface ImageUploadProps {
 }
 
 export default function ImageUpload({ label, value, onChange, required = false }: ImageUploadProps) {
+    const { t } = useAdminT();
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState<string>(value || "");
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,7 +91,7 @@ export default function ImageUpload({ label, value, onChange, required = false }
                     <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
                         <img
                             src={preview}
-                            alt="Preview"
+                            alt={t("Preview")}
                             className="w-full h-full object-contain"
                         />
                         <button
@@ -116,7 +119,7 @@ export default function ImageUpload({ label, value, onChange, required = false }
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
-                                Uploading...
+                                {t("Uploading...")}
                             </span>
                         ) : (
                             <span className="flex items-center justify-center gap-2">
@@ -138,7 +141,7 @@ export default function ImageUpload({ label, value, onChange, required = false }
                 />
 
                 <p className="text-xs text-gray-500">
-                    Accepted: JPG, PNG, WebP, GIF. Max size: 5MB
+                    {t("Accepted: JPG, PNG, WebP, GIF. Max size: 5MB")}
                 </p>
             </div>
         </div>

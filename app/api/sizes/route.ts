@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { invalidateCatalog } from '@/lib/catalog-cache';
+import { idsFromSearchParams } from '@/lib/request-ids';
+import { cachedCatalogQuery, invalidateCatalog } from '@/lib/catalog-cache';
 import supabase from '@/lib/supabase-admin';
 
 // GET - Fetch all sizes (public access)
 export async function GET(request: NextRequest) {
     try {
-        const { data, error } = await supabase
-            .from('sizes')
-            .select('*')
-            .is('deleted_at', null)
-            .order('sort_order', { ascending: true })
-            .order('name', { ascending: true });
-
-        if (error) throw error;
+        // Served from the catalog cache; sizes writes below call invalidateCatalog().
+        const data = await cachedCatalogQuery('api-sizes', async () => {
+            const { data, error } = await supabase
+                .from('sizes')
+                .select('*')
+                .is('deleted_at', null)
+                .order('sort_order', { ascending: true })
+                .order('name', { ascending: true });
+            if (error) throw error;
+            return data ?? [];
+        })();
 
         return NextResponse.json({ success: true, data });
     } catch (error: any) {
@@ -102,36 +106,25 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// DELETE - Delete a size
+// DELETE ?id= or ?ids=a,b - Soft-delete one or several sizes in a single statement.
 export async function DELETE(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url);
-        const id = searchParams.get('id');
-
-        if (!id) {
-            return NextResponse.json(
-                { success: false, error: 'Size ID is required' },
-                { status: 400 }
-            );
+        const ids = idsFromSearchParams(new URL(request.url).searchParams);
+        if (ids.length === 0) {
+            return NextResponse.json({ success: false, error: 'Size ID is required' }, { status: 400 });
         }
 
-        // Soft delete
         const { error } = await supabase
             .from('sizes')
             .update({ deleted_at: new Date().toISOString() })
-            .eq('id', id);
-
+            .in('id', ids);
         if (error) throw error;
 
         invalidateCatalog(); // refresh cached storefront data
-
         return NextResponse.json({ success: true });
     } catch (error: any) {
-        console.error('Error deleting size:', error);
-        return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 500 }
-        );
+        console.error('Error deleting sizes:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 

@@ -7,7 +7,6 @@ import {
     Card,
     Breadcrumb,
     Input,
-    message,
     Popconfirm,
     Table,
     Typography,
@@ -16,6 +15,8 @@ import {
     Form,
     Tabs,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
+import { useAdminRole } from "@/lib/admin-role-context";
 import type { ColumnsType } from "antd/es/table";
 import {
     DeleteOutlined,
@@ -25,6 +26,7 @@ import {
     ReloadOutlined,
     AppstoreOutlined,
 } from "@ant-design/icons";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 
@@ -44,6 +46,8 @@ interface SizeRow {
 }
 
 export default function AdminVariantsPage() {
+    const { t } = useAdminT();
+    const canDelete = useAdminRole().can("delete");
     const [colors, setColors] = useState<ColorRow[]>([]);
     const [sizes, setSizes] = useState<SizeRow[]>([]);
     const [loading, setLoading] = useState(true); // first fetch starts on mount: show the table spinner right away
@@ -72,7 +76,7 @@ export default function AdminVariantsPage() {
             }
         } catch (error: any) {
             console.error("Fetch error:", error);
-            message.error("Failed to fetch colors");
+            message.error(t("Failed to fetch colors"));
         } finally {
             setLoading(false);
         }
@@ -90,7 +94,7 @@ export default function AdminVariantsPage() {
             }
         } catch (error: any) {
             console.error("Fetch error:", error);
-            message.error("Failed to fetch sizes");
+            message.error(t("Failed to fetch sizes"));
         } finally {
             setLoading(false);
         }
@@ -119,13 +123,13 @@ export default function AdminVariantsPage() {
             const response = await fetch(`/api/colors?id=${color.id}`, { method: "DELETE" });
             const result = await response.json();
             if (result.success) {
-                message.success("Color deleted");
+                message.success(t("Color deleted"));
                 fetchColors();
             } else {
-                message.error(result.error || "Failed to delete");
+                message.error(result.error || t("Failed to delete"));
             }
         } catch (error) {
-            message.error("Failed to delete color");
+            message.error(t("Failed to delete color"));
         }
     };
 
@@ -133,14 +137,15 @@ export default function AdminVariantsPage() {
         if (selectedColorKeys.length === 0) return;
         setBulkDeleting(true);
         try {
-            await Promise.all(
-                selectedColorKeys.map(id => fetch(`/api/colors?id=${id}`, { method: "DELETE" }))
-            );
-            message.success(`Deleted ${selectedColorKeys.length} color${selectedColorKeys.length > 1 ? 's' : ''}`);
+            // One request, one statement: all selected colors are deleted or none.
+            const response = await fetch(`/api/colors?ids=${selectedColorKeys.join(",")}`, { method: "DELETE" });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result?.success) throw new Error(result?.error || "Delete failed");
+            message.success(t("Deleted {count} color(s)", { count: selectedColorKeys.length }));
             setSelectedColorKeys([]);
             fetchColors();
         } catch (error) {
-            message.error("Failed to delete colors");
+            message.error(t("Failed to delete colors"));
         } finally {
             setBulkDeleting(false);
         }
@@ -182,15 +187,15 @@ export default function AdminVariantsPage() {
 
             const result = await response.json();
             if (result.success) {
-                message.success(`Color ${editingColor ? "updated" : "created"}!`);
+                message.success((editingColor ? t("Color updated") : t("Color created")));
                 setIsColorModalOpen(false);
                 colorForm.resetFields();
                 fetchColors();
             } else {
-                message.error(result.error || "Failed to save");
+                message.error(result.error || t("Failed to save"));
             }
         } catch (error) {
-            message.error("Failed to save color");
+            message.error(t("Failed to save color"));
         } finally {
             setSubmitting(false);
         }
@@ -202,13 +207,13 @@ export default function AdminVariantsPage() {
             const response = await fetch(`/api/sizes?id=${size.id}`, { method: "DELETE" });
             const result = await response.json();
             if (result.success) {
-                message.success("Size deleted");
+                message.success(t("Size deleted"));
                 fetchSizes();
             } else {
-                message.error(result.error || "Failed to delete");
+                message.error(result.error || t("Failed to delete"));
             }
         } catch (error) {
-            message.error("Failed to delete size");
+            message.error(t("Failed to delete size"));
         }
     };
 
@@ -216,14 +221,15 @@ export default function AdminVariantsPage() {
         if (selectedSizeKeys.length === 0) return;
         setBulkDeleting(true);
         try {
-            await Promise.all(
-                selectedSizeKeys.map(id => fetch(`/api/sizes?id=${id}`, { method: "DELETE" }))
-            );
-            message.success(`Deleted ${selectedSizeKeys.length} size${selectedSizeKeys.length > 1 ? 's' : ''}`);
+            // One request, one statement: all selected sizes are deleted or none.
+            const response = await fetch(`/api/sizes?ids=${selectedSizeKeys.join(",")}`, { method: "DELETE" });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result?.success) throw new Error(result?.error || "Delete failed");
+            message.success(t("Deleted {count} size(s)", { count: selectedSizeKeys.length }));
             setSelectedSizeKeys([]);
             fetchSizes();
         } catch (error) {
-            message.error("Failed to delete sizes");
+            message.error(t("Failed to delete sizes"));
         } finally {
             setBulkDeleting(false);
         }
@@ -262,15 +268,15 @@ export default function AdminVariantsPage() {
 
             const result = await response.json();
             if (result.success) {
-                message.success(`Size ${editingSize ? "updated" : "created"}!`);
+                message.success((editingSize ? t("Size updated") : t("Size created")));
                 setIsSizeModalOpen(false);
                 sizeForm.resetFields();
                 fetchSizes();
             } else {
-                message.error(result.error || "Failed to save");
+                message.error(result.error || t("Failed to save"));
             }
         } catch (error) {
-            message.error("Failed to save size");
+            message.error(t("Failed to save size"));
         } finally {
             setSubmitting(false);
         }
@@ -279,7 +285,7 @@ export default function AdminVariantsPage() {
     // Table columns
     const colorColumns: ColumnsType<ColorRow> = [
         {
-            title: "Preview",
+            title: t("Preview"),
             key: "preview",
             width: 80,
             render: (_: any, record: ColorRow) => (
@@ -295,7 +301,7 @@ export default function AdminVariantsPage() {
             ),
         },
         {
-            title: "Color Name",
+            title: t("Color Name"),
             dataIndex: "display_name",
             key: "display_name",
             sorter: (a, b) => (a.display_name || a.name).localeCompare(b.display_name || b.name),
@@ -306,13 +312,13 @@ export default function AdminVariantsPage() {
             ),
         },
         {
-            title: "Hex Code",
+            title: t("Hex Code"),
             dataIndex: "hex_code",
             key: "hex_code",
             render: (hex: string | null) => hex || "—",
         },
         {
-            title: "Action",
+            title: t("Action"),
             key: "action",
             width: 150,
             render: (_: any, record: ColorRow) => (
@@ -323,17 +329,19 @@ export default function AdminVariantsPage() {
                         icon={<EditOutlined />}
                         onClick={() => handleOpenColorModal(record)}
                     >
-                        Edit
+                        {t("Edit")}
                     </Button>
-                    <Popconfirm
-                        title="Delete color?"
-                        description={`Remove "${record.display_name || record.name}"?`}
-                        onConfirm={() => handleDeleteColor(record)}
-                    >
-                        <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-                            Delete
-                        </Button>
-                    </Popconfirm>
+                    {canDelete && (
+                        <Popconfirm
+                            title={t("Delete color?")}
+                            description={t("Remove \"{name}\"?", { name: record.display_name || record.name })}
+                            onConfirm={() => handleDeleteColor(record)}
+                        >
+                            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                                {t("Delete")}
+                            </Button>
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         },
@@ -341,7 +349,7 @@ export default function AdminVariantsPage() {
 
     const sizeColumns: ColumnsType<SizeRow> = [
         {
-            title: "Size Name",
+            title: t("Size Name"),
             dataIndex: "display_name",
             key: "display_name",
             sorter: (a, b) => (a.display_name || a.name).localeCompare(b.display_name || b.name),
@@ -352,7 +360,7 @@ export default function AdminVariantsPage() {
             ),
         },
         {
-            title: "Code",
+            title: t("Code"),
             dataIndex: "name",
             key: "name",
             render: (name: string) => (
@@ -362,7 +370,7 @@ export default function AdminVariantsPage() {
             ),
         },
         {
-            title: "Action",
+            title: t("Action"),
             key: "action",
             width: 150,
             render: (_: any, record: SizeRow) => (
@@ -373,17 +381,19 @@ export default function AdminVariantsPage() {
                         icon={<EditOutlined />}
                         onClick={() => handleOpenSizeModal(record)}
                     >
-                        Edit
+                        {t("Edit")}
                     </Button>
-                    <Popconfirm
-                        title="Delete size?"
-                        description={`Remove "${record.display_name || record.name}"?`}
-                        onConfirm={() => handleDeleteSize(record)}
-                    >
-                        <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-                            Delete
-                        </Button>
-                    </Popconfirm>
+                    {canDelete && (
+                        <Popconfirm
+                            title={t("Delete size?")}
+                            description={t("Remove \"{name}\"?", { name: record.display_name || record.name })}
+                            onConfirm={() => handleDeleteSize(record)}
+                        >
+                            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                                {t("Delete")}
+                            </Button>
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         },
@@ -394,8 +404,8 @@ export default function AdminVariantsPage() {
             <div>
                 <Breadcrumb
                     items={[
-                        { title: <Link href="/admin/dashboard">Dashboard</Link> },
-                        { title: "Variants" },
+                        { title: <Link href="/admin/dashboard">{t("Dashboard")}</Link> },
+                        { title: t("Variants") },
                     ]}
                 />
                 <div
@@ -411,10 +421,10 @@ export default function AdminVariantsPage() {
                     <div>
                         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
                             <AppstoreOutlined style={{ marginRight: 12 }} />
-                            Product Variants
+                            {t("Product Variants")}
                         </Title>
                         <Text type="secondary">
-                            Manage colors and sizes for your products
+                            {t("Manage colors and sizes for your products")}
                         </Text>
                     </div>
                 </div>
@@ -427,30 +437,30 @@ export default function AdminVariantsPage() {
                     items={[
                         {
                             key: "colors",
-                            label: "🎨 Colors",
+                            label: t("🎨 Colors"),
                             children: (
                                 <>
                                     <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", gap: 12 }}>
                                         <Input
-                                            placeholder="Search colors..."
+                                            placeholder={t("Search colors...")}
                                             prefix={<SearchOutlined />}
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             style={{ maxWidth: 300 }}
                                         />
                                         <Space>
-                                            {selectedColorKeys.length > 0 && (
-                                                <Popconfirm
-                                                    title={`Delete ${selectedColorKeys.length} color${selectedColorKeys.length > 1 ? 's' : ''}?`}
-                                                    onConfirm={handleBulkDeleteColors}
-                                                >
-                                                    <Button danger icon={<DeleteOutlined />} loading={bulkDeleting}>
-                                                        Delete ({selectedColorKeys.length})
-                                                    </Button>
-                                                </Popconfirm>
+                                            {selectedColorKeys.length > 0 && canDelete && (
+                                                    <Popconfirm
+                                                        title={t("Delete {count} color(s)?", { count: selectedColorKeys.length })}
+                                                        onConfirm={handleBulkDeleteColors}
+                                                    >
+                                                        <Button danger icon={<DeleteOutlined />} loading={bulkDeleting}>
+                                                            {t("Delete ({count})", { count: selectedColorKeys.length })}
+                                                        </Button>
+                                                    </Popconfirm>
                                             )}
                                             <Button icon={<ReloadOutlined />} onClick={fetchColors}>
-                                                Refresh
+                                                {t("Refresh")}
                                             </Button>
                                             <Button
                                                 type="primary"
@@ -458,7 +468,7 @@ export default function AdminVariantsPage() {
                                                 onClick={() => handleOpenColorModal()}
                                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                                             >
-                                                Add Color
+                                                {t("Add Color")}
                                             </Button>
                                         </Space>
                                     </div>
@@ -478,30 +488,30 @@ export default function AdminVariantsPage() {
                         },
                         {
                             key: "sizes",
-                            label: "📏 Sizes",
+                            label: t("📏 Sizes"),
                             children: (
                                 <>
                                     <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", gap: 12 }}>
                                         <Input
-                                            placeholder="Search sizes..."
+                                            placeholder={t("Search sizes...")}
                                             prefix={<SearchOutlined />}
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             style={{ maxWidth: 300 }}
                                         />
                                         <Space>
-                                            {selectedSizeKeys.length > 0 && (
-                                                <Popconfirm
-                                                    title={`Delete ${selectedSizeKeys.length} size${selectedSizeKeys.length > 1 ? 's' : ''}?`}
-                                                    onConfirm={handleBulkDeleteSizes}
-                                                >
-                                                    <Button danger icon={<DeleteOutlined />} loading={bulkDeleting}>
-                                                        Delete ({selectedSizeKeys.length})
-                                                    </Button>
-                                                </Popconfirm>
+                                            {selectedSizeKeys.length > 0 && canDelete && (
+                                                    <Popconfirm
+                                                        title={t("Delete {count} size(s)?", { count: selectedSizeKeys.length })}
+                                                        onConfirm={handleBulkDeleteSizes}
+                                                    >
+                                                        <Button danger icon={<DeleteOutlined />} loading={bulkDeleting}>
+                                                            {t("Delete ({count})", { count: selectedSizeKeys.length })}
+                                                        </Button>
+                                                    </Popconfirm>
                                             )}
                                             <Button icon={<ReloadOutlined />} onClick={fetchSizes}>
-                                                Refresh
+                                                {t("Refresh")}
                                             </Button>
                                             <Button
                                                 type="primary"
@@ -509,7 +519,7 @@ export default function AdminVariantsPage() {
                                                 onClick={() => handleOpenSizeModal()}
                                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                                             >
-                                                Add Size
+                                                {t("Add Size")}
                                             </Button>
                                         </Space>
                                     </div>
@@ -533,7 +543,7 @@ export default function AdminVariantsPage() {
 
             {/* Color Modal */}
             <Modal
-                title={editingColor ? "Edit Color" : "Add Color"}
+                title={editingColor ? t("Edit Color") : t("Add Color")}
                 open={isColorModalOpen}
                 onCancel={() => setIsColorModalOpen(false)}
                 footer={null}
@@ -541,17 +551,17 @@ export default function AdminVariantsPage() {
             >
                 <Form form={colorForm} layout="vertical" onFinish={handleColorSubmit} style={{ marginTop: 24 }}>
                     <Form.Item
-                        label="Color Name"
+                        label={t("Color Name")}
                         name="display_name"
-                        rules={[{ required: true, message: "Enter color name" }]}
+                        rules={[{ required: true, message: t("Enter color name") }]}
                     >
-                        <Input placeholder="e.g., Sky Blue, Cherry Red" size="large" />
+                        <Input placeholder={t("e.g., Sky Blue, Cherry Red")} size="large" />
                     </Form.Item>
 
                     <Form.Item
-                        label="Color"
+                        label={t("Color")}
                         name="hex_code"
-                        rules={[{ required: true, message: "Select a color" }]}
+                        rules={[{ required: true, message: t("Select a color") }]}
                     >
                         <Input
                             type="color"
@@ -568,10 +578,10 @@ export default function AdminVariantsPage() {
                                 size="large"
                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                             >
-                                {editingColor ? "Update" : "Create"}
+                                {editingColor ? t("Update") : t("Create")}
                             </Button>
                             <Button onClick={() => setIsColorModalOpen(false)} size="large">
-                                Cancel
+                                {t("Cancel")}
                             </Button>
                         </Space>
                     </Form.Item>
@@ -580,7 +590,7 @@ export default function AdminVariantsPage() {
 
             {/* Size Modal */}
             <Modal
-                title={editingSize ? "Edit Size" : "Add Size"}
+                title={editingSize ? t("Edit Size") : t("Add Size")}
                 open={isSizeModalOpen}
                 onCancel={() => setIsSizeModalOpen(false)}
                 footer={null}
@@ -588,11 +598,11 @@ export default function AdminVariantsPage() {
             >
                 <Form form={sizeForm} layout="vertical" onFinish={handleSizeSubmit} style={{ marginTop: 24 }}>
                     <Form.Item
-                        label="Size Name"
+                        label={t("Size Name")}
                         name="display_name"
-                        rules={[{ required: true, message: "Enter size name" }]}
+                        rules={[{ required: true, message: t("Enter size name") }]}
                     >
-                        <Input placeholder="e.g., Small, Medium, Large, XL" size="large" />
+                        <Input placeholder={t("e.g., Small, Medium, Large, XL")} size="large" />
                     </Form.Item>
 
                     <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
@@ -604,10 +614,10 @@ export default function AdminVariantsPage() {
                                 size="large"
                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                             >
-                                {editingSize ? "Update" : "Create"}
+                                {editingSize ? t("Update") : t("Create")}
                             </Button>
                             <Button onClick={() => setIsSizeModalOpen(false)} size="large">
-                                Cancel
+                                {t("Cancel")}
                             </Button>
                         </Space>
                     </Form.Item>

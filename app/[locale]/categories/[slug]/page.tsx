@@ -9,7 +9,7 @@ import { EMBEDDED_DISCOUNTS, embeddedDiscountPercent, type ProductDiscount } fro
 import { getDescendantCategoryIds } from "@/lib/utils/product-utils";
 import { getCategories } from "@/lib/categories-cache";
 import Link from "next/link";
-import { useCart } from "@/lib/cart-context";
+import { useQuickAdd } from "@/lib/quick-add";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 import { goToLogin } from "@/lib/customer-auth";
 
@@ -104,7 +104,7 @@ export default function CategoryProductsPage() {
     const [category, setCategory] = useState<Category | null>(null);
     const [subcategories, setSubcategories] = useState<Category[]>([]);
     const [categoryIds, setCategoryIds] = useState<string[]>([]);
-    const { addItem } = useCart();
+    const quickAdd = useQuickAdd('');
     const [loading, setLoading] = useState(true);
     const [productsLoading, setProductsLoading] = useState(false);
     const [wishlist, setWishlist] = useState<Set<string>>(new Set());
@@ -342,27 +342,7 @@ export default function CategoryProductsPage() {
                                         locale={locale}
                                         isFavorite={wishlist.has(product.id)}
                                         onToggleFavorite={toggleWishlist}
-                                        onAddToCart={(p) => {
-                                            // Get product image from product_images or fallback
-                                            const productImage = p.product_images && p.product_images.length > 0
-                                                ? (p.product_images.find(img => img.is_main)?.image_url || p.product_images[0].image_url)
-                                                : (p.image_url || '');
-
-                                            // Calculate discounted price
-                                            const price = p.discount_percent
-                                                ? p.base_price * (1 - p.discount_percent / 100)
-                                                : p.base_price;
-
-                                            addItem({
-                                                id: p.id,
-                                                name: p.name,
-                                                name_ar: p.name_ar,
-                                                name_fr: p.name_fr,
-                                                price: Math.round(price),
-                                                image: productImage,
-                                                reviewCount: p.review_count || 0
-                                            });
-                                        }}
+                                        onAddToCart={(item) => quickAdd(item)}
                                     />
                                 ))}
                             </div>

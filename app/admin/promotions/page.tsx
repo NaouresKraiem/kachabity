@@ -8,7 +8,6 @@ import {
     Card,
     Typography,
     Tag,
-    message,
     Modal,
     Form,
     Select,
@@ -17,6 +16,7 @@ import {
     Switch,
     Popconfirm,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
 import {
     PlusOutlined,
     EditOutlined,
@@ -24,6 +24,7 @@ import {
     PercentageOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -47,6 +48,7 @@ interface Promotion {
 }
 
 export default function PromotionsPage() {
+    const { t } = useAdminT();
     const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -63,11 +65,11 @@ export default function PromotionsPage() {
             if (result.success) {
                 setPromotions(result.data || []);
             } else {
-                message.error("Failed to load promotions");
+                message.error(t("Failed to load promotions"));
             }
         } catch (error) {
             console.error("Error fetching promotions:", error);
-            message.error("Failed to load promotions");
+            message.error(t("Failed to load promotions"));
         } finally {
             setLoading(false);
         }
@@ -142,15 +144,15 @@ export default function PromotionsPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success(editingPromotion ? "Promotion updated!" : "Promotion created!");
+                message.success(editingPromotion ? t("Promotion updated!") : t("Promotion created!"));
                 closeModal();
                 fetchPromotions();
             } else {
-                message.error(result.error || "Failed to save promotion");
+                message.error(result.error || t("Failed to save promotion"));
             }
         } catch (error) {
             console.error("Error saving promotion:", error);
-            message.error("Failed to save promotion");
+            message.error(t("Failed to save promotion"));
         }
     };
 
@@ -166,27 +168,27 @@ export default function PromotionsPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success("Promotion deleted!");
+                message.success(t("Promotion deleted!"));
                 fetchPromotions();
             } else {
-                message.error(result.error || "Failed to delete promotion");
+                message.error(result.error || t("Failed to delete promotion"));
             }
         } catch (error) {
             console.error("Error deleting promotion:", error);
-            message.error("Failed to delete promotion");
+            message.error(t("Failed to delete promotion"));
         }
     };
 
     // Table columns
     const columns = [
         {
-            title: "Product",
+            title: t("Product"),
             dataIndex: ["products", "name"],
             key: "product",
             render: (name: string, record: Promotion) => name || `Product #${record.product_id.slice(0, 8)}`,
         },
         {
-            title: "Discount",
+            title: t("Discount"),
             dataIndex: "discount_percent",
             key: "discount",
             render: (percent: number) => (
@@ -196,19 +198,19 @@ export default function PromotionsPage() {
             ),
         },
         {
-            title: "Start Date",
+            title: t("Start Date"),
             dataIndex: "starts_at",
             key: "starts_at",
-            render: (date: string) => date ? dayjs(date).format("MMM DD, YYYY") : <span style={{ color: "#999" }}>Immediate</span>,
+            render: (date: string) => date ? dayjs(date).format("MMM DD, YYYY") : <span style={{ color: "#999" }}>{t("Immediate")}</span>,
         },
         {
-            title: "End Date",
+            title: t("End Date"),
             dataIndex: "ends_at",
             key: "ends_at",
-            render: (date: string) => date ? dayjs(date).format("MMM DD, YYYY") : <span style={{ color: "#999" }}>No End Date</span>,
+            render: (date: string) => date ? dayjs(date).format("MMM DD, YYYY") : <span style={{ color: "#999" }}>{t("No End Date")}</span>,
         },
         {
-            title: "Status",
+            title: t("Status"),
             dataIndex: "active",
             key: "active",
             render: (active: boolean, record: Promotion) => {
@@ -217,16 +219,16 @@ export default function PromotionsPage() {
                 const notStarted = record.starts_at && new Date(record.starts_at) > now;
                 const isIndefinite = !record.ends_at && !record.starts_at;
 
-                if (isExpired) return <Tag color="default">Expired</Tag>;
-                if (notStarted) return <Tag color="blue">Scheduled</Tag>;
-                if (active && isIndefinite) return <Tag color="purple">Active (Ongoing)</Tag>;
-                if (active && !record.ends_at) return <Tag color="purple">Active (No End Date)</Tag>;
-                if (active) return <Tag color="green">Active</Tag>;
-                return <Tag color="red">Inactive</Tag>;
+                if (isExpired) return <Tag color="default">{t("Expired")}</Tag>;
+                if (notStarted) return <Tag color="blue">{t("Scheduled")}</Tag>;
+                if (active && isIndefinite) return <Tag color="purple">{t("Active (Ongoing)")}</Tag>;
+                if (active && !record.ends_at) return <Tag color="purple">{t("Active (No End Date)")}</Tag>;
+                if (active) return <Tag color="green">{t("Active")}</Tag>;
+                return <Tag color="red">{t("Inactive")}</Tag>;
             },
         },
         {
-            title: "Actions",
+            title: t("Actions"),
             key: "actions",
             render: (_: any, record: Promotion) => (
                 <Space>
@@ -235,18 +237,18 @@ export default function PromotionsPage() {
                         icon={<EditOutlined />}
                         onClick={() => openModal(record)}
                     >
-                        Edit
+                        {t("Edit")}
                     </Button>
                     <Popconfirm
-                        title="Delete promotion?"
-                        description="This action cannot be undone."
+                        title={t("Delete promotion?")}
+                        description={t("This action cannot be undone.")}
                         onConfirm={() => handleDelete(record.id)}
-                        okText="Delete"
-                        cancelText="Cancel"
+                        okText={t("Delete")}
+                        cancelText={t("Cancel")}
                         okButtonProps={{ danger: true }}
                     >
                         <Button type="text" danger icon={<DeleteOutlined />}>
-                            Delete
+                            {t("Delete")}
                         </Button>
                     </Popconfirm>
                 </Space>
@@ -259,7 +261,7 @@ export default function PromotionsPage() {
             <Card>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                     <Title level={2} style={{ margin: 0 }}>
-                        Promotions & Discounts
+                        {t("Promotions & Discounts")}
                     </Title>
                     <Button
                         type="primary"
@@ -268,7 +270,7 @@ export default function PromotionsPage() {
                         size="large"
                         style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                     >
-                        Create Promotion
+                        {t("Create Promotion")}
                     </Button>
                 </div>
 
@@ -283,12 +285,12 @@ export default function PromotionsPage() {
 
             {/* Create/Edit Modal */}
             <Modal
-                title={editingPromotion ? "Edit Promotion" : "Create Promotion"}
+                title={editingPromotion ? t("Edit Promotion") : t("Create Promotion")}
                 open={modalVisible}
                 onCancel={closeModal}
                 onOk={() => form.submit()}
-                okText="Save"
-                cancelText="Cancel"
+                okText={t("Save")}
+                cancelText={t("Cancel")}
                 width={600}
             >
                 <Form
@@ -298,12 +300,12 @@ export default function PromotionsPage() {
                     initialValues={{ active: true }}
                 >
                     <Form.Item
-                        label="Product"
+                        label={t("Product")}
                         name="product_id"
-                        rules={[{ required: true, message: "Please select a product" }]}
+                        rules={[{ required: true, message: t("Please select a product") }]}
                     >
                         <Select
-                            placeholder="Select product"
+                            placeholder={t("Select product")}
                             showSearch
                             optionFilterProp="children"
                             size="large"
@@ -316,11 +318,11 @@ export default function PromotionsPage() {
                         </Select>
                     </Form.Item>
 
-                    <Form.Item label="Discount Percentage" required>
+                    <Form.Item label={t("Discount Percentage")} required>
                         <Space.Compact style={{ width: "100%" }}>
                             {/* noStyle binds the value to InputNumber; the outer item only renders the label */}
                             <Form.Item name="discount_percent" noStyle rules={[
-                                { required: true, message: "Please enter discount percentage" },
+                                { required: true, message: t("Please enter discount percentage") },
                                 {
                                     validator: (_, value) => {
                                         if (!value) return Promise.reject("Please enter discount percentage");
@@ -331,7 +333,7 @@ export default function PromotionsPage() {
                             ]}>
                                 <InputNumber
                                     style={{ width: "100%" }}
-                                    placeholder="e.g., 20"
+                                    placeholder={t("e.g., 20")}
                                     min={1}
                                     max={100}
                                     size="large"
@@ -342,9 +344,9 @@ export default function PromotionsPage() {
                     </Form.Item>
 
                     <Form.Item
-                        label="Duration (Optional)"
+                        label={t("Duration (Optional)")}
                         name="date_range"
-                        help="Leave empty for promotions that run indefinitely"
+                        help={t("Leave empty for promotions that run indefinitely")}
                     >
                         <RangePicker
                             style={{ width: "100%" }}
@@ -356,7 +358,7 @@ export default function PromotionsPage() {
                     </Form.Item>
 
                     <Form.Item
-                        label="Active"
+                        label={t("Active")}
                         name="active"
                         valuePropName="checked"
                     >

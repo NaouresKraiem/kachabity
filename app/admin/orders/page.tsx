@@ -8,7 +8,6 @@ import {
     Card,
     Breadcrumb,
     Input,
-    message,
     Popconfirm,
     Select,
     Table,
@@ -16,6 +15,9 @@ import {
     Typography,
     Space,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
+import { ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS, orderStatusLabel, validateOrder } from "@/components/admin/order-status";
+import { useAdminRole } from "@/lib/admin-role-context";
 import type { ColumnsType } from "antd/es/table";
 import {
     DeleteOutlined,
@@ -23,6 +25,7 @@ import {
     SearchOutlined,
     ReloadOutlined,
 } from "@ant-design/icons";
+import { DATE_LOCALES, useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 
@@ -40,6 +43,8 @@ interface OrderRow {
 }
 
 export default function AdminOrdersPage() {
+    const { t, locale } = useAdminT();
+    const canDelete = useAdminRole().can("delete");
     const router = useRouter();
     const [orders, setOrders] = useState<OrderRow[]>([]);
     const [loading, setLoading] = useState(true); // first fetch starts on mount: show the table spinner right away
@@ -62,7 +67,7 @@ export default function AdminOrdersPage() {
             if (!response.ok) {
                 const text = await response.text();
                 console.error("API Error:", response.status, text);
-                message.error(`Failed to load orders: ${response.status}`);
+                message.error(t("Failed to load orders: {status}", { status: response.status }));
                 return;
             }
 
@@ -70,11 +75,11 @@ export default function AdminOrdersPage() {
             if (result.success) {
                 setOrders(result.data || []);
             } else {
-                message.error(result.error || "Unable to load orders");
+                message.error(result.error || t("Unable to load orders"));
             }
         } catch (error: any) {
             console.error("Fetch error:", error);
-            message.error(`Failed to fetch orders: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to fetch orders: {error}", { error: error.message || t("Unknown error") }));
         } finally {
             setLoading(false);
         }
@@ -104,13 +109,27 @@ export default function AdminOrdersPage() {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString('en-US', {
+        return new Date(dateString).toLocaleString(DATE_LOCALES[locale], {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const [validatingId, setValidatingId] = useState<string | null>(null);
+    const handleValidate = async (order: OrderRow) => {
+        setValidatingId(order.id);
+        try {
+            await validateOrder(order.id);
+            message.success(t("Order {order_number} validated", { order_number: order.order_number }));
+            fetchOrders();
+        } catch (e) {
+            message.error(t((e as Error).message));
+        } finally {
+            setValidatingId(null);
+        }
     };
 
     const handleDelete = async (order: OrderRow) => {
@@ -121,59 +140,46 @@ export default function AdminOrdersPage() {
 
             const result = await response.json();
             if (result.success) {
-                message.success(`Deleted order ${order.order_number}`);
+                message.success(t("Deleted order {order_number}", { order_number: order.order_number }));
                 fetchOrders();
             } else {
-                message.error(result.error || "Unable to delete order");
+                message.error(result.error || t("Unable to delete order"));
             }
         } catch (error: any) {
             console.error("Delete error:", error);
-            message.error(`Failed to delete order: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to delete order: {error}", { error: error.message || t("Unknown error") }));
         }
     };
 
     const handleBulkDelete = async () => {
         if (selectedRowKeys.length === 0) {
-            message.warning("No orders selected");
+            message.warning(t("No orders selected"));
             return;
         }
 
         setBulkDeleting(true);
         try {
-            const deletePromises = selectedRowKeys.map(id =>
-                fetch(`/api/orders?id=${id}`, { method: "DELETE" })
-            );
-
-            const results = await Promise.all(deletePromises);
-
-            let successCount = 0;
-            let failCount = 0;
-
-            for (const response of results) {
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        successCount++;
-                    } else {
-                        failCount++;
-                    }
-                } else {
-                    failCount++;
-                }
+            // One request: the server deletes all selected orders in a single transaction, or none.
+            const response = await fetch(`/api/orders?ids=${selectedRowKeys.join(",")}`, { method: "DELETE" });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result?.success) {
+                throw new Error(result?.error || "Delete failed");
             }
+            const successCount = selectedRowKeys.length;
+            const failCount = 0;
 
             if (successCount > 0) {
-                message.success(`Successfully deleted ${successCount} order${successCount > 1 ? 's' : ''}`);
+                message.success(t("Successfully deleted {count} order(s)", { count: successCount }));
             }
             if (failCount > 0) {
-                message.error(`Failed to delete ${failCount} order${failCount > 1 ? 's' : ''}`);
+                message.error(t("Failed to delete {count} order(s)", { count: failCount }));
             }
 
             setSelectedRowKeys([]);
             fetchOrders();
         } catch (error: any) {
             console.error("Bulk delete error:", error);
-            message.error(`Failed to delete orders: ${error.message || "Unknown error"}`);
+            message.error(t("Failed to delete orders: {error}", { error: error.message || t("Unknown error") }));
         } finally {
             setBulkDeleting(false);
         }
@@ -181,7 +187,7 @@ export default function AdminOrdersPage() {
 
     const columns: ColumnsType<OrderRow> = [
         {
-            title: "Order #",
+            title: t("Order #"),
             dataIndex: "order_number",
             key: "order_number",
             sorter: (a, b) => a.order_number.localeCompare(b.order_number),
@@ -190,7 +196,7 @@ export default function AdminOrdersPage() {
             ),
         },
         {
-            title: "Customer",
+            title: t("Customer"),
             key: "customer",
             render: (_: any, record: OrderRow) => (
                 <div>
@@ -202,34 +208,21 @@ export default function AdminOrdersPage() {
             ),
         },
         {
-            title: "Total",
+            title: t("Total"),
             dataIndex: "total",
             key: "total",
             sorter: (a, b) => a.total - b.total,
             render: (total: number) => formatPrice(total),
         },
         {
-            title: "Status",
+            title: t("Status"),
             dataIndex: "status",
             key: "status",
             sorter: (a, b) => a.status.localeCompare(b.status),
-            render: (status: string) => {
-                const colorMap: Record<string, string> = {
-                    pending: "orange",
-                    processing: "blue",
-                    shipped: "cyan",
-                    delivered: "green",
-                    cancelled: "red",
-                };
-                return (
-                    <Tag color={colorMap[status] || "default"}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </Tag>
-                );
-            },
+            render: (status: string) => <Tag color={ORDER_STATUS_COLORS[status] || "default"}>{t(orderStatusLabel(status))}</Tag>,
         },
         {
-            title: "Payment",
+            title: t("Payment"),
             dataIndex: "payment_status",
             key: "payment_status",
             sorter: (a, b) => a.payment_status.localeCompare(b.payment_status),
@@ -242,43 +235,57 @@ export default function AdminOrdersPage() {
                 };
                 return (
                     <Tag color={colorMap[paymentStatus] || "default"}>
-                        {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}
+                        {t(paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1))}
                     </Tag>
                 );
             },
         },
         {
-            title: "Date",
+            title: t("Date"),
             dataIndex: "created_at",
             key: "created_at",
             sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
             render: (date: string) => formatDate(date),
         },
         {
-            title: "Action",
+            title: t("Action"),
             key: "action",
-            width: 120,
+            width: 220,
             render: (_: any, record: OrderRow) => (
                 <Space>
+                    {record.status === "pending" && (
+                        <Popconfirm
+                            title={t("Validate order {order_number}?", { order_number: record.order_number })}
+                            description={t("This confirms the order and takes its items out of stock.")}
+                            okText={t("Validate")}
+                            onConfirm={() => handleValidate(record)}
+                        >
+                            <Button type="primary" size="small" loading={validatingId === record.id} onClick={(e) => e.stopPropagation()}>
+                                {t("Validate")}
+                            </Button>
+                        </Popconfirm>
+                    )}
                     <Button
                         type="link"
                         size="small"
                         icon={<EyeOutlined />}
                         onClick={() => router.push(`/admin/orders/${record.id}`)}
                     >
-                        View
+                        {t("View")}
                     </Button>
-                    <Popconfirm
-                        title="Delete order"
-                        description={`Are you sure you want to delete order ${record.order_number}?`}
-                        okText="Yes, delete"
-                        cancelText="Cancel"
-                        onConfirm={() => handleDelete(record)}
-                    >
-                        <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-                            Delete
-                        </Button>
-                    </Popconfirm>
+                    {canDelete && (
+                        <Popconfirm
+                            title={t("Delete order")}
+                            description={t("Are you sure you want to delete order {order_number}?", { order_number: record.order_number })}
+                            okText={t("Yes, delete")}
+                            cancelText={t("Cancel")}
+                            onConfirm={() => handleDelete(record)}
+                        >
+                            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                                {t("Delete")}
+                            </Button>
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         },
@@ -289,9 +296,9 @@ export default function AdminOrdersPage() {
             <div>
                 <Breadcrumb
                     items={[
-                        { title: <Link href="/admin/dashboard">Dashboard</Link> },
-                        { title: "Orders" },
-                        { title: "List" },
+                        { title: <Link href="/admin/dashboard">{t("Dashboard")}</Link> },
+                        { title: t("Orders") },
+                        { title: t("List") },
                     ]}
                 />
                 <div
@@ -306,32 +313,32 @@ export default function AdminOrdersPage() {
                 >
                     <div>
                         <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-                            Orders
+                            {t("Orders")}
                         </Title>
                         <Text type="secondary">
-                            Manage customer orders and fulfillment
+                            {t("Manage customer orders and fulfillment")}
                         </Text>
                     </div>
                     <Space>
-                        {selectedRowKeys.length > 0 && (
-                            <Popconfirm
-                                title="Delete selected orders"
-                                description={`Are you sure you want to delete ${selectedRowKeys.length} order${selectedRowKeys.length > 1 ? 's' : ''}?`}
-                                okText="Yes, delete"
-                                cancelText="Cancel"
-                                onConfirm={handleBulkDelete}
-                            >
-                                <Button
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    loading={bulkDeleting}
+                        {selectedRowKeys.length > 0 && canDelete && (
+                                <Popconfirm
+                                    title={t("Delete selected orders")}
+                                    description={t("Are you sure you want to delete {count} order(s)?", { count: selectedRowKeys.length })}
+                                    okText={t("Yes, delete")}
+                                    cancelText={t("Cancel")}
+                                    onConfirm={handleBulkDelete}
                                 >
-                                    Delete ({selectedRowKeys.length})
-                                </Button>
-                            </Popconfirm>
+                                    <Button
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        loading={bulkDeleting}
+                                    >
+                                        {t("Delete ({count})", { count: selectedRowKeys.length })}
+                                    </Button>
+                                </Popconfirm>
                         )}
                         <Button icon={<ReloadOutlined />} onClick={fetchOrders}>
-                            Refresh
+                            {t("Refresh")}
                         </Button>
                     </Space>
                 </div>
@@ -350,12 +357,8 @@ export default function AdminOrdersPage() {
                         value={statusFilter}
                         onChange={(value) => setStatusFilter(value)}
                         options={[
-                            { value: "all", label: "All statuses" },
-                            { value: "pending", label: "Pending" },
-                            { value: "processing", label: "Processing" },
-                            { value: "shipped", label: "Shipped" },
-                            { value: "delivered", label: "Delivered" },
-                            { value: "cancelled", label: "Cancelled" },
+                            { value: "all", label: t("All statuses") },
+                            ...ORDER_STATUS_OPTIONS.map((o) => ({ ...o, label: t(o.label) })),
                         ]}
                         style={{ width: 160 }}
                     />
@@ -363,16 +366,16 @@ export default function AdminOrdersPage() {
                         value={paymentStatusFilter}
                         onChange={(value) => setPaymentStatusFilter(value)}
                         options={[
-                            { value: "all", label: "All payments" },
-                            { value: "pending", label: "Pending" },
-                            { value: "paid", label: "Paid" },
-                            { value: "failed", label: "Failed" },
-                            { value: "refunded", label: "Refunded" },
+                            { value: "all", label: t("All payments") },
+                            { value: "pending", label: t("Pending") },
+                            { value: "paid", label: t("Paid") },
+                            { value: "failed", label: t("Failed") },
+                            { value: "refunded", label: t("Refunded") },
                         ]}
                         style={{ width: 160 }}
                     />
                     <Input
-                        placeholder="Search orders..."
+                        placeholder={t("Search orders...")}
                         prefix={<SearchOutlined style={{ color: "#bfbfbf" }} />}
                         value={searchTerm}
                         onChange={(event) => setSearchTerm(event.target.value)}
@@ -397,13 +400,13 @@ export default function AdminOrdersPage() {
                     pagination={{
                         pageSize: 10,
                         showSizeChanger: true,
-                        showTotal: (total) => `Total ${total} orders`,
+                        showTotal: (total) => t("{count} orders", { count: total }),
                     }}
                     locale={{
                         emptyText: (
                             <div style={{ padding: "40px 0", textAlign: "center" }}>
                                 <div style={{ fontSize: 48, color: "#d9d9d9", marginBottom: 16 }}>📦</div>
-                                <div style={{ color: "#999" }}>No orders found</div>
+                                <div style={{ color: "#999" }}>{t("No orders found")}</div>
                             </div>
                         ),
                     }}

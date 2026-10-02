@@ -90,6 +90,7 @@ function generateOrderConfirmationHTML(order: Order, orderItems: OrderItem[], cu
                                 <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333; font-weight: 600;">
                                     ${escapeHtml(item.product_name)}
                                 </h3>
+                                ${item.variant_label ? `<p style="margin: 0 0 8px 0; color: #888; font-size: 14px;">${escapeHtml(item.variant_label)}</p>` : ''}
                                 <p style="margin: 0 0 8px 0; color: #888; font-size: 14px;">
                                     Quantity: <span style="color: #7a3b2e; font-weight: 600;">${quantity}</span>
                                 </p>

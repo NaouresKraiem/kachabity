@@ -1,32 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { invalidateCatalog } from '@/lib/catalog-cache';
-import defaultSupabase from '@/lib/supabaseClient';
-import { createClient } from '@supabase/supabase-js';
-
-// Use Service Role Key if available to bypass RLS for admin operations
-const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY)
-    : defaultSupabase;
-
-// Warn if service role key is not set (admin operations may fail due to RLS)
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('⚠️  SUPABASE_SERVICE_ROLE_KEY not set. Admin category operations may fail due to RLS policies.');
-}
+import { idsFromSearchParams } from '@/lib/request-ids';
+import { cachedCatalogQuery, invalidateCatalog } from '@/lib/catalog-cache';
+import supabase from '@/lib/supabase-admin';
 
 // GET - Fetch all categories (public access)
 export async function GET(request: NextRequest) {
     try {
-        const { data, error } = await supabase
-            .from('categories')
-            .select('id, name, name_ar, name_fr, slug, sort_order, is_featured, image_url, parent_id')
-            .is('deleted_at', null)
-            .order('sort_order', { ascending: true })
-            .order('name', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching categories:', error);
-            throw error;
-        }
+        // Served from the catalog cache; category writes below call invalidateCatalog().
+        const data = await cachedCatalogQuery('api-categories', async () => {
+            const { data, error } = await supabase
+                .from('categories')
+                .select('id, name, name_ar, name_fr, slug, sort_order, is_featured, image_url, parent_id')
+                .is('deleted_at', null)
+                .order('sort_order', { ascending: true })
+                .order('name', { ascending: true });
+            if (error) throw error;
+            return data ?? [];
+        })();
 
         return NextResponse.json({
             success: true,
@@ -138,44 +128,25 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// DELETE - Delete a category
+// DELETE ?id= or ?ids=a,b - Soft-delete one or several categories in a single statement.
 export async function DELETE(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url);
-        const id = searchParams.get('id');
-
-        if (!id) {
-            return NextResponse.json(
-                { success: false, error: 'Category ID is required' },
-                { status: 400 }
-            );
+        const ids = idsFromSearchParams(new URL(request.url).searchParams);
+        if (ids.length === 0) {
+            return NextResponse.json({ success: false, error: 'Category ID is required' }, { status: 400 });
         }
 
-        // Try soft delete first (if deleted_at column exists)
-        const { error: softDeleteError } = await supabase
+        const { error } = await supabase
             .from('categories')
             .update({ deleted_at: new Date().toISOString() })
-            .eq('id', id);
-
-        if (softDeleteError) {
-            // If soft delete fails (column doesn't exist), do hard delete
-            const { error: deleteError } = await supabase
-                .from('categories')
-                .delete()
-                .eq('id', id);
-
-            if (deleteError) throw deleteError;
-        }
+            .in('id', ids);
+        if (error) throw error;
 
         invalidateCatalog(); // refresh cached storefront data
-
         return NextResponse.json({ success: true });
     } catch (error: any) {
-        console.error('Error deleting category:', error);
-        return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 500 }
-        );
+        console.error('Error deleting categories:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 

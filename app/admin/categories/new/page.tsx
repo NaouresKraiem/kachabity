@@ -9,7 +9,6 @@ import {
     Button,
     InputNumber,
     Switch,
-    message,
     Card,
     Breadcrumb,
     Typography,
@@ -18,6 +17,7 @@ import {
     Col,
     Upload,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
 import type { UploadFile } from "antd/es/upload/interface";
 import CategoryExtraFields from "@/components/admin/CategoryExtraFields";
 import {
@@ -25,10 +25,12 @@ import {
     ArrowLeftOutlined,
     PlusOutlined,
 } from "@ant-design/icons";
+import { useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 
 export default function CreateCategoryPage() {
+    const { t } = useAdminT();
     const router = useRouter();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
@@ -81,14 +83,14 @@ export default function CreateCategoryPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success("Category created successfully!");
+                message.success(t("Category created successfully!"));
                 router.push("/admin/categories");
             } else {
-                message.error(result.error || "Failed to create category");
+                message.error(result.error || t("Failed to create category"));
             }
         } catch (error: any) {
             console.error("Error creating category:", error);
-            message.error(error.message || "Failed to create category");
+            message.error(error.message || t("Failed to create category"));
         } finally {
             setLoading(false);
         }
@@ -98,18 +100,18 @@ export default function CreateCategoryPage() {
         <div style={{ padding: 24, background: "#fff", minHeight: "100vh" }}>
             <Breadcrumb
                 items={[
-                    { title: <Link href="/admin/dashboard">Dashboard</Link> },
-                    { title: <Link href="/admin/categories">Categories</Link> },
-                    { title: "Create" },
+                    { title: <Link href="/admin/dashboard">{t("Dashboard")}</Link> },
+                    { title: <Link href="/admin/categories">{t("Categories")}</Link> },
+                    { title: t("Create") },
                 ]}
             />
 
             <div style={{ marginTop: 24, marginBottom: 24 }}>
                 <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-                    Create New Category
+                    {t("Create New Category")}
                 </Title>
                 <Text type="secondary">
-                    Add a new category to organize your products
+                    {t("Add a new category to organize your products")}
                 </Text>
             </div>
 
@@ -126,20 +128,20 @@ export default function CreateCategoryPage() {
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Category Name"
+                                label={t("Category Name")}
                                 name="name"
                                 rules={[
-                                    { required: true, message: "Please enter category name" },
+                                    { required: true, message: t("Please enter category name") },
                                 ]}
                             >
-                                <Input placeholder="Enter category name" />
+                                <Input placeholder={t("Enter category name")} />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Slug"
+                                label={t("Slug")}
                                 name="slug"
-                                tooltip="URL-friendly identifier (auto-generated from name if left empty)"
+                                tooltip={t("URL-friendly identifier (auto-generated from name if left empty)")}
                             >
                                 <Input placeholder="category-slug" />
                             </Form.Item>
@@ -148,7 +150,7 @@ export default function CreateCategoryPage() {
 
                     <CategoryExtraFields />
 
-                    <Form.Item label="Category Image">
+                    <Form.Item label={t("Category Image")}>
                         <Upload
                             listType="picture-card"
                             fileList={imageFile}
@@ -159,21 +161,21 @@ export default function CreateCategoryPage() {
                             {imageFile.length === 0 && (
                                 <div>
                                     <PlusOutlined />
-                                    <div style={{ marginTop: 8 }}>Upload</div>
+                                    <div style={{ marginTop: 8 }}>{t("Upload")}</div>
                                 </div>
                             )}
                         </Upload>
                         <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
-                            Upload a category image (optional)
+                            {t("Upload a category image (optional)")}
                         </Text>
                     </Form.Item>
 
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Sort Order"
+                                label={t("Sort Order")}
                                 name="sort_order"
-                                tooltip="Lower numbers appear first"
+                                tooltip={t("Lower numbers appear first")}
                             >
                                 <InputNumber
                                     style={{ width: "100%" }}
@@ -184,7 +186,7 @@ export default function CreateCategoryPage() {
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Featured Category"
+                                label={t("Featured Category")}
                                 name="is_featured"
                                 valuePropName="checked"
                             >
@@ -203,13 +205,13 @@ export default function CreateCategoryPage() {
                                 size="large"
                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                             >
-                                Create Category
+                                {t("Create Category")}
                             </Button>
                             <Button
                                 icon={<ArrowLeftOutlined />}
                                 onClick={() => router.push("/admin/categories")}
                             >
-                                Cancel
+                                {t("Cancel")}
                             </Button>
                         </Space>
                     </Form.Item>

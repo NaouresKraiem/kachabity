@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, Handlee } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from 'react-hot-toast';
 import { headers } from "next/headers";
 
-const inter = Inter({ subsets: ["latin"] });
-const hando = Handlee({
+// Fonts are self-hosted (Latin subsets from Google Fonts, see app/fonts) so dev and
+// production builds never depend on downloading them from Google.
+const inter = localFont({
+  src: "./fonts/inter-latin-var.woff2",
+  weight: "100 900",
+  display: "swap",
+});
+const hando = localFont({
+  src: "./fonts/handlee-latin.woff2",
   weight: "400",
-  subsets: ["latin"],
-  variable: "--font-hando"
+  display: "swap",
+  variable: "--font-hando",
 });
 
 export const metadata: Metadata = {

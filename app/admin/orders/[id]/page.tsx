@@ -7,25 +7,31 @@ import {
     Button,
     Card,
     Breadcrumb,
-    message,
     Typography,
     Space,
+    Tag,
+    Alert,
     Spin,
     Descriptions,
-    Table, Select,
-    Divider
+    Table,
+    Select,
+    Divider,
 } from "antd";
+import { message } from "@/components/admin/antd-app";
+import { ORDER_STATUS_OPTIONS, validateOrder } from "@/components/admin/order-status";
 import type { ColumnsType } from "antd/es/table";
 import {
     ArrowLeftOutlined,
     SaveOutlined,
 } from "@ant-design/icons";
+import { DATE_LOCALES, useAdminT } from "@/lib/admin-i18n";
 
 const { Title, Text } = Typography;
 
 interface OrderItem {
     id: string;
     product_name: string;
+    variant_label?: string | null;
     quantity: number;
     price: number;
     subtotal: number;
@@ -50,11 +56,13 @@ interface Order {
     order_notes?: string;
     status: string;
     payment_status: string;
+    stock_deducted?: boolean;
     created_at: string;
     items: OrderItem[];
 }
 
 export default function OrderDetailPage() {
+    const { t, locale } = useAdminT();
     const router = useRouter();
     const params = useParams();
     const id = params?.id as string;
@@ -79,12 +87,12 @@ export default function OrderDetailPage() {
                     setStatus(result.data.status);
                     setPaymentStatus(result.data.payment_status);
                 } else {
-                    message.error("Order not found");
+                    message.error(t("Order not found"));
                     router.push("/admin/orders");
                 }
             } catch (error) {
                 console.error("Error fetching order:", error);
-                message.error("Failed to load order details");
+                message.error(t("Failed to load order details"));
             } finally {
                 setLoading(false);
             }
@@ -92,6 +100,22 @@ export default function OrderDetailPage() {
 
         fetchOrder();
     }, [id, router]);
+
+    const [validating, setValidating] = useState(false);
+    const handleValidate = async () => {
+        if (!order) return;
+        setValidating(true);
+        try {
+            const updated = await validateOrder(order.id);
+            setOrder({ ...order, status: updated.status, stock_deducted: updated.stock_deducted });
+            setStatus(updated.status);
+            message.success(t("Order {order_number} validated", { order_number: order.order_number }));
+        } catch (e) {
+            message.error(t((e as Error).message));
+        } finally {
+            setValidating(false);
+        }
+    };
 
     const handleUpdateStatus = async () => {
         if (!order) return;
@@ -113,14 +137,14 @@ export default function OrderDetailPage() {
             const result = await response.json();
 
             if (result.success) {
-                message.success("Order updated successfully!");
-                setOrder({ ...order, status, payment_status: paymentStatus });
+                message.success(t("Order updated successfully!"));
+                setOrder({ ...order, status, payment_status: paymentStatus, stock_deducted: result.data?.stock_deducted });
             } else {
-                message.error(result.error || "Failed to update order");
+                message.error(result.error || t("Failed to update order"));
             }
         } catch (error: any) {
             console.error("Error updating order:", error);
-            message.error(error.message || "Failed to update order");
+            message.error(error.message || t("Failed to update order"));
         } finally {
             setUpdating(false);
         }
@@ -131,7 +155,7 @@ export default function OrderDetailPage() {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString('en-US', {
+        return new Date(dateString).toLocaleString(DATE_LOCALES[locale], {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -142,25 +166,31 @@ export default function OrderDetailPage() {
 
     const itemColumns: ColumnsType<OrderItem> = [
         {
-            title: "Product",
+            title: t("Product"),
             dataIndex: "product_name",
             key: "product_name",
+            render: (name: string, item: OrderItem) => (
+                <div>
+                    {name}
+                    {item.variant_label && <div><Text type="secondary" style={{ fontSize: 12 }}>{item.variant_label}</Text></div>}
+                </div>
+            ),
         },
         {
-            title: "Quantity",
+            title: t("Quantity"),
             dataIndex: "quantity",
             key: "quantity",
             width: 100,
         },
         {
-            title: "Price",
+            title: t("Price"),
             dataIndex: "price",
             key: "price",
             width: 120,
             render: (price: number) => formatPrice(price),
         },
         {
-            title: "Subtotal",
+            title: t("Subtotal"),
             dataIndex: "subtotal",
             key: "subtotal",
             width: 120,
@@ -171,7 +201,7 @@ export default function OrderDetailPage() {
     if (loading) {
         return (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-                <Spin size="large" tip="Loading order details...">
+                <Spin size="large" description={t("Loading order details...")}>
                     <div style={{ padding: "50px" }} />
                 </Spin>
             </div>
@@ -186,8 +216,8 @@ export default function OrderDetailPage() {
         <div style={{ padding: 24, background: "#fff", minHeight: "100vh" }}>
             <Breadcrumb
                 items={[
-                    { title: <Link href="/admin/dashboard">Dashboard</Link> },
-                    { title: <Link href="/admin/orders">Orders</Link> },
+                    { title: <Link href="/admin/dashboard">{t("Dashboard")}</Link> },
+                    { title: <Link href="/admin/orders">{t("Orders")}</Link> },
                     { title: order.order_number },
                 ]}
             />
@@ -195,53 +225,67 @@ export default function OrderDetailPage() {
             <div style={{ marginTop: 24, marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                     <Title level={2} style={{ margin: 0, fontWeight: 600 }}>
-                        Order {order.order_number}
+                        {t("Order {number}", { number: order.order_number })}
                     </Title>
                     <Text type="secondary">
-                        Placed on {formatDate(order.created_at)}
+                        {t("Placed on {date}", { date: formatDate(order.created_at) })}
                     </Text>
                 </div>
                 <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => router.push("/admin/orders")}
                 >
-                    Back to Orders
+                    {t("Back to Orders")}
                 </Button>
             </div>
 
             <Space orientation="vertical" size="large" style={{ width: "100%" }}>
                 {/* Status Update Card */}
-                <Card title="Order Status">
+                {order.status === "pending" && (
+                    <Alert
+                        type="warning"
+                        showIcon
+                        title={t("This order is waiting for validation")}
+                        description={t("Validating confirms the order and takes its items out of the online location's stock. Check the customer's details first.")}
+                        action={
+                            <Button type="primary" loading={validating} onClick={handleValidate} style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}>
+                                {t("Validate order")}
+                            </Button>
+                        }
+                    />
+                )}
+                <Card title={t("Order Status")}>
                     <Space orientation="vertical" style={{ width: "100%" }} size="middle">
                         <div>
-                            <Text strong style={{ display: "block", marginBottom: 8 }}>Order Status</Text>
+                            <Text strong style={{ display: "block", marginBottom: 8 }}>{t("Order Status")}</Text>
                             <Select
                                 value={status}
                                 onChange={setStatus}
                                 style={{ width: 200 }}
-                                options={[
-                                    { value: "pending", label: "Pending" },
-                                    { value: "processing", label: "Processing" },
-                                    { value: "shipped", label: "Shipped" },
-                                    { value: "delivered", label: "Delivered" },
-                                    { value: "cancelled", label: "Cancelled" },
-                                ]}
+                                options={ORDER_STATUS_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
                             />
                         </div>
                         <div>
-                            <Text strong style={{ display: "block", marginBottom: 8 }}>Payment Status</Text>
+                            <Text strong style={{ display: "block", marginBottom: 8 }}>{t("Payment Status")}</Text>
                             <Select
                                 value={paymentStatus}
                                 onChange={setPaymentStatus}
                                 style={{ width: 200 }}
                                 options={[
-                                    { value: "pending", label: "Pending" },
-                                    { value: "paid", label: "Paid" },
-                                    { value: "failed", label: "Failed" },
-                                    { value: "refunded", label: "Refunded" },
+                                    { value: "pending", label: t("Pending") },
+                                    { value: "paid", label: t("Paid") },
+                                    { value: "failed", label: t("Failed") },
+                                    { value: "refunded", label: t("Refunded") },
                                 ]}
                             />
                         </div>
+                        <Text type="secondary">
+                            {order.stock_deducted ? (
+                                <><Tag color="green">{t("Stock deducted")}</Tag>{t("Cancelling, or moving it back to pending, returns the items to stock.")}</>
+                            ) : (
+                                <><Tag>{t("Stock not deducted")}</Tag>{t("Validating the order (or marking it shipped or delivered) takes the items out of the online location's stock (tracked products only).")}</>
+                            )}
+                        </Text>
                         <Button
                             type="primary"
                             icon={<SaveOutlined />}
@@ -250,37 +294,37 @@ export default function OrderDetailPage() {
                             disabled={status === order.status && paymentStatus === order.payment_status}
                             style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                         >
-                            Update Status
+                            {t("Update Status")}
                         </Button>
                     </Space>
                 </Card>
 
                 {/* Customer Information */}
-                <Card title="Customer Information">
+                <Card title={t("Customer Information")}>
                     <Descriptions column={2}>
-                        <Descriptions.Item label="Name">
+                        <Descriptions.Item label={t("Name")}>
                             {order.customer_first_name} {order.customer_last_name}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Email">{order.customer_email}</Descriptions.Item>
-                        <Descriptions.Item label="Phone">{order.customer_phone || "—"}</Descriptions.Item>
+                        <Descriptions.Item label={t("Email")}>{order.customer_email}</Descriptions.Item>
+                        <Descriptions.Item label={t("Phone")}>{order.customer_phone || "—"}</Descriptions.Item>
                     </Descriptions>
                 </Card>
 
                 {/* Shipping Information */}
                 {(order.shipping_address || order.shipping_city) && (
-                    <Card title="Shipping Address">
+                    <Card title={t("Shipping Address")}>
                         <Descriptions column={1}>
-                            <Descriptions.Item label="Address">{order.shipping_address || "—"}</Descriptions.Item>
-                            <Descriptions.Item label="City">{order.shipping_city || "—"}</Descriptions.Item>
-                            <Descriptions.Item label="State/Province">{order.shipping_state || "—"}</Descriptions.Item>
-                            <Descriptions.Item label="ZIP/Postal Code">{order.shipping_zip || "—"}</Descriptions.Item>
-                            <Descriptions.Item label="Country">{order.shipping_country || "—"}</Descriptions.Item>
+                            <Descriptions.Item label={t("Address")}>{order.shipping_address || "—"}</Descriptions.Item>
+                            <Descriptions.Item label={t("City")}>{order.shipping_city || "—"}</Descriptions.Item>
+                            <Descriptions.Item label={t("State/Province")}>{order.shipping_state || "—"}</Descriptions.Item>
+                            <Descriptions.Item label={t("ZIP/Postal Code")}>{order.shipping_zip || "—"}</Descriptions.Item>
+                            <Descriptions.Item label={t("Country")}>{order.shipping_country || "—"}</Descriptions.Item>
                         </Descriptions>
                     </Card>
                 )}
 
                 {/* Order Items */}
-                <Card title="Order Items">
+                <Card title={t("Order Items")}>
                     <Table
                         rowKey="id"
                         dataSource={order.items}
@@ -291,15 +335,15 @@ export default function OrderDetailPage() {
                     <div style={{ textAlign: "right" }}>
                         <Space orientation="vertical" size="small">
                             <div>
-                                <Text>Subtotal: </Text>
+                                <Text>{t("Subtotal:")} </Text>
                                 <Text strong>{formatPrice(order.subtotal)}</Text>
                             </div>
                             <div>
-                                <Text>Shipping: </Text>
+                                <Text>{t("Shipping:")} </Text>
                                 <Text strong>{formatPrice(order.shipping_cost)}</Text>
                             </div>
                             <div style={{ fontSize: 18 }}>
-                                <Text strong>Total: </Text>
+                                <Text strong>{t("Total:")} </Text>
                                 <Text strong style={{ color: "#7a3b2e" }}>{formatPrice(order.total)}</Text>
                             </div>
                         </Space>
@@ -308,7 +352,7 @@ export default function OrderDetailPage() {
 
                 {/* Order Notes */}
                 {order.order_notes && (
-                    <Card title="Order Notes">
+                    <Card title={t("Order Notes")}>
                         <Text>{order.order_notes}</Text>
                     </Card>
                 )}

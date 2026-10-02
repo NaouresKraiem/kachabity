@@ -28,7 +28,6 @@ const csvArg = args.indexOf('--csv');
 const CSV_PATH = csvArg >= 0 ? path.resolve(args[csvArg + 1]) : path.join(ROOT, 'kachabiti-products.csv');
 
 const SKIP_IDS = new Set(['3877']); // no price and no images in the export
-const IN_STOCK_QTY = 100; // WooCommerce was not tracking stock quantities
 const BUCKET = 'products';
 const UPLOAD_CONCURRENCY = 6;
 const OFFERS_CATEGORY = 'عروضنا';
@@ -91,7 +90,6 @@ function slugify(s) {
 
 const rows = parse(fs.readFileSync(CSV_PATH), { columns: true, bom: true, relax_quotes: true, relax_column_count: true });
 const col = (row, name) => (row[name] ?? '').trim();
-const IN_STOCK = 'En stock ?';
 
 const parents = rows.filter((r) => col(r, 'Type') !== 'variation' && !SKIP_IDS.has(col(r, 'ID')));
 const variationsByParent = new Map();
@@ -113,7 +111,6 @@ function rowAttributes(row) {
 }
 
 const price = (v) => (v === '' || v == null ? null : Number(v));
-const stockOf = (row) => (['1', 'backorder'].includes(col(row, IN_STOCK)) ? IN_STOCK_QTY : 0);
 const imagesOf = (row) => col(row, 'Images').split(',').map((u) => u.trim()).filter(Boolean);
 
 function sizeRank(label) {
@@ -167,7 +164,7 @@ for (const p of parents) {
     const quantityAttr = attrs.find((a) => a.kind === 'quantity');
     const norm = (attr, v) => attr?.values.find((x) => x.toLowerCase() === v.toLowerCase()) ?? v;
 
-    // Each variant: { color, size, regular, promo, stock, image }
+    // Each variant: { color, size, regular, promo, image }
     let variants = [];
     // Disabled variations are skipped, except on draft products, whose variations are all unpublished too.
     const parentPublished = col(p, 'Publié') === '1';
@@ -182,7 +179,7 @@ for (const p of parents) {
                 if (kind && val) va[kind] = val;
             }
             if (quantityAttr && va.quantity && va.quantity !== '1') continue; // quantity packs → cart quantity
-            const base = { regular: price(col(v, 'Tarif régulier')), promo: price(col(v, 'Tarif promo')), stock: stockOf(v), image: imagesOf(v)[0] || null };
+            const base = { regular: price(col(v, 'Tarif régulier')), promo: price(col(v, 'Tarif promo')), image: imagesOf(v)[0] || null };
             if (base.regular == null && base.promo != null) { base.regular = base.promo; base.promo = null; }
             // The export lost an attribute on some variations ("any size"): expand to every value of the parent.
             const colors = va.color ? [norm(colorAttr, va.color)] : colorAttr ? colorAttr.values : [null];
@@ -192,7 +189,7 @@ for (const p of parents) {
     } else {
         const regular = price(col(p, 'Tarif régulier')) ?? price(col(p, 'Tarif promo'));
         const promo = price(col(p, 'Tarif régulier')) != null ? price(col(p, 'Tarif promo')) : null;
-        const base = { regular, promo, stock: stockOf(p), image: null };
+        const base = { regular, promo, image: null };
         const colors = colorAttr ? colorAttr.values : [null];
         const sizes = sizeAttr ? sizeAttr.values : [null];
         for (const c of colors) for (const s of sizes) variants.push({ ...base, color: c, size: s });
@@ -339,42 +336,34 @@ for (const c of categories) {
     categoryIds.set(c.arName, saved.id);
 }
 
-// Products with their variants, images and discount (replaced on every run).
+// Products with their variants, images and discount (replaced on every run). Each product is
+// saved by the save_product database function in one transaction, so a failure never leaves a
+// half-imported product. Variants are matched by color + size and updated in place (their ids
+// hold stock, movements and order lines); stock itself is managed in the admin and never
+// touched here. Variants missing from the CSV are removed unless they still hold stock.
 for (const p of products) {
-    const [saved] = await must(db.from('products').upsert({
-        slug: p.slug, name: p.name, name_fr: p.name_fr, name_ar: p.name_ar,
-        description: p.description, description_fr: p.description_fr, description_ar: p.description_ar,
-        category_id: p.categoryAr ? categoryIds.get(p.categoryAr) ?? null : null,
-        base_price: p.basePrice, status: p.status, deleted_at: null,
-    }, { onConflict: 'slug' }).select('id'), `product ${p.slug}`);
-    const productId = saved.id;
-
-    await must(db.from('product_images').delete().eq('product_id', productId), 'clear images');
-    await must(db.from('product_variants').delete().eq('product_id', productId), 'clear variants');
-    await must(db.from('product_discounts').delete().eq('product_id', productId), 'clear discounts');
-
-    const variantRows = await must(db.from('product_variants').insert(p.variants.map((v) => ({
-        product_id: productId,
-        color_id: v.color ? colorIds.get(v.color) : null,
-        size_id: v.size ? sizeIds.get(v.size) : null,
-        price: v.regular === p.basePrice ? null : v.regular,
-        stock: v.stock,
-        is_available: true,
-    }))).select('id'), `variants ${p.slug}`);
-
-    const imageRows = p.images.filter((u) => publicUrl.has(u)).map((u, i) => ({
-        product_id: productId, variant_id: null, image_url: publicUrl.get(u), alt_text: p.name_ar, is_main: i === 0, position: i,
-    }));
-    p.variants.forEach((v, i) => {
-        if (v.image && publicUrl.has(v.image)) {
-            imageRows.push({ product_id: productId, variant_id: variantRows[i].id, image_url: publicUrl.get(v.image), alt_text: p.name_ar, is_main: true, position: 0 });
-        }
-    });
-    if (imageRows.length) await must(db.from('product_images').insert(imageRows), `images ${p.slug}`);
-
-    if (p.discount) {
-        await must(db.from('product_discounts').insert({ product_id: productId, discount_percent: p.discount, active: true }), `discount ${p.slug}`);
-    }
+    const existing = await must(db.from('products').select('id').eq('slug', p.slug).maybeSingle(), `find ${p.slug}`);
+    const image = (url) => (url && publicUrl.has(url) ? { url: publicUrl.get(url), alt: p.name_ar } : null);
+    await must(db.rpc('save_product', {
+        p_product_id: existing?.id ?? null,
+        p_product: {
+            slug: p.slug, name: p.name, name_fr: p.name_fr, name_ar: p.name_ar,
+            description: p.description, description_fr: p.description_fr, description_ar: p.description_ar,
+            category_id: p.categoryAr ? categoryIds.get(p.categoryAr) ?? null : null,
+            base_price: p.basePrice, status: p.status, restore: true,
+        },
+        p_variants: p.variants.map((v) => ({
+            color_id: v.color ? colorIds.get(v.color) : null,
+            size_id: v.size ? sizeIds.get(v.size) : null,
+            price: v.regular === p.basePrice ? null : v.regular,
+            is_available: true,
+            images: [image(v.image)].filter(Boolean),
+        })),
+        p_images: p.images.map(image).filter(Boolean),
+        p_replace_discount: true,
+        p_discount: p.discount ?? null,
+        p_keep_stocked_variants: true,
+    }), `product ${p.slug}`);
     process.stdout.write(`\rproducts: ${products.indexOf(p) + 1}/${products.length}`);
 }
 console.log();
@@ -389,5 +378,5 @@ for (const c of categories) {
     if (cover) await must(db.from('categories').update({ image_url: cover }).eq('id', categoryIds.get(c.arName)), 'category image');
 }
 
-for (const w of report.warnings.slice(-5)) if (w.startsWith('image')) console.log(`  note: ${w}`);
+for (const w of report.warnings) if (w.startsWith('image')) console.log(`  note: ${w}`);
 console.log('done.');

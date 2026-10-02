@@ -10,7 +10,7 @@ import supabase from "@/lib/supabaseClient";
 import { Order as OrderType } from "@/lib/orders";
 import { getUserFavorites, removeFromFavorites, FavoriteWithProduct } from "@/lib/favorites";
 import ProductListCard from "@/components/products/ProductListCard";
-import { useCart } from "@/lib/cart-context";
+import { useQuickAdd } from "@/lib/quick-add";
 import { FormInput } from "@/components/forms";
 import { authHref, customerName, useCustomer } from "@/lib/customer-auth";
 
@@ -236,7 +236,7 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
   const locale: Locale = ["en", "fr", "ar"].includes(rawLocale as string) ? (rawLocale as Locale) : "en";
   const text = content[locale];
   const router = useRouter();
-  const { addItem } = useCart();
+  const quickAdd = useQuickAdd('');
   const { user, loading: authLoading } = useCustomer();
   // Set while logging out, so losing the session sends the customer home rather than to the login page.
   const loggingOut = useRef(false);
@@ -735,28 +735,7 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
                           locale={locale}
                           isFavorite={true}
                           onToggleFavorite={() => handleRemoveFavorite(item.product_id)}
-                          onAddToCart={(product) => {
-                            // Get product image from product_images or fallback
-                            const productImage = product.product_images && product.product_images.length > 0
-                              ? (product.product_images.find(img => img.is_main)?.image_url || product.product_images[0].image_url)
-                              : (product.image_url || '');
-
-                            // Calculate discounted price
-                            const price = product.discount_percent
-                              ? product.base_price * (1 - product.discount_percent / 100)
-                              : product.base_price;
-
-                            addItem({
-                              id: product.id,
-                              name: product.name,
-                              name_ar: product.name_ar,
-                              name_fr: product.name_fr,
-                              price: Math.round(price),
-                              image: productImage,
-                              rating: product.rating,
-                              reviewCount: product.review_count || 0,
-                            });
-                          }}
+                          onAddToCart={(item) => quickAdd(item)}
                         />
                       ))}
                     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCart } from "@/lib/cart-context";
+import { cartLineKey, useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
 import { calculateShipping } from "@/lib/shipping";
 import { useState, useEffect } from "react";
@@ -138,7 +138,7 @@ export default function CartPage() {
                             <div className="space-y-6">
                                 {items.map((item) => (
                                     <CartItem
-                                        key={item.id}
+                                        key={cartLineKey(item)}
                                         item={item}
                                         onUpdateQuantity={updateQuantity}
                                         onRemove={removeItem}

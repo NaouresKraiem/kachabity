@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCart } from "@/lib/cart-context";
+import { cartLineKey, useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
 import { createOrder } from "@/lib/orders";
 import { calculateShipping, getCountryCode } from "@/lib/shipping";
@@ -78,6 +78,8 @@ const content = {
         failedToCreateOrder: "Failed to create order. Please try again.",
         pricesChanged: "Some items in your cart changed price or are no longer available. Please review your cart.",
         totalChanged: "Your order total was updated. Please review it and confirm again.",
+        outOfStock: "Some items in your cart are no longer in stock in the quantity you chose. Please update your cart.",
+        chooseVariant: "Please choose a size and color for every item in your cart. Remove the item and add it again from its product page.",
         errorOccurred: "An error occurred. Please try again."
     },
     fr: {
@@ -140,6 +142,8 @@ const content = {
         failedToCreateOrder: "Échec de la création de la commande. Veuillez réessayer.",
         pricesChanged: "Certains articles de votre panier ont changé de prix ou ne sont plus disponibles. Veuillez vérifier votre panier.",
         totalChanged: "Le total de votre commande a été mis à jour. Veuillez le vérifier et confirmer à nouveau.",
+        outOfStock: "Certains articles de votre panier ne sont plus en stock dans la quantité choisie. Veuillez mettre à jour votre panier.",
+        chooseVariant: "Veuillez choisir une taille et une couleur pour chaque article. Retirez l'article et ajoutez-le à nouveau depuis sa page produit.",
         errorOccurred: "Une erreur s'est produite. Veuillez réessayer."
     },
     ar: {
@@ -202,6 +206,8 @@ const content = {
         failedToCreateOrder: "فشل إنشاء الطلب. يرجى المحاولة مرة أخرى.",
         pricesChanged: "تغيّر سعر بعض المنتجات في سلتك أو لم تعد متوفرة. يرجى مراجعة سلتك.",
         totalChanged: "تم تحديث إجمالي طلبك. يرجى مراجعته والتأكيد مرة أخرى.",
+        outOfStock: "بعض المنتجات في سلتك لم تعد متوفرة بالكمية التي اخترتها. يرجى تحديث سلتك.",
+        chooseVariant: "يرجى اختيار المقاس واللون لكل منتج في سلتك. احذف المنتج وأضفه من جديد من صفحته.",
         errorOccurred: "حدث خطأ. يرجى المحاولة مرة أخرى."
     }
 };
@@ -398,6 +404,8 @@ export default function CheckoutPage() {
                 toast.error(
                     code === 'TOTALS_CHANGED' ? text.totalChanged
                         : code === 'PRICES_CHANGED' || code === 'PRODUCT_UNAVAILABLE' ? text.pricesChanged
+                        : code === 'OUT_OF_STOCK' ? text.outOfStock
+                        : code === 'VARIANT_REQUIRED' ? text.chooseVariant
                             : text.failedToCreateOrder
                 );
                 setIsProcessing(false);
@@ -552,7 +560,7 @@ export default function CheckoutPage() {
                                 <div className="space-y-6 mb-8">
                                     {items.map((item) => (
                                         <CartItem
-                                            key={item.id}
+                                            key={cartLineKey(item)}
                                             item={item}
                                             onUpdateQuantity={updateQuantity}
                                             onRemove={removeItem}
@@ -760,7 +768,7 @@ export default function CheckoutPage() {
                                         <div className="px-6 pb-6 space-y-3 border-t pt-4">
                                             {items.map((item) => (
                                                 <CartItem
-                                                    key={item.id}
+                                                    key={cartLineKey(item)}
                                                     item={item}
                                                     variant="compact"
                                                     reviewsText={text.reviews}
@@ -925,7 +933,7 @@ export default function CheckoutPage() {
                                 <div className="space-y-6 mb-8">
                                     {displayItems.map((item) => (
                                         <CartItem
-                                            key={item.id}
+                                            key={cartLineKey(item)}
                                             item={item}
                                             variant="default"
                                             reviewsText={text.reviews}

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
             price: body.price !== undefined 
                 ? parseFloat(body.price) 
                 : (body.price_cents !== undefined ? parseFloat(body.price_cents) / 100 : null),
-            stock: parseInt(body.stock) || 0,
+            // Stock is only changed through stock movements (/api/stock/movements).
             is_available: body.is_available !== undefined ? body.is_available : true,
         };
 
@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest) {
         } else if (body.price_cents !== undefined) {
             updateData.price = parseFloat(body.price_cents) / 100;
         }
-        if (body.stock !== undefined) updateData.stock = parseInt(body.stock);
+        if (body.reorder_point !== undefined) updateData.reorder_point = Math.max(0, parseInt(body.reorder_point) || 0);
         if (body.is_available !== undefined) updateData.is_available = body.is_available;
 
         const { data, error } = await supabase

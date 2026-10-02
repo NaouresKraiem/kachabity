@@ -77,6 +77,8 @@ interface Product {
     image_url?: string;
     product_images?: ProductImage[];
     stock?: number;
+    /** Off until the shop's stock is counted: the product stays orderable whatever the stock says. */
+    stock_tracked?: boolean;
     category_id?: string;
     colors?: string[];
     sizes?: string[];
@@ -345,8 +347,9 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                         if (firstVariant.size_id) setSelectedSize(firstVariant.size_id);
                     }
                 } else {
-                    const firstSizeId = available.find((v: ProductVariant) => v.size_id)?.size_id;
-                    if (firstSizeId) setSelectedSize(firstSizeId);
+                    const firstVariant = available.find((v: ProductVariant) => v.size_id) ?? available[0];
+                    if (firstVariant) setSelectedVariant(firstVariant);
+                    if (firstVariant?.size_id) setSelectedSize(firstVariant.size_id);
                 }
 
                 // Show the product now; reviews fill in below (they change often, so they aren't cached).
@@ -576,9 +579,9 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
         setSelectedSize(sizeId);
 
         // Find variant with this color and size
-        if (product.product_variants && product.product_variants.length > 0 && selectedColor) {
+        if (product.product_variants && product.product_variants.length > 0) {
             const variant = product.product_variants.find(
-                v => v.color_id === selectedColor && v.size_id === sizeId && (v.is_available !== false)
+                v => (selectedColor ? v.color_id === selectedColor : !v.color_id) && v.size_id === sizeId && (v.is_available !== false)
             );
             if (variant) {
                 setSelectedVariant(variant);
@@ -589,6 +592,11 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
 
     // Get current stock - use variant stock if available
     const currentStock = selectedVariant?.stock ?? product.stock ?? 0;
+    const stockTracked = !!product.stock_tracked;
+    const inStock = !stockTracked || currentStock > 0;
+    const variantLabel = selectedVariant
+        ? [selectedVariant.colors?.display_name || selectedVariant.colors?.name, selectedVariant.sizes?.name].filter(Boolean).join(' / ')
+        : '';
 
 
 
@@ -674,9 +682,9 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                 <Stars value={averageRating} />
                                 <span>{reviewCount > 0 ? `${averageRating.toFixed(1)} (${reviewCount} ${text.reviews})` : text.noRatingYet}</span>
                             </a>
-                            <span className={`inline-flex items-center gap-1.5 font-medium ${currentStock > 0 ? 'text-[#3f7a3a]' : 'text-[#a33a2a]'}`}>
-                                <span className={`h-2 w-2 rounded-full ${currentStock > 0 ? 'bg-[#3f7a3a]' : 'bg-[#a33a2a]'}`} aria-hidden="true" />
-                                {currentStock > 0 ? text.inStock : text.outOfStock}
+                            <span className={`inline-flex items-center gap-1.5 font-medium ${inStock ? 'text-[#3f7a3a]' : 'text-[#a33a2a]'}`}>
+                                <span className={`h-2 w-2 rounded-full ${inStock ? 'bg-[#3f7a3a]' : 'bg-[#a33a2a]'}`} aria-hidden="true" />
+                                {inStock ? text.inStock : text.outOfStock}
                             </span>
                         </div>
 
@@ -706,7 +714,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                 <div className="flex flex-wrap gap-3">
                                     {availableColors.map((color) => {
                                         const colorName = color.display_name || color.name;
-                                        const hasStock = product.product_variants?.some((v) => v.color_id === color.id && v.stock > 0 && v.is_available !== false);
+                                        const hasStock = product.product_variants?.some((v) => v.color_id === color.id && (!stockTracked || v.stock > 0) && v.is_available !== false);
                                         const selected = selectedColor === color.id;
                                         return (
                                             <button
@@ -772,7 +780,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                 <span className="w-8 text-center font-medium" aria-live="polite">{quantity}</span>
                                 <button
                                     type="button"
-                                    onClick={() => setQuantity(Math.min(Math.max(currentStock, 1), quantity + 1))}
+                                    onClick={() => setQuantity(stockTracked ? Math.min(Math.max(currentStock, 1), quantity + 1) : quantity + 1)}
                                     className="h-12 w-11 rounded-e-full text-lg outline-none hover:bg-[#f3efe9] focus-visible:ring-2 focus-visible:ring-[var(--wool-maroon)]"
                                     aria-label="+"
                                 >
@@ -785,12 +793,15 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                     name: product.name,
                                     name_ar: product.name_ar,
                                     name_fr: product.name_fr,
+                                    variantId: selectedVariant?.id,
+                                    variantLabel: variantLabel || undefined,
                                     price: Math.round(discountedPrice),
                                     image: selectedVariant?.image_url || productImages[0]?.url || product.image_url || '',
                                     rating: averageRating,
                                     reviewCount: reviewCount
                                 }}
                                 quantity={quantity}
+                                disabled={!inStock}
                                 className="h-12 flex-1 justify-center rounded-full! bg-[var(--wool-maroon)]! text-base hover:bg-[#6b2516]!"
                             />
                         </div>

@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- `npm run dev`: Turbopack dev server on http://localhost:3000
+- `npm run dev`: Turbopack dev server on http://localhost:3000. It sets `NODE_OPTIONS=--network-family-autoselection-attempt-timeout=2000` because Node's default 250 ms connect attempt times out against Supabase on slow networks, which makes middleware treat signed-in admins as signed out. Use the same flag for `next start` and Node scripts.
 - `npm run lint`: ESLint (flat config in `eslint.config.mjs`)
 - `npm run build`: production build with Turbopack
-- `npm run import:woocommerce -- --dry-run`: preview a re-import of the WooCommerce export (`kachabiti-products.csv`); drop `--dry-run` to write. It is idempotent: products are upserted by slug and their variants, images and discounts replaced. English/French text lives in `scripts/import/translations.json` and `descriptions.json`, and color hexes in `colors.json`.
+- `npm run import:woocommerce -- --dry-run`: preview a re-import of the WooCommerce export (`kachabiti-products.csv`); drop `--dry-run` to write. It is idempotent: products are upserted by slug, variants are matched by color + size and updated in place (never touching stock), and images and discounts are replaced. English/French text lives in `scripts/import/translations.json` and `descriptions.json`, and color hexes in `colors.json`.
 - `supabase db query --linked -f <file>`: run SQL against the linked project (`hwxgibxahqdxkzuvfxvz`)
 - `supabase db advisors --linked`: Supabase security/performance lints
 - `npx tsc --noEmit`: type-check. **Run this yourself**: `next.config.ts` sets `ignoreBuildErrors` and `ignoreDuringBuilds`, so `npm run build` succeeds even when there are type or lint errors.
@@ -24,13 +24,14 @@ Kachabity is a Next.js 15 App Router storefront for handcrafted Tunisian product
 
 `middleware.ts` handles two separate jobs:
 
-1. **Admin gate.** Requests to `/admin/*` (except `/admin/login`) and "protected" API requests resolve the Supabase user from auth cookies and check `isAdminUser()` in `lib/admin-auth.ts`. A user is an admin if `app_metadata.role` is `'admin'` or their email is in the comma-separated `ADMIN_EMAILS` env var. Never trust `user_metadata`, because users can edit it themselves. The cookies are set by `/admin/login` through the cookie-backed client in `lib/supabase-browser.ts`. The storefront client (`lib/supabaseClient.ts`) keeps its session in localStorage, so middleware cannot see it. The protected API rules are:
-   - any non-GET request to a path in `ADMIN_MUTATION_PATHS`
-   - `GET /api/products?admin=true`
-   - any `/api/orders` request that isn't a POST
-   - all of `/api/cart/analytics`
+1. **Back-office gate (roles and permissions).** Requests to `/admin/*` (except `/admin/login`) and back-office API requests resolve the Supabase user from auth cookies (`getClaims()`, so roles come from the JWT). `lib/admin-auth.ts` defines the model:
+   - `getAdminRole()`: `'admin'` if `app_metadata.role` is `'admin'` or the email is in the comma-separated `ADMIN_EMAILS` env var, `'staff'` if `app_metadata.role` is `'staff'`, otherwise none. Never trust `user_metadata`, because users can edit it themselves.
+   - `getPermissions()`: admins have every permission in `PERMISSIONS` (`products`, `stock`, `orders`, `discounts`, `marketing`, `analytics`, `costs`, `delete`) plus team management. Staff have the list in `app_metadata.permissions`, or `DEFAULT_STAFF_PERMISSIONS` when there is none. Admins edit these lists in Admin → Team (`/api/admin/team`). Changes reach a session when its JWT refreshes (up to an hour) or at the next sign-in.
+   - `requirementFor()` in `middleware.ts` maps each request to what it needs: `PAGE_PERMISSIONS` for admin pages, `MUTATION_PERMISSIONS` for writes to catalog/marketing APIs, explicit rules for `/api/stock/*`, `/api/orders`, `/api/cart/analytics`, `/api/admin/*`. A DELETE needs the area permission **and** `delete`; `/admin/team` and `/api/admin/team` are admin-only. Refused API calls get 403; refused pages redirect to `/admin/dashboard`.
+   - Middleware passes the verified identity to route handlers as `x-admin-role` / `x-admin-user-id` / `x-admin-email` / `x-admin-permissions`; read them with `getAdminActor(request.headers)`. The admin UI uses `useAdminRole()` (`lib/admin-role-context.tsx`, fed by `GET /api/admin/me`) and its `can(permission)` only to hide menu entries and controls.
+   - The cookies are set by `/admin/login` through the cookie-backed client in `lib/supabase-browser.ts`. The storefront client (`lib/supabaseClient.ts`) keeps its session in localStorage, so middleware cannot see it.
 
-   **When you add an admin-only API route or method, register it in `ADMIN_MUTATION_PATHS` / `isProtectedApiRequest`.** The route handlers themselves do not re-check auth.
+   **When you add a back-office page, API route or method, give it a rule in `requirementFor` (and a menu permission in `MENU_PERMISSIONS` in `app/admin/layout.tsx`).** The route handlers themselves do not re-check auth.
 2. **Locale prefixing.** Every storefront page lives under `app/[locale]/`. A path with no locale is redirected to one detected from `Accept-Language`. `/admin`, `/api`, and `/api-docs` are left unlocalized.
 
 ### Internationalization
@@ -46,16 +47,26 @@ The supported locales are `en`, `fr`, and `ar`, and the **default is `ar`** (RTL
 
 Env settings live in `lib/supabase-env.ts`. It reads `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, falling back to the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`. There are three clients:
 - `lib/supabaseClient.ts`: publishable-key singleton, used by `lib/*` data modules, pages, and client components. It is subject to RLS.
-- `lib/supabase-admin.ts`: **service-role** client for API routes, which bypasses RLS. Most admin routes use it. `app/api/products`, `categories`, `orders` and `upload` build an equivalent client inline.
+- `lib/supabase-admin.ts`: **service-role** client for API routes, which bypasses RLS. Every admin route uses it (`/api/cart/analytics` builds an equivalent one).
+- Server-side clients use `resilientFetch` (`lib/resilient-fetch.ts`), which retries only when a connection could not be opened (DNS failure, connect timeout), so flaky networks don't surface as random `fetch failed` 500s and writes are never sent twice.
 - `lib/supabase-browser.ts`: cookie-backed browser client, used only by the admin login and sign-out.
 
 The access model is enforced by RLS:
 - The public can read live catalog and content rows only (not soft-deleted, active).
 - Shoppers can insert reviews, manage their own `user_favorites`, and read their own orders.
 - Every other write goes through `app/api/*` with the service role. That includes checkout: `lib/orders.ts` `createOrder` calls `POST /api/orders`, which verifies the bearer token before setting `user_id`.
-- `newsletter_subscribers`, `carts` and `cart_items` are service-role only.
+- `newsletter_subscribers`, `carts`, `cart_items` and the stock tables (`locations`, `suppliers`, `collections`, `product_costs`, `inventory_levels`, `stock_movements`) are service-role only.
 
 A browser-side `.insert/.update` on any other table will fail. Route it through an API handler instead.
+
+**Related writes must be one transaction.** supabase-js can't span requests, so any operation that writes more than one row/table that belong together is a Postgres function (`supabase/migrations/20261001170000_transactional_writes.sql`) called with `supabase.rpc()`:
+- `create_order` (order + lines)
+- `set_order_status` (status + stock movement)
+- `delete_orders` (stock restore + delete, one or many)
+- `save_product` (product, variants, variant photos, photos, opening stock, tracking, importer discount; create and update)
+- `record_stock_movements` (all movement types, counts across locations, tracking flag)
+
+If any step fails, nothing is written. Bulk deletes send `?ids=a,b` and run one statement. When you add a write that touches several rows or tables together, add or extend such a function rather than chaining client calls.
 
 **The schema source of truth is `supabase/migrations/`.** The legacy SQL scripts from the old project have been removed. Categories are nested (`categories.parent_id`): use `getDescendantCategoryIds` (`lib/utils/product-utils.ts`) wherever products are filtered by category. For a new migration, run `supabase migration new <name>`, apply it with `supabase db query --linked -f`, then `supabase migration repair --status applied <version> --linked`, and run the advisors. The storage bucket for uploads is `products`, which is public-read with service-role-only writes.
 
@@ -63,7 +74,6 @@ A browser-side `.insert/.update` on any other table will fail. Route it through 
 
 - `product-discounts.ts`: discounts live only in `product_discounts`, and the product row has no discount column. Every listing must attach them with `getActiveProductDiscounts` (product page, listing, category page, `/api/products/top`, `/api/products/promo`), or prices show undiscounted.
 - `cache.ts` is an in-memory TTL cache, per server instance and not shared.
-- `product-discounts.ts`: discounts live in a separate `product_discounts` table with date windows, not only in `products.discount_percent`.
 - `shipping.ts` and `get-site-settings.ts`: shipping cost, the free-shipping threshold, and per-country tax rates come from the `site_settings` key/value table, `shipping_rates`, and `country_tax_rates`, with hard-coded fallbacks.
 - `orders.ts` → `POST /api/orders` → `order-pricing.ts`: checkout is re-priced on the server and nothing client-supplied is stored as an amount.
   - Each unit price must match `round(base or variant price × (1 − valid discount%))`, which is how the product pages build cart prices.
@@ -71,13 +81,22 @@ A browser-side `.insert/.update` on any other table will fail. Route it through 
   - Mismatches return 409 with `code`: `PRICES_CHANGED`, `TOTALS_CHANGED` or `PRODUCT_UNAVAILABLE`, which the checkout maps to translated messages.
   - If you change how the storefront computes a price, update `allowedUnitPrices` too.
 - `order-confirmation-email.ts`: sent from `POST /api/orders` using the stored order, with customer text HTML-escaped. There is deliberately no public "send email" endpoint. `abandoned-cart-email.ts` is also here. Both send through nodemailer/Gmail SMTP (`GMAIL_USER`, `GMAIL_APP_PASSWORD`).
-- `cart-context.tsx`: the cart is client-side only (localStorage key `shopping_cart`), provided in `app/[locale]/layout.tsx` along with `CartDrawer`.
+- `cart-context.tsx`: the cart is client-side only (localStorage key `shopping_cart`), provided in `app/[locale]/layout.tsx` along with `CartDrawer`. Lines are keyed by product + variant (`cartLineKey`); `removeItem`/`updateQuantity` take that key. Product cards add through `useQuickAdd()` (`lib/quick-add.ts`), which opens the product page when a size/color must be chosen.
+
+### Stock
+
+Stock management (formerly a separate app) lives in this database and the admin's Stock section.
+- **Never write `product_variants.stock` or `inventory_levels` directly.** Every change is a row in the append-only `stock_movements` (types `restock`, `sale`, `return`, `adjustment`, `transfer`); the trigger `private.apply_stock_movement` updates `inventory_levels` (per variant × location) and rejects negative stock with `insufficient_stock:<sku>:<available>` (`stockErrorMessage()` in `lib/stock.ts` turns it into a message). Record movements through `POST /api/stock/movements` (also does transfers and `count` mode).
+- One location has `sells_online`. For products with `stock_tracked = true`, its levels are mirrored into `product_variants.stock`, which the storefront and checkout read. Untracked products (the default, until counted) stay orderable whatever `stock` says: availability is `!stock_tracked || stock > 0`.
+- Orders: the admin shows `processing` as **Validated**. The "Validate" button (`validateOrder` in `components/admin/order-status.ts`) moves a pending order to `processing`; this is the hook for handing orders to a delivery company later. `order_items` store `variant_id` and `variant_label`. `PUT /api/orders` calls `apply_order_stock` (idempotent via `orders.stock_deducted`): processing/shipped/delivered deducts tracked items from the online location, pending/cancelled restores them, and a shortage returns 409 without changing the status. Checkout (`order-pricing.ts`) rejects tracked lines over stock (`OUT_OF_STOCK`) or without a variant on multi-variant tracked products (`VARIANT_REQUIRED`).
+- Product saves (`save_product`, used by `POST/PUT /api/products` and the importer) update variants in place, matched by id or color + size, because variant ids carry stock. Removing a variant that still holds stock is refused with 409. New products record their opening stock as restock movements and start tracked.
+- Product codes and variant SKUs are generated by triggers when left blank. Purchase costs live in `product_costs` (`costs` permission).
 - `lib/schemas/`: zod schemas used with react-hook-form (for example, checkout).
 
 ### Caching and performance
 
 - **Next.js data cache.** `lib/catalog-cache.ts` wraps public catalog reads in `unstable_cache` with the `catalog` tag and a 5-minute safety revalidate. It covers the product page (`getCachedProductDetail`, from the loader in `lib/product-detail.ts`) and all home page data. The home loaders in `lib/home-data.ts` (featured categories, top and promo products, sale banners, reels, latest reviews) plus the landing and hero data are loaded in `app/[locale]/page.tsx` and passed to the sections as `initial*` props, so they render in the first HTML. Keep new home sections on this pattern instead of fetching in `useEffect` behind a `mounted` flag. `/api/products/top` and `/promo` serve the same cached loaders.
-- **Invalidation.** Every admin mutation route (products, variants, product-images, promotions, categories, colors, sizes, sale-banners) calls `invalidateCatalog()` before returning success. **New admin write routes must do the same**, or the storefront serves stale data. Writes that bypass the API (the importer, the Supabase dashboard) show up after at most 5 minutes.
+- **Invalidation.** Every admin mutation route (products, variants, product-images, promotions, categories, colors, sizes, sale-banners, stock movements and tracking) calls `invalidateCatalog()` before returning success. **New admin write routes must do the same**, or the storefront serves stale data. Writes that bypass the API (the importer, the Supabase dashboard) show up after at most 5 minutes.
 - **Product page.** `app/[locale]/products/[slug]/page.tsx` is a server component that passes cached data to `ProductDetailClient.tsx`. It only fetches reviews client-side.
 - **Header and footer** are rendered once in `app/[locale]/layout.tsx`. Don't add `<StaticHeader />` or `<Footer />` to pages.
 - **Browser-side caching.** `lib/categories-cache.ts` shares the category list across pages. `next.config.ts` sets `staleTimes` so the client router cache makes revisits instant.
@@ -87,7 +106,14 @@ A browser-side `.insert/.update` on any other table will fail. Route it through 
 
 ### Admin
 
-Ant Design is used **only in the admin**; the storefront uses Tailwind plus `react-hot-toast`. Don't import `antd` in `app/[locale]` or `components/` outside `components/admin`, because it adds about 500 kB to every page. In admin forms, an `InputNumber` inside `Space.Compact` must sit in a `noStyle` `Form.Item` (see the Base Price field), or the value never reaches the form. `app/admin/` is a client-rendered Ant Design dashboard (layout in `app/admin/layout.tsx`, theme in `lib/antd-config.ts`). It covers products, variants, categories, orders, promotions, sale banners, reels, and cart analytics, and it reads and writes through the `app/api/*` routes.
+Ant Design is used **only in the admin**; the storefront uses Tailwind plus `react-hot-toast`. Don't import `antd` in `app/[locale]` or `components/` outside `components/admin`, because it adds about 500 kB to every page. In admin forms, an `InputNumber` inside `Space.Compact` must sit in a `noStyle` `Form.Item` (see the Base Price field), or the value never reaches the form. Import `message` from `@/components/admin/antd-app`, not from `antd`: the admin layout wraps pages in antd's `<App>`, and the static API ignores the theme and warns. For searchable `Select`s whose values are ids, give options a `searchtext` and use `filterOption={searchByText}` (`components/admin/select-search.ts`). The admin layout installs `components/admin/admin-fetch-cache.ts`, which keeps the small lookup lists (categories, colors, sizes, suppliers, collections, locations) in memory for 5 minutes and clears an entry on any write to the same path. `app/admin/` is a client-rendered Ant Design dashboard (layout in `app/admin/layout.tsx`, theme in `lib/antd-config.ts`). It covers products, variants, categories, orders, stock (inventory, movements, restock, settings), team, promotions, sale banners, reels, and cart analytics, and it reads and writes through the `app/api/*` routes.
+
+**Admin language (EN / FR / AR).** The admin has its own language switch in the header (and on the login page), separate from the storefront URL locale. It's remembered per browser:
+- Write UI text in English and wrap it: `const { t } = useAdminT()` then `t("Save changes")` or `t("Deleted {count} color(s)", { count })`.
+- Text defined outside components (constants) is marked with `msg("…")` and translated where it's displayed with `t(value)`.
+- French and Arabic live in `lib/admin-translations.ts` as `[English, French, Arabic]` rows. A missing row falls back to English, so **add a row for every new string**, keeping `{placeholders}` intact.
+- Arabic switches antd and the layout to right-to-left; antd's own texts (pagination, OK/Cancel, dates) and dayjs follow the language (`AdminConfig` in `app/admin/layout.tsx`).
+- Never translate values that are data (HTTP methods, statuses sent to the API, ids).
 
 ### API docs
 
@@ -96,5 +122,6 @@ Ant Design is used **only in the admin**; the storefront uses Tailwind plus `rea
 ## Configuration notes
 
 - The env var names are listed in `ENV-EXAMPLE.md`. `ADMIN_EMAILS` and `SUPABASE_SERVICE_ROLE_KEY` are server-only.
+- Fonts are self-hosted with `next/font/local` (`app/fonts/*.woff2`: Inter and Handlee Latin subsets, Reem Kufi Arabic + Latin, variable weights) and wired in `app/layout.tsx` and `lib/fonts.ts`. Don't switch back to `next/font/google`: Turbopack fails the build when the Google Fonts download is slow or offline.
 - `next.config.ts` whitelists remote image hosts, including the project's Supabase storage host. Add any new image source there.
 - The many top-level `*.md` files are historical setup and fix notes. Treat them as background, not as the current source of truth.

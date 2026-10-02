@@ -51,6 +51,9 @@ export interface OrderItem {
     product_name_ar?: string;
     product_name_fr?: string;
     product_image?: string;
+    variant_id?: string | null;
+    /** e.g. "Black / XL" */
+    variant_label?: string | null;
     quantity: number;
     price: number;
     subtotal: number;
