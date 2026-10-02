@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, Table, Typography, Space, Button, Tag, Modal, Form, Input, Select, Popconfirm, Tooltip, Alert, Checkbox } from "antd";
 import { message } from "@/components/admin/antd-app";
 import type { ColumnsType } from "antd/es/table";
@@ -156,30 +157,36 @@ export default function TeamPage() {
         { title: t("Last sign-in"), dataIndex: "last_sign_in_at", render: (d: string | null) => (d ? dayjs(d).format("DD MMM YYYY HH:mm") : <Text type="secondary">{t("Never")}</Text>) },
         {
             key: "actions",
-            width: 240,
-            render: (_, m) =>
-                !m.locked && m.email !== myEmail && (
-                    <Space size={0}>
-                        <Popconfirm
-                            title={t("Remove {email}'s access?", { email: m.email })}
-                            description={t("The account stays (they can still shop with it), but it can't open the admin.")}
-                            okText={t("Remove access")}
-                            okButtonProps={{ danger: true }}
-                            onConfirm={() => changeRole(m, null)}
-                        >
-                            <Button type="text">{t("Remove access")}</Button>
-                        </Popconfirm>
-                        <Popconfirm
-                            title={t("Delete {email}'s account?", { email: m.email })}
-                            description={t("This permanently deletes the account. Stock history keeps their email.")}
-                            okText={t("Delete account")}
-                            okButtonProps={{ danger: true }}
-                            onConfirm={() => deleteMember(m)}
-                        >
-                            <Button danger type="text">{t("Delete")}</Button>
-                        </Popconfirm>
-                    </Space>
-                ),
+            width: 320,
+            render: (_, m) => (
+                <Space size={0}>
+                    <Link href={`/admin/activity?actor=${m.id}`}>
+                        <Button type="text">{t("Activity")}</Button>
+                    </Link>
+                    {!m.locked && m.email !== myEmail && (
+                        <>
+                            <Popconfirm
+                                title={t("Remove {email}'s access?", { email: m.email })}
+                                description={t("The account stays (they can still shop with it), but it can't open the admin.")}
+                                okText={t("Remove access")}
+                                okButtonProps={{ danger: true }}
+                                onConfirm={() => changeRole(m, null)}
+                            >
+                                <Button type="text">{t("Remove access")}</Button>
+                            </Popconfirm>
+                            <Popconfirm
+                                title={t("Delete {email}'s account?", { email: m.email })}
+                                description={t("The account is deactivated and can't sign in. It is kept with its history.")}
+                                okText={t("Delete account")}
+                                okButtonProps={{ danger: true }}
+                                onConfirm={() => deleteMember(m)}
+                            >
+                                <Button danger type="text">{t("Delete")}</Button>
+                            </Popconfirm>
+                        </>
+                    )}
+                </Space>
+            ),
         },
     ];
 

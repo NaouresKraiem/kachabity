@@ -27,7 +27,7 @@ interface VariantRow {
 // GET - One row per variant with stock per location, totals and status.
 export async function GET() {
     try {
-        const locationsResult = await supabase.from('locations').select('id, name, sells_online').order('sells_online', { ascending: false }).order('name');
+        const locationsResult = await supabase.from('locations').select('id, name, sells_online').is('deleted_at', null).order('sells_online', { ascending: false }).order('name');
         if (locationsResult.error) throw locationsResult.error;
 
         // Page through variants: PostgREST caps responses at 1000 rows.
@@ -45,6 +45,8 @@ export async function GET() {
                 .is('deleted_at', null)
                 .is('products.deleted_at', null)
                 .is('products.product_images.variant_id', null)
+                .is('products.product_images.deleted_at', null)
+                .is('product_images.deleted_at', null)
                 .order('id')
                 .range(from, from + PAGE - 1);
             if (error) throw error;

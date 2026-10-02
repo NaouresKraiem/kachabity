@@ -137,21 +137,10 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Try soft delete first
-        const { error: softDeleteError } = await supabase
-            .from('product_variants')
-            .update({ deleted_at: new Date().toISOString() })
-            .eq('id', id);
-
-        if (softDeleteError) {
-            // If soft delete fails, do hard delete
-            const { error: deleteError } = await supabase
-                .from('product_variants')
-                .delete()
-                .eq('id', id);
-
-            if (deleteError) throw deleteError;
-        }
+        // Soft delete: the row stays (stock history points at it), hidden from the shop,
+        // and its photos go with it, in one transaction.
+        const { error } = await supabase.rpc('delete_variant', { p_variant_id: id });
+        if (error) throw error;
 
         invalidateCatalog(); // refresh cached storefront data
 

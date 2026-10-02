@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
             .from('reels')
             .select('*')
             .eq('active', true)
+            .is('deleted_at', null)
             .order('sort_order', { ascending: true });
 
         if (error) throw error;
@@ -116,7 +117,7 @@ export async function DELETE(request: NextRequest) {
 
         const { error } = await supabase
             .from('reels')
-            .delete()
+            .update({ active: false, deleted_at: new Date().toISOString() })
             .eq('id', body.id);
 
         if (error) throw error;

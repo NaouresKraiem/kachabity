@@ -4,7 +4,7 @@ import HeroSection from "@/components/sections/HeroSection";
 import TopProducts from "@/components/products/TopProducts";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
 import PromoProducts from "@/components/products/PromoProducts";
 import CustomerFeedback from "@/components/reviews/CustomerFeedback";
 import SaleBanner from "@/components/sections/SaleBanner";
@@ -16,36 +16,13 @@ import ProductShowcase from "@/components/landing/ProductShowcase";
 import NewArrivals from "@/components/landing/NewArrivals";
 import CollectionSpotlight from "@/components/landing/CollectionSpotlight";
 import HowToOrder from "@/components/landing/HowToOrder";
-import { getNewArrivals, getProductsBySlugs, getSpotlightCollection, type LandingProduct, type SpotlightCollection } from "@/lib/landing-products";
+import { getLandingConfig, getLandingPicks, getNewArrivals, getSpotlightCollection, type LandingProduct, type SpotlightCollection } from "@/lib/landing-products";
+import { DEFAULT_LANDING_CONFIG, type HomeSectionKey, type LandingConfig } from "@/lib/landing-config";
 import { getSiteSettings } from "@/lib/get-site-settings";
 import { getFeaturedCategories, getTopProducts, getPromoProducts, getSaleBanners, getReels, getLatestReviews } from "@/lib/home-data";
 
 // The hero carousel is hidden until it has its own images; the product showcase leads the page meanwhile.
 const SHOW_HERO_CAROUSEL = false;
-
-// Pieces shown in the header: a zemnia wool kachabia, a dengri and a blouza. They are
-// the static photos, and the first cards of the 3D ring.
-const SHOWCASE_SLUGS = [
-  "kachabia-laine-zemnia-homme-224",
-  "dengri-tunisien-homme-240",
-  "blouza-djerbienne-homme-690",
-];
-
-// More pieces to complete the 3D ring (fourteen cards in all): kachabias in different
-// wools, dengris, and a burnous.
-const RING_EXTRA_SLUGS = [
-  "kachabia-wazra-tibar-7018",
-  "kachabia-ennour-3742",
-  "dengri-du-marie-5849",
-  "kachabia-poil-de-chameau-1853",
-  "burnous-tunisien-laine-232",
-  "kachabia-cachemire-3226",
-  "kachabia-zemnia-rayee-4952",
-  "kachabia-mlef-bouc-2638",
-  "dengri-tunisien-simple-6583",
-  "kachabia-chakhma-pro-max-2-7066",
-  "kachabia-zemnia-demi-homme-241",
-];
 
 interface LandingData {
   showcase: LandingProduct[];
@@ -53,14 +30,18 @@ interface LandingData {
   newArrivals: LandingProduct[];
   spotlight: SpotlightCollection | null;
   freeShippingThreshold: number | null;
+  layout: LandingConfig['layout'];
 }
 
+// Section order and visibility, and the products of each list, are set by the admin
+// (Admin → Landing page).
 async function loadLandingData(locale: string): Promise<LandingData> {
+  const config = await getLandingConfig();
   const [showcase, ringExtras, newArrivals, spotlight, settings] = await Promise.all([
-    getProductsBySlugs(locale, SHOWCASE_SLUGS),
-    getProductsBySlugs(locale, RING_EXTRA_SLUGS),
-    getNewArrivals(locale, 10),
-    getSpotlightCollection(locale),
+    getLandingPicks(locale, 'showcase'),
+    getLandingPicks(locale, 'ring'),
+    getNewArrivals(locale, config.lists.new_arrivals),
+    getSpotlightCollection(locale, config.lists.spotlight, config.spotlightCategoryId),
     getSiteSettings(),
   ]);
   return {
@@ -69,6 +50,7 @@ async function loadLandingData(locale: string): Promise<LandingData> {
     newArrivals,
     spotlight,
     freeShippingThreshold: settings.free_shipping_enabled ? settings.global_free_shipping_threshold : null,
+    layout: config.layout,
   };
 }
 
@@ -76,10 +58,10 @@ async function loadLandingData(locale: string): Promise<LandingData> {
 // Errors are caught outside the cache so a failed load isn't cached.
 async function getLandingData(locale: string): Promise<LandingData> {
   try {
-    return await cachedCatalogQuery(`landing-v4-${locale}`, () => loadLandingData(locale))();
+    return await cachedCatalogQuery(`landing-v6-${locale}`, () => loadLandingData(locale))();
   } catch (error) {
     console.error('Error fetching landing page data:', error);
-    return { showcase: [], ringExtras: [], newArrivals: [], spotlight: null, freeShippingThreshold: null };
+    return { showcase: [], ringExtras: [], newArrivals: [], spotlight: null, freeShippingThreshold: null, layout: DEFAULT_LANDING_CONFIG.layout };
   }
 }
 
@@ -166,29 +148,37 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   // (instead of each section fetching after hydration).
   const [landing, home] = await Promise.all([getLandingData(locale), getHomeSections()]);
 
+  const sections: Record<HomeSectionKey, React.ReactNode> = {
+    showcase: (
+      <ProductShowcase
+        locale={locale}
+        products={landing.showcase}
+        ringProducts={ringProducts(landing)}
+        collectionSlug={landing.spotlight?.slug ?? null}
+        freeShippingThreshold={landing.freeShippingThreshold}
+      />
+    ),
+    new_arrivals: <NewArrivals locale={locale} products={landing.newArrivals} />,
+    services: <ServiceHighlights />,
+    categories: <ProductGrid locale={locale} initialCategories={home.categories} />,
+    top_products: <TopProducts locale={locale} initialProducts={home.topProducts} />,
+    spotlight: <CollectionSpotlight locale={locale} collection={landing.spotlight} />,
+    promo_products: <PromoProducts locale={locale} initialProducts={home.promoProducts} />,
+    sale_banners: <SaleBanner initialPromotions={home.saleBanners} />,
+    reels: <Reels initialReels={home.reels} />,
+    reviews: <CustomerFeedback initialReviews={home.reviews} />,
+    how_to_order: <HowToOrder locale={locale} freeShippingThreshold={landing.freeShippingThreshold} />,
+    faq: <FAQ />,
+  };
+
   return (
     <ErrorBoundary>
       <main className="min-h-screen bg-white">
         {SHOW_HERO_CAROUSEL && <HeroContent locale={locale} />}
-        <ProductShowcase
-          locale={locale}
-          products={landing.showcase}
-          ringProducts={ringProducts(landing)}
-          collectionSlug={landing.spotlight?.slug ?? null}
-          freeShippingThreshold={landing.freeShippingThreshold}
-        />
         <Suspense fallback={<LoadingSpinner />}>
-          <ServiceHighlights />
-          <ProductGrid locale={locale} initialCategories={home.categories} />
-          <NewArrivals locale={locale} products={landing.newArrivals} />
-          <TopProducts locale={locale} initialProducts={home.topProducts} />
-          <CollectionSpotlight locale={locale} collection={landing.spotlight} />
-          <PromoProducts locale={locale} initialProducts={home.promoProducts} />
-          <SaleBanner initialPromotions={home.saleBanners} />
-          <Reels initialReels={home.reels} />
-          <CustomerFeedback initialReviews={home.reviews} />
-          <HowToOrder locale={locale} freeShippingThreshold={landing.freeShippingThreshold} />
-          <FAQ />
+          {landing.layout
+            .filter((section) => section.visible)
+            .map((section) => <Fragment key={section.key}>{sections[section.key]}</Fragment>)}
         </Suspense>
       </main>
     </ErrorBoundary>

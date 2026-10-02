@@ -149,6 +149,7 @@ export async function GET(request: NextRequest) {
         let query = supabase
             .from('orders')
             .select(id ? '*, items:order_items(*)' : '*')
+            .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
         // Filter by ID if provided

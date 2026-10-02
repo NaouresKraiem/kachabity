@@ -6,8 +6,14 @@ import { stockErrorMessage } from '@/lib/stock';
 /**
  * GET/POST/PUT/DELETE handlers for the small stock lookup tables (locations, suppliers, collections).
  * `fields` whitelists the writable columns; middleware restricts DELETE to admins.
+ * DELETE only marks the row (deleted_at); `canDelete` may refuse with a message.
  */
-export function stockLookupHandlers(table: string, fields: string[], label: string) {
+export function stockLookupHandlers(
+    table: string,
+    fields: string[],
+    label: string,
+    canDelete?: (id: string) => Promise<string | null>
+) {
     const pick = (body: Record<string, unknown>) => {
         const row: Record<string, unknown> = {};
         for (const field of fields) {
@@ -23,7 +29,7 @@ export function stockLookupHandlers(table: string, fields: string[], label: stri
 
     return {
         async GET() {
-            const { data, error } = await supabase.from(table).select('*').order('name');
+            const { data, error } = await supabase.from(table).select('*').is('deleted_at', null).order('name');
             if (error) return fail(error, 500);
             return NextResponse.json({ success: true, data: data ?? [] });
         },
@@ -51,7 +57,9 @@ export function stockLookupHandlers(table: string, fields: string[], label: stri
         async DELETE(request: NextRequest) {
             const id = request.nextUrl.searchParams.get('id');
             if (!id) return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });
-            const { error } = await supabase.from(table).delete().eq('id', id);
+            const refusal = canDelete ? await canDelete(id) : null;
+            if (refusal) return NextResponse.json({ success: false, error: refusal }, { status: 409 });
+            const { error } = await supabase.from(table).update({ deleted_at: new Date().toISOString() }).eq('id', id);
             if (error) return fail(error);
             invalidateCatalog();
             return NextResponse.json({ success: true });

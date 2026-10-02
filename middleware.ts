@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supportedLanguages, defaultLanguage, detectLanguageFromHeader, isValidLocale } from './lib/language-utils';
 import { ADMIN_HEADERS, getAdminRole, getPermissions, type AdminRole, type Permission } from './lib/admin-auth';
 import { supabaseUrl, supabasePublishableKey } from './lib/supabase-env';
+import { TRASH_TABLES, isTrashTable } from './lib/trash-tables';
 
 const ADMIN_LOGIN_PATH = '/admin/login';
 
@@ -11,7 +12,8 @@ const ADMIN_LOGIN_PATH = '/admin/login';
  * - null: public
  * - { any: [] }: any back-office user
  * - { any: [a, b] }: at least one of these permissions
- * - { all: [...] }: every one of these (deletes need the area's permission and `delete`)
+ * - { all: [...] }: every one of these (deletes need the area's permission and `delete`;
+ *   permanent deletes need it and `hard_delete`)
  * - { admin: true }: admins only (team management)
  * Admins have every permission.
  */
@@ -35,6 +37,8 @@ const MUTATION_PERMISSIONS: Record<string, Permission[]> = {
 // Admin pages by path prefix (longest match wins). Pages not listed need any back-office user.
 const PAGE_PERMISSIONS: [string, Requirement][] = [
     ['/admin/team', { admin: true }],
+    ['/admin/activity', { admin: true }],
+    ['/admin/trash', { all: ['hard_delete'] }],
     ['/admin/products', { any: ['products'] }],
     ['/admin/categories', { any: ['products'] }],
     ['/admin/variants', { any: ['products'] }],
@@ -43,6 +47,7 @@ const PAGE_PERMISSIONS: [string, Requirement][] = [
     ['/admin/promotions', { any: ['discounts'] }],
     ['/admin/sale-banners', { any: ['marketing'] }],
     ['/admin/reels', { any: ['marketing'] }],
+    ['/admin/landing', { any: ['marketing'] }],
     ['/admin/cart-analytics', { any: ['analytics'] }],
 ];
 
@@ -59,7 +64,12 @@ function requirementFor(request: NextRequest): Requirement | null {
         return PAGE_PERMISSIONS.find(([prefix]) => under(prefix))?.[1] ?? { any: [] };
     }
 
-    if (under('/api/admin/team')) return { admin: true };
+    if (under('/api/admin/team') || under('/api/admin/activity')) return { admin: true };
+    // Permanent deletes: `hard_delete` plus the permission of the area the table belongs to.
+    if (under('/api/admin/trash')) {
+        const table = searchParams.get('table');
+        return { all: isTrashTable(table) ? [TRASH_TABLES[table].permission, 'hard_delete'] : ['hard_delete'] };
+    }
     if (under('/api/admin')) return { any: [] };
     if (under('/api/stock/costs')) return { any: ['costs'] };
     // Product forms read suppliers, collections and locations too.
@@ -68,6 +78,8 @@ function requirementFor(request: NextRequest): Requirement | null {
     }
     if (under('/api/stock')) return withDelete(method, ['stock']);
     if (pathname === '/api/cart/analytics') return { any: ['analytics'] };
+    // Home page curation: reads and writes are back-office only.
+    if (under('/api/landing')) return { any: ['marketing'] };
     // Admin product lists also feed the discount, banner and stock screens.
     if (pathname === '/api/products' && searchParams.get('admin') === 'true' && method === 'GET') {
         return { any: ['products', 'discounts', 'marketing', 'stock'] };
@@ -76,6 +88,14 @@ function requirementFor(request: NextRequest): Requirement | null {
     const area = MUTATION_PERMISSIONS[pathname];
     if (area && method !== 'GET') return withDelete(method, area);
     return null;
+}
+
+// Only gated requests carry a verified identity (and the activity log trusts it), so any
+// identity headers a client sent itself are dropped everywhere else.
+function withoutAdminHeaders(request: NextRequest): Headers {
+    const headers = new Headers(request.headers);
+    Object.values(ADMIN_HEADERS).forEach((name) => headers.delete(name));
+    return headers;
 }
 
 function allows(requirement: Requirement, role: AdminRole, permissions: Permission[]): boolean {
@@ -180,15 +200,15 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/favicon.ico') ||
         pathname.includes('.')
     ) {
-        return NextResponse.next();
+        return NextResponse.next({ request: { headers: withoutAdminHeaders(request) } });
     }
 
     if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-        return NextResponse.next();
+        return NextResponse.next({ request: { headers: withoutAdminHeaders(request) } });
     }
 
     if (pathname === '/api-docs' || pathname.startsWith('/api-docs/') || pathname.startsWith('/api/')) {
-        return NextResponse.next();
+        return NextResponse.next({ request: { headers: withoutAdminHeaders(request) } });
     }
 
     const segments = pathname.split('/');
@@ -215,7 +235,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Lets the root layout set <html lang> for the requested locale.
-    const requestHeaders = new Headers(request.headers);
+    const requestHeaders = withoutAdminHeaders(request);
     requestHeaders.set('x-locale', locale);
     return NextResponse.next({ request: { headers: requestHeaders } });
 }

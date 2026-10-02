@@ -15,6 +15,7 @@ export const PERMISSIONS = {
     analytics: { label: 'Analytics', description: 'Cart analytics on the dashboard' },
     costs: { label: 'Costs', description: 'See and edit purchase costs and stock value' },
     delete: { label: 'Delete', description: 'Delete records in the areas they can edit' },
+    hard_delete: { label: 'Permanent delete', description: 'Erase deleted records for good in the areas they can edit (Deleted items)' },
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
