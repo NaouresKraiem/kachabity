@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { App, Layout, Menu, Typography, Button, ConfigProvider } from "antd";
+import { App, Layout, Menu, Typography, Button, ConfigProvider, Drawer, Grid } from "antd";
 import { AntdAppBridge } from "@/components/admin/antd-app";
 import { installAdminFetchCache } from "@/components/admin/admin-fetch-cache";
 import type { MenuProps } from "antd";
@@ -19,6 +19,7 @@ import {
     PercentageOutlined,
     PlayCircleOutlined,
     LogoutOutlined,
+    ShopOutlined,
     InboxOutlined,
     HistoryOutlined,
     ReloadOutlined,
@@ -259,7 +260,23 @@ function AdminConfig({ children }: { children: React.ReactNode }) {
         <ConfigProvider theme={antdTheme} locale={ANTD_LOCALES[locale]} direction={dir}>
             <App>
                 <AntdAppBridge />
-                <div dir={dir} lang={locale}>{children}</div>
+                <div dir={dir} lang={locale} className="admin-root">
+                    {/* Phones: wide tables scroll inside their card instead of widening the page. */}
+                    <style>{`
+                        .admin-root .ant-table-content, .admin-root .ant-table-body { overflow-x: auto; }
+                        .admin-root .ant-table-wrapper, .admin-root .ant-select, .admin-root .ant-picker { max-width: 100%; }
+                        @media (max-width: 767px) {
+                            .admin-root .ant-card-head { padding: 0 12px; }
+                            .admin-root .ant-card-body { padding: 12px; }
+                            .admin-root .ant-card-head-wrapper { flex-wrap: wrap; gap: 4px; }
+                            .admin-root .ant-card-extra { margin-inline-start: 0; }
+                            .admin-root h1.ant-typography, .admin-root h2.ant-typography { font-size: 22px; }
+                            .admin-root .ant-statistic-content { font-size: 20px; }
+                            .admin-root .ant-picker-dropdown .ant-picker-panels { flex-direction: column; }
+                        }
+                    `}</style>
+                    {children}
+                </div>
             </App>
         </ConfigProvider>
     );
@@ -272,6 +289,12 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     const items = useMemo(() => menuFor(isAdmin, permissions, t), [isAdmin, permissions, t]);
     const router = useRouter();
     const [collapsed, setCollapsed] = useState(false);
+    const { dir } = useAdminT();
+    // Phones (below md): the sidebar becomes a drawer and the header goes icon-only.
+    const screens = Grid.useBreakpoint();
+    const mobile = screens.md === false;
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    useEffect(() => setDrawerOpen(false), [pathname]);
     // Highlight the clicked entry immediately instead of waiting for navigation to finish.
     const [pendingKey, setPendingKey] = useState<string | null>(null);
     useEffect(() => setPendingKey(null), [pathname]);
@@ -311,30 +334,18 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         router.refresh();
     };
 
-    return (
-            <Layout style={{ minHeight: "100vh" }}>
-                <Sider
-                    collapsible
-                    collapsed={collapsed}
-                    onCollapse={setCollapsed}
-                    breakpoint="lg"
-                    width={250}
-                    theme="dark"
-                    style={{
-                        background: "#050f1f",
-                    }}
-                >
+    const brand = (
                     <div
                         style={{
                             height: 64,
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: collapsed ? "center" : "flex-start",
-                            paddingLeft: collapsed ? 0 : 24,
+                            justifyContent: (collapsed && !mobile) ? "center" : "flex-start",
+                            paddingInlineStart: (collapsed && !mobile) ? 0 : 24,
                             borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
                         }}
                     >
-                        {collapsed ? (
+                        {(collapsed && !mobile) ? (
                             <div
                                 style={{
                                     width: 32,
@@ -354,6 +365,8 @@ function AdminShell({ children }: { children: React.ReactNode }) {
                             </div>
                         )}
                     </div>
+    );
+    const menu = (
                     <Menu
                         theme="dark"
                         mode="inline"
@@ -395,57 +408,111 @@ function AdminShell({ children }: { children: React.ReactNode }) {
                         }}
                         style={{
                             borderRight: 0,
-                            height: "calc(100vh - 64px)",
+                            height: mobile ? "auto" : "calc(100vh - 64px)",
                             background: "#050f1f",
                         }}
                     />
+    );
+    const roleLabel = role === "owner" ? t("Owner") : role === "admin" ? t("Admin") : t("Staff");
+
+    return (
+            <Layout style={{ minHeight: "100vh" }}>
+                {mobile ? (
+                    // Phones: the menu lives in a drawer opened from the header.
+                    <Drawer
+                        open={drawerOpen}
+                        onClose={() => setDrawerOpen(false)}
+                        placement={dir === "rtl" ? "right" : "left"}
+                        size={280}
+                        closable={false}
+                        styles={{ body: { padding: 0, background: "#050f1f" }, header: { display: "none" } }}
+                    >
+                        {brand}
+                        {menu}
+                        {role && (
+                            <div style={{ padding: "16px 24px", color: "rgba(255,255,255,0.65)", fontSize: 13, borderTop: "1px solid rgba(255,255,255,0.08)", wordBreak: "break-all" }}>
+                                {email} · {roleLabel}
+                            </div>
+                        )}
+                    </Drawer>
+                ) : (
+                <Sider
+                    collapsible
+                    collapsed={collapsed}
+                    onCollapse={setCollapsed}
+                    breakpoint="lg"
+                    width={250}
+                    theme="dark"
+                    style={{
+                        background: "#050f1f",
+                    }}
+                >
+                    {brand}
+                    {menu}
                 </Sider>
-                <Layout>
+                )}
+                <Layout style={{ minWidth: 0 }}>
                     <Header
                         style={{
                             background: "#fff",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            padding: "0 24px",
+                            gap: 8,
+                            padding: mobile ? "0 8px" : "0 24px",
                             boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            height: 64,
+                            height: mobile ? 56 : 64,
+                            position: mobile ? "sticky" : undefined,
+                            top: 0,
+                            zIndex: 20,
                         }}
                     >
-                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: mobile ? 4 : 16, minWidth: 0 }}>
                             <Button
                                 type="text"
-                                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                                onClick={() => setCollapsed((prev) => !prev)}
+                                size={mobile ? "large" : "middle"}
+                                aria-label={t("Menu")}
+                                icon={mobile ? <MenuUnfoldOutlined /> : collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                                onClick={() => (mobile ? setDrawerOpen(true) : setCollapsed((prev) => !prev))}
                             />
-                            <Title level={4} style={{ margin: 0, fontWeight: 600, color: "#1c1d27" }}>
-                                {t("Admin Panel")}
-                            </Title>
+                            {!mobile && (
+                                <Title level={4} style={{ margin: 0, fontWeight: 600, color: "#1c1d27" }}>
+                                    {t("Admin Panel")}
+                                </Title>
+                            )}
                         </div>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <div style={{ display: "flex", gap: mobile ? 4 : 8, alignItems: "center", minWidth: 0 }}>
                             <AdminLanguageSwitcher />
                             {role && <NotificationBell />}
-                            {role && (
+                            {role && !mobile && (
                                 <span style={{ color: "#6b7280", fontSize: 13, marginInlineEnd: 8 }}>
-                                    {email} · {role === "owner" ? t("Owner") : role === "admin" ? t("Admin") : t("Staff")}
+                                    {email} · {roleLabel}
                                 </span>
                             )}
-                            <Button type="primary" href="/" target="_blank" style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}>
-                                {t("View Store")}
+                            <Button
+                                type="primary"
+                                href="/"
+                                target="_blank"
+                                icon={mobile ? <ShopOutlined /> : undefined}
+                                aria-label={t("View Store")}
+                                style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
+                            >
+                                {!mobile && t("View Store")}
                             </Button>
-                            <Button icon={<LogoutOutlined />} onClick={handleSignOut}>
-                                {t("Sign out")}
+                            <Button icon={<LogoutOutlined />} onClick={handleSignOut} aria-label={t("Sign out")}>
+                                {!mobile && t("Sign out")}
                             </Button>
                         </div>
                     </Header>
                     <Content
                         style={{
-                            padding: "32px 32px 48px",
+                            padding: mobile ? "16px 12px 40px" : "32px 32px 48px",
                             background: "#f5f6fa",
                             minHeight: "calc(100vh - 64px)",
+                            minWidth: 0,
                         }}
                     >
-                        <div style={{ maxWidth: 1320, margin: "0 auto" }}>{children}</div>
+                        <div style={{ maxWidth: 1320, margin: "0 auto", minWidth: 0 }}>{children}</div>
                     </Content>
                 </Layout>
             </Layout>

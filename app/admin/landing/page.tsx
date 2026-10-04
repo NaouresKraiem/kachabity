@@ -332,7 +332,7 @@ export default function LandingPage() {
                                     <Select
                                         showSearch
                                         allowClear
-                                        style={{ minWidth: 280 }}
+                                        style={{ width: 280, maxWidth: "100%" }}
                                         placeholder={t("Automatic (the category with the most products)")}
                                         value={config.spotlightCategoryId ?? undefined}
                                         options={categoryOptions([])}

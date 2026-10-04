@@ -161,13 +161,13 @@ export default function MovementModal({ open, onClose, onSaved, rows, locations,
                         const row = line.variant_id ? rowById.get(line.variant_id) : undefined;
                         const here = row && locationId ? row.levels[locationId] ?? 0 : null;
                         return (
-                            <Space key={line.key} style={{ display: "flex" }} align="center">
+                            <Space key={line.key} style={{ display: "flex", paddingBottom: 8, borderBottom: "1px solid #f0f0f0" }} align="center" wrap>
                                 <VariantThumb src={row?.image ?? null} size={40} />
                                 <Select
                                     showSearch
                                     filterOption={searchByText}
                                     placeholder={t("Search product, color, size or SKU")}
-                                    style={{ width: 400 }}
+                                    style={{ width: 400, maxWidth: "calc(100vw - 120px)", minWidth: 0 }}
                                     value={line.variant_id}
                                     options={options}
                                     onChange={(value) => updateLine(line.key, { variant_id: value })}
@@ -200,7 +200,7 @@ export default function MovementModal({ open, onClose, onSaved, rows, locations,
                     <Form.Item name="reference" label={t("Reference")} style={{ minWidth: 220 }}>
                         <Input placeholder={t("Invoice, delivery note…")} maxLength={200} />
                     </Form.Item>
-                    <Form.Item name="note" label={t("Note")} style={{ minWidth: 380 }}>
+                    <Form.Item name="note" label={t("Note")} style={{ minWidth: 0, width: 380, maxWidth: "100%" }}>
                         <Input placeholder={t("Optional")} maxLength={1000} />
                     </Form.Item>
                 </Space>

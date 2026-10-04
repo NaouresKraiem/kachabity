@@ -65,6 +65,7 @@ const content = {
         loading: "Loading...",
         fillShippingInfo: "Please fill in your shipping information to continue",
         deliveryTime: "Delivery within 48 hours",
+        optional: "Optional",
         enterFirstName: "Enter your first name",
         enterLastName: "Enter your Last Name",
         enterEmail: "Enter your Email Address",
@@ -129,6 +130,7 @@ const content = {
         loading: "Chargement...",
         fillShippingInfo: "Veuillez remplir vos informations de livraison pour continuer",
         deliveryTime: "Livraison sous 48 heures",
+        optional: "Facultatif",
         enterFirstName: "Entrez votre prénom",
         enterLastName: "Entrez votre nom",
         enterEmail: "Entrez votre adresse e-mail",
@@ -193,6 +195,7 @@ const content = {
         loading: "جاري التحميل...",
         fillShippingInfo: "يرجى ملء معلومات الشحن للمتابعة",
         deliveryTime: "التوصيل خلال 48 ساعة",
+        optional: "اختياري",
         enterFirstName: "أدخل اسمك الأول",
         enterLastName: "أدخل اسم العائلة",
         enterEmail: "أدخل عنوان بريدك الإلكتروني",
@@ -590,7 +593,7 @@ export default function CheckoutPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.firstName}
+                                                    {text.firstName} <span className="text-red-600">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -605,7 +608,7 @@ export default function CheckoutPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.lastName}
+                                                    {text.lastName} <span className="text-red-600">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -622,11 +625,14 @@ export default function CheckoutPage() {
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                {text.phone}
+                                                {text.phone} <span className="text-red-600">*</span>
                                             </label>
                                             <input
                                                 type="tel"
-                                                {...register("phone")}
+                                                {...register("phone", {
+                                                    // Tunisian numbers: 8 digits, nothing else.
+                                                    onChange: (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 8); },
+                                                })}
                                                 autoComplete="tel"
                                                 inputMode="numeric"
                                                 maxLength={8}
@@ -655,7 +661,7 @@ export default function CheckoutPage() {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                {text.emailAddress} <span className="text-gray-400 font-normal">(Optional)</span>
+                                                {text.emailAddress} <span className="text-gray-400 font-normal">({text.optional})</span>
                                             </label>
                                             <input
                                                 type="email"
@@ -672,7 +678,7 @@ export default function CheckoutPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.stateProvince} <span className="text-gray-400 font-normal">(Optional)</span>
+                                                    {text.stateProvince} <span className="text-gray-400 font-normal">({text.optional})</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -687,7 +693,7 @@ export default function CheckoutPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.city} <span className="text-gray-400 font-normal">(Optional)</span>
+                                                    {text.city} <span className="text-gray-400 font-normal">({text.optional})</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -705,7 +711,7 @@ export default function CheckoutPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.zipPostalCode} <span className="text-gray-400 font-normal">(Optional)</span>
+                                                    {text.zipPostalCode} <span className="text-gray-400 font-normal">({text.optional})</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -720,7 +726,7 @@ export default function CheckoutPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.country} <span className="text-gray-400 font-normal">(Optional)</span>
+                                                    {text.country} <span className="text-gray-400 font-normal">({text.optional})</span>
                                                 </label>
                                                 <select
                                                     {...register("country")}

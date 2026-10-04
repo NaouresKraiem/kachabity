@@ -8,6 +8,7 @@ type Entry = [en: string, fr: string, ar: string];
 const entries: Entry[] = [
     // Navigation and layout
     ["Dashboard", "Tableau de bord", "لوحة التحكم"],
+    ["Menu", "Menu", "القائمة"],
     ["Products", "Produits", "المنتجات"],
     ["List", "Liste", "القائمة"],
     ["Create", "Créer", "إنشاء"],
