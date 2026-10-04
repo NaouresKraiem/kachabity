@@ -1,0 +1,4 @@
+interface:
+  display_name: Sentry Issues
+  short_description: Retrieve and summarize recent Sentry issues safely
+  default_prompt: Use $sentry-issues to retrieve and summarize recent Sentry issues for this project.
