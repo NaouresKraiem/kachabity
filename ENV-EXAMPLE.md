@@ -58,9 +58,14 @@ NEXT_PUBLIC_WALLET_NAME=Your Wallet Name
 # Read in code through lib/app-env.ts; also used as the Sentry environment.
 ENV=local
 
-# Sentry error monitoring (settings per ENV in lib/sentry-options.ts; `next dev` never reports)
-# DSN: Sentry → Project Settings → Client Keys (DSN). Public, safe in the browser.
-NEXT_PUBLIC_SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project-id>
+# Sentry error monitoring (settings per ENV in lib/sentry-options.ts; `next dev` never reports).
+# Projects: kachabiti-front-end-prod, kachabiti-backend-prod, kachabiti-local.
+# The local project is shared by browser and backend. Production uses one project per runtime.
+NEXT_PUBLIC_SENTRY_DSN_LOCAL=https://<local-key>@<org>.ingest.sentry.io/<local-project-id>
+NEXT_PUBLIC_SENTRY_DSN_FRONTEND_PRODUCTION=https://<frontend-key>@<org>.ingest.sentry.io/<frontend-project-id>
+NEXT_PUBLIC_SENTRY_DSN_BACKEND_PRODUCTION=https://<backend-key>@<org>.ingest.sentry.io/<backend-project-id>
+# Optional legacy fallback for existing deployments:
+# NEXT_PUBLIC_SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project-id>
 # Build-time only, for readable stack traces (source map upload). Set on Netlify.
 # Token: Sentry → Settings → Auth Tokens (Organization token). Server-only, keep secret.
 SENTRY_AUTH_TOKEN=sntrys_...

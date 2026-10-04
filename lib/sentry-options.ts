@@ -13,7 +13,15 @@ import { APP_ENV } from "@/lib/app-env";
 //
 // Nothing is sent without NEXT_PUBLIC_SENTRY_DSN.
 
-const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+// Production uses separate projects for browser/frontend and server/backend events.
+// Local uses one shared project. Keep the legacy DSN as a fallback for existing builds.
+const frontendDsn = APP_ENV === "production"
+    ? process.env.NEXT_PUBLIC_SENTRY_DSN_FRONTEND_PRODUCTION ?? process.env.NEXT_PUBLIC_SENTRY_DSN_PRODUCTION
+    : process.env.NEXT_PUBLIC_SENTRY_DSN_LOCAL;
+const backendDsn = APP_ENV === "production"
+    ? process.env.NEXT_PUBLIC_SENTRY_DSN_BACKEND_PRODUCTION ?? process.env.NEXT_PUBLIC_SENTRY_DSN_PRODUCTION
+    : process.env.NEXT_PUBLIC_SENTRY_DSN_LOCAL;
+const legacyDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 const envSettings: Record<string, { tracesSampleRate: number }> = {
     production: { tracesSampleRate: 0.1 },
@@ -37,13 +45,18 @@ function scrubEvent(event: ErrorEvent): ErrorEvent {
     return event;
 }
 
-export const sentryOptions = {
-    dsn,
-    // The dev server's hot reloads and half-finished code would only add noise.
-    enabled: Boolean(dsn) && process.env.NODE_ENV === "production",
-    environment: APP_ENV,
-    tracesSampleRate: (envSettings[APP_ENV] ?? { tracesSampleRate: 0.2 }).tracesSampleRate,
-    // No IP addresses, cookies or request bodies.
-    sendDefaultPii: false,
-    beforeSend: scrubEvent,
-};
+export function createSentryOptions(dsn: string | undefined) {
+    return {
+        dsn,
+        // The dev server's hot reloads and half-finished code would only add noise.
+        enabled: Boolean(dsn) && process.env.NODE_ENV === "production",
+        environment: APP_ENV,
+        tracesSampleRate: (envSettings[APP_ENV] ?? { tracesSampleRate: 0.2 }).tracesSampleRate,
+        // No IP addresses, cookies or request bodies.
+        sendDefaultPii: false,
+        beforeSend: scrubEvent,
+    };
+}
+
+export const sentryOptions = createSentryOptions(frontendDsn ?? legacyDsn);
+export const backendSentryOptions = createSentryOptions(backendDsn ?? legacyDsn);
