@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { reportError } from '@/lib/report-error';
 import supabase from '@/lib/supabase-admin';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
@@ -24,8 +25,8 @@ const createOrderSchema = z.object({
     customerEmail: z.string().email().optional(),
     customerFirstName: z.string().trim().min(1),
     customerLastName: z.string().trim().min(1),
-    customerPhone: z.string().trim().min(1),
-    shippingAddress: z.string().optional(),
+    customerPhone: z.string().trim().regex(/^[24579]\d{7}$/, 'Invalid Tunisian phone number'),
+    shippingAddress: z.string().trim().min(1, 'Shipping address is required').max(200),
     shippingCity: z.string().optional(),
     shippingState: z.string().optional(),
     shippingZip: z.string().optional(),
@@ -130,6 +131,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, data: order }, { status: 201 });
     } catch (error) {
         console.error('Error creating order:', error);
+        reportError(error, 'checkout');
         return NextResponse.json(
             { success: false, error: 'Unable to create order' },
             { status: 500 }
@@ -173,6 +175,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, data: orders || [] });
     } catch (error: any) {
         console.error('Error fetching orders:', error);
+        reportError(error, 'admin-orders', { action: 'list' });
         return NextResponse.json(
             { success: false, error: error.message },
             { status: 500 }
@@ -223,6 +226,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ success: true, data: order });
     } catch (error: any) {
         console.error('Error updating order:', error);
+        reportError(error, 'admin-orders', { action: 'update' });
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
@@ -253,7 +257,7 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ success: true, data: { deleted } });
     } catch (error: any) {
         console.error('Error deleting order:', error);
+        reportError(error, 'admin-orders', { action: 'delete' });
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
-

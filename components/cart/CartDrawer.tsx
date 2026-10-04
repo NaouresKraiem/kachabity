@@ -9,10 +9,10 @@ import CartItem from "./CartItem";
 
 const content = {
     en: {
-        myCart: "My card",
+        myCart: "My cart",
         reviews: "reviews",
         subtotal: "Subtotal",
-        checkout: "checkout",
+        checkout: "Checkout",
         viewCart: "View Cart",
         emptyCart: "Your cart is empty",
         startShopping: "Start Shopping"
@@ -21,7 +21,7 @@ const content = {
         myCart: "Mon Panier",
         reviews: "avis",
         subtotal: "Sous-total",
-        checkout: "commander",
+        checkout: "Commander",
         viewCart: "Voir le Panier",
         emptyCart: "Votre panier est vide",
         startShopping: "Commencer vos achats"
@@ -39,7 +39,6 @@ const content = {
 
 export default function CartDrawer() {
     const { items, subtotal, updateQuantity, removeItem, isCartOpen, closeCart } = useCart();
-console.log(items);
     const { locale } = useLanguage();
     const text = content[locale as keyof typeof content] || content.en;
     const rtl = isRTL(locale);
@@ -64,18 +63,26 @@ console.log(items);
                 className="fixed inset-0 z-1500 bg-black/30 backdrop-blur-[2px]"
                 onClick={closeCart}
             />
-            <div className={`fixed ${rtl ? 'left-6' : 'right-6'} top-[110px] mt-2 w-full max-w-[500px] bg-white z-1510 shadow-2xl rounded-[12px] border border-gray-200 max-h-[calc(100vh-140px)] overflow-hidden`}>
+            {/* Phones: bottom sheet. Larger screens: popover under the header's cart button. */}
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={text.myCart}
+                dir={rtl ? "rtl" : "ltr"}
+                className={`fixed inset-x-0 bottom-0 z-1510 flex max-h-[85dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:inset-x-auto sm:bottom-auto sm:top-[110px] sm:mt-2 sm:max-h-[calc(100vh-140px)] sm:w-full sm:max-w-[500px] sm:rounded-[12px] sm:border sm:border-gray-200 ${rtl ? 'sm:left-6' : 'sm:right-6'}`}
+            >
+                <div className={`absolute -top-2 hidden ${rtl ? 'left-10' : 'right-10'} w-4 h-4 bg-white border-t border-l border-gray-200 transform rotate-45 sm:block`}></div>
+                <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-gray-300 sm:hidden" aria-hidden="true" />
+                <div className="flex min-h-0 flex-1 flex-col">
 
-                <div className={`absolute -top-2 ${rtl ? 'left-10' : 'right-10'} w-4 h-4 bg-white border-t border-l border-gray-200 transform rotate-45`}></div>
-                <div className="flex flex-col h-full">
-
-                    <div className="flex items-center justify-between px-8 py-6 bg-white sticky top-0 z-10 border-b">
+                    <div className="flex shrink-0 items-center justify-between border-b bg-white px-5 py-3 sm:px-8 sm:py-6">
                         <h2 className="text-[20px] font-bold text-gray-900">
                             {text.myCart}
                         </h2>
                         <button
                             onClick={closeCart}
-                            className="text-gray-400 hover:text-gray-600 transition"
+                            className="-me-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+                            aria-label="Close"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -84,7 +91,7 @@ console.log(items);
                     </div>
 
                     {/* Cart Items */}
-                    <div className="flex-1 overflow-y-auto px-8 pt-6 bg-white max-h-100">
+                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-5 pt-4 sm:max-h-100 sm:px-8 sm:pt-6">
                         {items.length === 0 ? (
                             <div className="pb-12 flex flex-col items-center justify-center h-full text-center">
                                 <svg className="w-24 h-24 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +107,7 @@ console.log(items);
                                 </Link>
                             </div>
                         ) : (
-                            <div className="space-y-8">
+                            <div className="space-y-2 sm:space-y-8">
                                 {items.map((item) => (
                                     <React.Fragment key={cartLineKey(item)}>
                                         <CartItem
@@ -119,18 +126,18 @@ console.log(items);
 
                     {/* Footer with Subtotal and Actions */}
                     {items.length > 0 && (
-                        <div className="px-8 pb-6 space-y-6 bg-white border-t">
+                        <div className="shrink-0 space-y-3 border-t bg-white px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 sm:space-y-6 sm:px-8 sm:pb-6">
                             {/* Subtotal */}
                             <div className="flex justify-between items-center">
                                 <span className="text-[16px] font-bold text-[#4B1307]">{text.subtotal}</span>
-                                <span className="text-[17px] font-semibold text-[#008325]">{subtotal} TND</span>
+                                <span className="text-[17px] font-semibold text-[#2b1a16]" dir="ltr">{subtotal} TND</span>
                             </div>
 
                             {/* Checkout Button */}
                             <Link
                                 href={`/${locale}/checkout`}
                                 onClick={closeCart}
-                                className="block w-full py-4 bg-[#842E1B] text-white text-center rounded-lg hover:bg-[#5e2d23] transition font-medium text-lg"
+                                className="block w-full rounded-full bg-[#842E1B] py-3.5 text-center text-lg font-medium text-white transition hover:bg-[#5e2d23]"
                             >
                                 {text.checkout}
                             </Link>
@@ -139,7 +146,7 @@ console.log(items);
                             <Link
                                 href={`/${locale}/cart`}
                                 onClick={closeCart}
-                                className="block w-full py-4 border border-[#7a3b2e] text-[#7a3b2e] text-center rounded-lg hover:bg-gray-50 transition font-medium text-lg"
+                                className="block w-full rounded-full border border-[#7a3b2e] py-3 text-center text-base font-medium text-[#7a3b2e] transition hover:bg-gray-50"
                             >
                                 {text.viewCart}
                             </Link>

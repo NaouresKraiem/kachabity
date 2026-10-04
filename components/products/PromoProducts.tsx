@@ -97,7 +97,7 @@ export default function PromoProducts({ locale = 'en', initialProducts }: PromoP
                 {isLoading ? (
                     <div className="flex gap-6 overflow-x-auto overflow-y-hidden pb-4 snap-x snap-mandatory scrollbar-hide">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="bg-white rounded-2xl border border-[#E3E3E3] overflow-hidden animate-pulse shrink-0 w-[90%] md:w-[45%] lg:w-[400px] xl:w-[490px] 2xl:w-[500px] snap-start">
+                            <div key={i} className="bg-white rounded-2xl border border-[#E3E3E3] overflow-hidden animate-pulse shrink-0 w-[80%] md:w-[45%] lg:w-[400px] xl:w-[490px] 2xl:w-[500px] snap-start">
                                 <div className="h-64 bg-gray-200" />
                                 <div className="p-6 space-y-4">
                                     <div className="h-6 bg-gray-200 rounded w-3/4" />
@@ -112,7 +112,7 @@ export default function PromoProducts({ locale = 'en', initialProducts }: PromoP
                     <>
                         <div className="flex gap-6 overflow-x-auto overflow-y-hidden pb-4 snap-x snap-mandatory scrollbar-hide">
                             {products.map((product) => (
-                                <div key={product.id} className="shrink-0 w-[90%] md:w-[45%] lg:w-[500px] xl:w-[490px] 2xl:w-[500px] snap-start">
+                                <div key={product.id} className="shrink-0 w-[80%] md:w-[45%] lg:w-[500px] xl:w-[490px] 2xl:w-[500px] snap-start">
                                     <PromoProductCard
                                         product={product}
                                         locale={locale}

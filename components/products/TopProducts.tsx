@@ -263,6 +263,7 @@ export default function TopProducts({ locale = 'en', initialProducts }: TopProdu
                             <div className="flex gap-6 pb-4" style={{ width: 'max-content' }}>
                                 {products.map((product: any) => (
                                     <ProductListCard
+                                        layout="carousel"
                                         key={product.id}
                                         product={product}
                                         locale={locale}

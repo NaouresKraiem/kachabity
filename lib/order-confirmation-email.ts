@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Order, OrderItem } from './orders';
 import { headerConfig } from './config';
+import { reportError } from './report-error';
 
 interface EmailData {
     order: Order;
@@ -16,6 +17,7 @@ export async function sendOrderConfirmationEmail(data: EmailData) {
         if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
             const errorMsg = 'Gmail credentials are not configured in environment variables';
             console.error(errorMsg);
+            reportError(new Error(errorMsg), 'order-email', { orderNumber: order.order_number });
             return {
                 success: false,
                 error: {
@@ -48,6 +50,7 @@ export async function sendOrderConfirmationEmail(data: EmailData) {
         return { success: true, data: emailResult };
     } catch (error: unknown) {
         console.error('Failed to send order confirmation email:', error);
+        reportError(error, 'order-email', { orderNumber: order.order_number });
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         const errorDetails = error instanceof Error ? error.stack : String(error);
         return {

@@ -313,11 +313,11 @@ export default function CategoryProductsPage() {
 
                     {/* Products Grid */}
                     {productsLoading ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-3 xl:grid-cols-4">
                             {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
-                                <div key={index} className="animate-pulse overflow-hidden rounded-lg border border-gray-100 bg-white">
-                                            <div className="aspect-square w-full bg-gray-200" />
-                                            <div className="space-y-2 p-4">
+                                <div key={index} className="animate-pulse">
+                                            <div className="aspect-[4/5] w-full rounded-2xl bg-gray-200" />
+                                            <div className="space-y-2 pt-3">
                                                 <div className="h-4 w-3/4 rounded bg-gray-200" />
                                                 <div className="h-3 w-1/2 rounded bg-gray-200" />
                                                 <div className="h-3 w-1/3 rounded bg-gray-200" />
@@ -334,7 +334,7 @@ export default function CategoryProductsPage() {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-4">
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-3 xl:grid-cols-4 pb-4">
                                 {products.map(product => (
                                     <ProductListCard
                                         key={product.id}

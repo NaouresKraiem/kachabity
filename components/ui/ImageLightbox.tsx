@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 
 interface LightboxImage {
@@ -15,9 +16,15 @@ interface ImageLightboxProps {
     className?: string;
 }
 
-/** Product image that opens a full-screen, keyboard-navigable gallery on click. */
+/**
+ * Product photo that opens a full-screen, keyboard- and swipe-navigable gallery on click.
+ * The photo is framed from the top so a model's face stays in view; the full-screen view
+ * shows the whole photo. The overlay is portalled to <body> so sticky page sections can
+ * never paint above it.
+ */
 export default function ImageLightbox({ images, index, className = "" }: ImageLightboxProps) {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
+    const [touchStartX, setTouchStartX] = useState<number | null>(null);
     const current = images[index] ?? images[0];
 
     const close = useCallback(() => setOpenIndex(null), []);
@@ -34,46 +41,74 @@ export default function ImageLightbox({ images, index, className = "" }: ImageLi
             if (e.key === "ArrowLeft") step(-1);
         };
         document.addEventListener("keydown", onKey);
+        const previous = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         return () => {
             document.removeEventListener("keydown", onKey);
-            document.body.style.overflow = "";
+            document.body.style.overflow = previous;
         };
     }, [openIndex, close, step]);
 
     if (!current) return null;
+
+    const control = "flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white outline-none transition hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white";
 
     return (
         <>
             <button
                 type="button"
                 onClick={() => setOpenIndex(Math.max(0, images.indexOf(current)))}
-                className={`group relative block w-full aspect-square overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 ${className}`}
+                className={`relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden rounded-2xl lg:aspect-square ${className}`}
+                aria-label={current.alt}
             >
-                <Image src={current.src} alt={current.alt} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
-                <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                <Image src={current.src} alt={current.alt} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover object-top" />
+                <span className="absolute bottom-3 end-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/85 text-[#2b1a16] shadow-sm" aria-hidden="true">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
                     </svg>
-                    <span className="text-white text-sm font-medium">Click to view</span>
                 </span>
             </button>
 
-            {openIndex !== null && (
-                <div role="dialog" aria-modal="true" className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90" onClick={close}>
-                    <div className="relative h-[85vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
-                        <Image src={images[openIndex].src} alt={images[openIndex].alt} fill sizes="90vw" className="object-contain" />
-                    </div>
-                    <button type="button" onClick={close} aria-label="Close" className="absolute top-4 right-4 text-3xl text-white/80 hover:text-white">×</button>
-                    {images.length > 1 && (
-                        <>
-                            <button type="button" aria-label="Previous image" onClick={(e) => { e.stopPropagation(); step(-1); }} className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-4 py-2 text-3xl text-white hover:bg-white/20">‹</button>
-                            <button type="button" aria-label="Next image" onClick={(e) => { e.stopPropagation(); step(1); }} className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-4 py-2 text-3xl text-white hover:bg-white/20">›</button>
-                            <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-white/80">{openIndex + 1} / {images.length}</span>
-                        </>
-                    )}
-                </div>
-            )}
+            {openIndex !== null &&
+                createPortal(
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={images[openIndex].alt}
+                        className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/95"
+                        onClick={close}
+                        onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+                        onTouchEnd={(e) => {
+                            if (touchStartX === null || images.length < 2) return;
+                            const dx = e.changedTouches[0].clientX - touchStartX;
+                            setTouchStartX(null);
+                            if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
+                        }}
+                    >
+                        <div className="relative h-[calc(100dvh-7rem)] w-[calc(100vw-1.5rem)] max-w-5xl" onClick={(e) => e.stopPropagation()}>
+                            <Image src={images[openIndex].src} alt={images[openIndex].alt} fill sizes="100vw" className="object-contain" />
+                        </div>
+                        <button type="button" onClick={close} aria-label="Close" className={`absolute end-3 top-3 ${control}`}>
+                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path strokeLinecap="round" strokeWidth={2} d="M6 6l12 12M18 6L6 18" />
+                            </svg>
+                        </button>
+                        {images.length > 1 && (
+                            <>
+                                <button type="button" aria-label="Previous image" onClick={(e) => { e.stopPropagation(); step(-1); }} className={`absolute left-3 top-1/2 hidden -translate-y-1/2 sm:flex ${control}`}>
+                                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeWidth={2} d="M15 6l-6 6 6 6" /></svg>
+                                </button>
+                                <button type="button" aria-label="Next image" onClick={(e) => { e.stopPropagation(); step(1); }} className={`absolute right-3 top-1/2 hidden -translate-y-1/2 sm:flex ${control}`}>
+                                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeWidth={2} d="M9 6l6 6-6 6" /></svg>
+                                </button>
+                                <span className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-sm text-white" dir="ltr">
+                                    {openIndex + 1} / {images.length}
+                                </span>
+                            </>
+                        )}
+                    </div>,
+                    document.body
+                )}
         </>
     );
 }

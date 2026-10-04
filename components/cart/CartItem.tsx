@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useLanguage } from "@/lib/language-context";
 import { cartLineKey } from "@/lib/cart-context";
+import { SHOW_RATINGS } from "@/lib/config";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400";
 
@@ -41,7 +42,6 @@ export default function CartItem({
     reviewsText = "reviews",
 }: CartItemProps) {
     const { locale } = useLanguage();
-console.log(item);
     const itemName = locale === 'ar' && item.name_ar ? item.name_ar :
         locale === 'fr' && item.name_fr ? item.name_fr :
             item.name;
@@ -52,13 +52,13 @@ console.log(item);
     // Compact variant (for drawer)
     if (variant === "compact") {
         return (
-            <div className="flex gap-6">
-                <div className="relative w-30 h-30 shrink-0 bg-gray-100 rounded-[4px] overflow-hidden">
+            <div className="flex gap-4 sm:gap-6">
+                <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-30 sm:w-30">
                     <Image
                         src={imageUrl}
                         alt={itemName || "Product"}
                         fill
-                        className="object-cover"
+                        className="object-cover object-top"
                         sizes="120px"
                     />
                 </div>
@@ -86,7 +86,7 @@ console.log(item);
                             )}
                         </div>
 
-                        {item.rating !== 0  && item.reviewCount !== 0 && (
+                        {SHOW_RATINGS && item.rating !== 0  && item.reviewCount !== 0 && (
 
                             <div className="flex items-center gap-10 mb-1">
                                 <div className="flex gap-2">
@@ -109,13 +109,10 @@ console.log(item);
                                 </span>
                             </div>
                         )}
-                        <span className="text-[15px] font-medium text-[#777A7E] mt-4 md:mt-0">
-                        Quantity: {item.quantity}
-                        </span>
                     </div>
 
                     <div>
-                        <p className="text-[17px] font-semibold text-[#008325] mb-4">
+                        <p className="mb-4 text-[17px] font-semibold text-[#2b1a16]" dir="ltr">
                             {item.price} TND
                         </p>
 
@@ -123,7 +120,7 @@ console.log(item);
                             <div className="flex items-center">
                                 <button
                                     onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity - 1)}
-                                    className="text-[#4F4F4F] w-8 h-8 border border-[#B2BCCA] rounded-[3px] flex items-center justify-center hover:bg-gray-50 transition text-xl font-bold"
+                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d9cfc3] text-xl text-[#2b1a16] transition hover:bg-gray-50" aria-label="−"
                                 >
                                     −
                                 </button>
@@ -132,7 +129,7 @@ console.log(item);
                                 </span>
                                 <button
                                     onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity + 1)}
-                                    className="text-[#4F4F4F] text-xl font-bold w-8 h-8 border border-[#B2BCCA] rounded-[3px] flex items-center justify-center hover:bg-gray-50 transition"
+                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d9cfc3] text-xl text-[#2b1a16] transition hover:bg-gray-50" aria-label="+"
                                 >
                                     +
                                 </button>
@@ -154,7 +151,7 @@ console.log(item);
                             src={imageUrl}
                             alt={itemName || "Product"}
                             fill
-                            className="object-cover"
+                            className="object-cover object-top"
                             sizes="128px"
                         />
                     </div>
@@ -182,7 +179,7 @@ console.log(item);
                                 )}
                             </div>
 
-                            {item.rating && (
+                            {SHOW_RATINGS && !!item.rating && (
                                 <div className="flex items-center gap-10 mb-1">
                                     <div className="flex gap-2">
                                         {[...Array(5)].map((_, i) => (
@@ -207,7 +204,7 @@ console.log(item);
                         </div>
 
                         <div>
-                            <p className="text-[17px] font-semibold text-[#008325] mb-4">
+                            <p className="mb-4 text-[17px] font-semibold text-[#2b1a16]" dir="ltr">
                                 {item.price} TND
                             </p>
 
@@ -215,7 +212,7 @@ console.log(item);
                                 <div className="flex items-center">
                                     <button
                                         onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity - 1)}
-                                        className="text-[#4F4F4F] w-8 h-8 border border-[#B2BCCA] rounded-[3px] flex items-center justify-center hover:bg-gray-50 transition text-xl font-bold"
+                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d9cfc3] text-xl text-[#2b1a16] transition hover:bg-gray-50" aria-label="−"
                                     >
                                         −
                                     </button>
@@ -224,7 +221,7 @@ console.log(item);
                                     </span>
                                     <button
                                         onClick={() => onUpdateQuantity(cartLineKey(item), item.quantity + 1)}
-                                        className="text-[#4F4F4F] text-xl font-bold w-8 h-8 border border-[#B2BCCA] rounded-[3px] flex items-center justify-center hover:bg-gray-50 transition"
+                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d9cfc3] text-xl text-[#2b1a16] transition hover:bg-gray-50" aria-label="+"
                                     >
                                         +
                                     </button>
@@ -247,7 +244,7 @@ console.log(item);
                         src={imageUrl}
                         alt={itemName || "Product"}
                         fill
-                        className="object-cover"
+                        className="object-cover object-top"
                         sizes="96px"
                     />
                 </div>
@@ -256,7 +253,7 @@ console.log(item);
                         {itemName}
                     </h3>
                     {item.variantLabel && <p className="text-sm text-gray-500 mt-0.5">{item.variantLabel}</p>}
-                    {item.rating && (
+                    {SHOW_RATINGS && !!item.rating && (
                         <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
                             <div className="flex">
                                 {[...Array(5)].map((_, i) => (

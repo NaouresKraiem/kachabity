@@ -54,7 +54,6 @@ const content = {
         grandTotal: "Grand Total",
         orderComment: "Order Comment",
         typeHere: "Type here...",
-        acknowledgePolicy: "Please check to acknowledge our Privacy & Terms Policy",
         reviews: "reviews",
         quantity: "Quantity:",
         cashOnDelivery: "Livraison",
@@ -65,6 +64,7 @@ const content = {
         backToHome: "Back to Home",
         loading: "Loading...",
         fillShippingInfo: "Please fill in your shipping information to continue",
+        deliveryTime: "Delivery within 48 hours",
         enterFirstName: "Enter your first name",
         enterLastName: "Enter your Last Name",
         enterEmail: "Enter your Email Address",
@@ -118,7 +118,6 @@ const content = {
         grandTotal: "Total général",
         orderComment: "Commentaire de commande",
         typeHere: "Écrivez ici...",
-        acknowledgePolicy: "Veuillez cocher pour accepter notre politique de confidentialité",
         reviews: "avis",
         quantity: "Quantité:",
         cashOnDelivery: "Livraison",
@@ -129,6 +128,7 @@ const content = {
         backToHome: "Retour à l'accueil",
         loading: "Chargement...",
         fillShippingInfo: "Veuillez remplir vos informations de livraison pour continuer",
+        deliveryTime: "Livraison sous 48 heures",
         enterFirstName: "Entrez votre prénom",
         enterLastName: "Entrez votre nom",
         enterEmail: "Entrez votre adresse e-mail",
@@ -182,7 +182,6 @@ const content = {
         grandTotal: "المجموع الكلي",
         orderComment: "تعليق الطلب",
         typeHere: "اكتب هنا...",
-        acknowledgePolicy: "يرجى التحقق للإقرار بسياسة الخصوصية",
         reviews: "تقييم",
         quantity: "الكمية:",
         cashOnDelivery: "التوصيل",
@@ -193,6 +192,7 @@ const content = {
         backToHome: "العودة إلى الصفحة الرئيسية",
         loading: "جاري التحميل...",
         fillShippingInfo: "يرجى ملء معلومات الشحن للمتابعة",
+        deliveryTime: "التوصيل خلال 48 ساعة",
         enterFirstName: "أدخل اسمك الأول",
         enterLastName: "أدخل اسم العائلة",
         enterEmail: "أدخل عنوان بريدك الإلكتروني",
@@ -224,7 +224,6 @@ export default function CheckoutPage() {
     const stepFromUrl = parseInt(searchParams.get('step') || '1', 10);
     const [currentStep, setCurrentStep] = useState(stepFromUrl);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [acceptPolicy, setAcceptPolicy] = useState(false);
     const [orderConfirmed, setOrderConfirmed] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
 
@@ -268,7 +267,6 @@ export default function CheckoutPage() {
         handleSubmit: handleFormSubmit,
         formState: { errors },
         watch,
-        setValue,
     } = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
         defaultValues: {
@@ -372,11 +370,6 @@ export default function CheckoutPage() {
     };
 
     const onSubmit = async (formData: CheckoutFormData) => {
-        if (!acceptPolicy) {
-            toast.error(text.acknowledgePolicy);
-            return;
-        }
-
         setIsProcessing(true);
 
         try {
@@ -441,7 +434,7 @@ export default function CheckoutPage() {
             setIsProcessing(false);
             setOrderConfirmed(true);
             setCurrentStep(3);
-        } catch (error) {
+        } catch {
             toast.error("An error occurred. Please try again.");
             setIsProcessing(false);
         }
@@ -548,13 +541,13 @@ export default function CheckoutPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="absolute left-[-150] ">
+                    <div className="pointer-events-none absolute left-[-150px] hidden lg:block" aria-hidden="true">
                         <Image src="/assets/images/checkout/backgroundCheckout.svg" alt="bg-checkout" width={100} height={100} className="w-full h-full object-cover" />
                     </div>
                     {/* Step 1: Summary Order */}
                     {currentStep === 1 && (
                         <div className="max-w-3xl mx-auto">
-                            <div className=" p-8">
+                            <div className="p-4 sm:p-8">
                                 <h2 className="text-2xl font-bold text-gray-900 mb-6">{text.summaryOrder}</h2>
 
                                 <div className="space-y-6 mb-8">
@@ -586,9 +579,10 @@ export default function CheckoutPage() {
                         <div className=" mx-auto max-w-6xl grid lg:grid-cols-3 gap-8">
                             {/* Left Side - Form */}
                             <div className="lg:col-span-2">
-                                <form onSubmit={handleFormSubmit(handleContinueFromInformation)} className="bg-white rounded-lg shadow-sm p-8">
+                                <form onSubmit={handleFormSubmit(handleContinueFromInformation)} className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
                                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{text.information}</h2>
                                     <p className="text-gray-500 text-sm mb-6">{text.fillShippingInfo}</p>
+                                    <p className="text-sm text-[#7a3b2e] mb-6">{text.deliveryTime}</p>
 
                                     <div className="space-y-6">
                                         <h3 className="text-xl font-bold text-gray-900">{text.billingAddress}</h3>
@@ -601,6 +595,7 @@ export default function CheckoutPage() {
                                                 <input
                                                     type="text"
                                                     {...register("firstName")}
+                                                    autoComplete="given-name"
                                                     placeholder={text.enterFirstName}
                                                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
                                                 />
@@ -615,6 +610,7 @@ export default function CheckoutPage() {
                                                 <input
                                                     type="text"
                                                     {...register("lastName")}
+                                                    autoComplete="family-name"
                                                     placeholder={text.enterLastName}
                                                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
                                                 />
@@ -631,7 +627,10 @@ export default function CheckoutPage() {
                                             <input
                                                 type="tel"
                                                 {...register("phone")}
-                                                placeholder="+ 216 000 000 000"
+                                                autoComplete="tel"
+                                                inputMode="numeric"
+                                                maxLength={8}
+                                                placeholder="20 000 000"
                                                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
                                             />
                                             {errors.phone && (
@@ -640,31 +639,33 @@ export default function CheckoutPage() {
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                {text.emailAddress} <span className="text-gray-400 font-normal">(Optional)</span>
-                                            </label>
-                                            <input
-                                                type="email"
-                                                {...register("email")}
-                                                placeholder={text.enterEmail}
-                                                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-                                            />
-                                            {errors.email && (
-                                                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                {text.streetAddress} <span className="text-gray-400 font-normal">(Optional)</span>
+                                                {text.streetAddress} <span className="text-red-600">*</span>
                                             </label>
                                             <input
                                                 type="text"
                                                 {...register("address")}
+                                                autoComplete="street-address"
                                                 placeholder={text.enterStreetAddress}
                                                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
                                             />
                                             {errors.address && (
                                                 <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                {text.emailAddress} <span className="text-gray-400 font-normal">(Optional)</span>
+                                            </label>
+                                            <input
+                                                type="email"
+                                                {...register("email")}
+                                                autoComplete="email" inputMode="email"
+                                                placeholder={text.enterEmail}
+                                                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                                            />
+                                            {errors.email && (
+                                                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
                                             )}
                                         </div>
 
@@ -676,6 +677,7 @@ export default function CheckoutPage() {
                                                 <input
                                                     type="text"
                                                     {...register("state")}
+                                                    autoComplete="address-level1"
                                                     placeholder={text.enterState}
                                                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.state ? 'border-red-500' : 'border-gray-300'}`}
                                                 />
@@ -690,6 +692,7 @@ export default function CheckoutPage() {
                                                 <input
                                                     type="text"
                                                     {...register("city")}
+                                                    autoComplete="address-level2"
                                                     placeholder={text.enterCity}
                                                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
                                                 />
@@ -707,6 +710,7 @@ export default function CheckoutPage() {
                                                 <input
                                                     type="text"
                                                     {...register("zipCode")}
+                                                    autoComplete="postal-code" inputMode="numeric"
                                                     placeholder={text.enterPostalCode}
                                                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.zipCode ? 'border-red-500' : 'border-gray-300'}`}
                                                 />
@@ -720,6 +724,7 @@ export default function CheckoutPage() {
                                                 </label>
                                                 <select
                                                     {...register("country")}
+                                                    autoComplete="country-name"
                                                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.country ? 'border-red-500' : 'border-gray-300'}`}
                                                 >
                                                     <option value="Tunisia">Tunisia</option>
@@ -871,20 +876,6 @@ export default function CheckoutPage() {
                                                 />
                                             </div>
 
-                                            {/* Privacy Policy Checkbox */}
-                                            <div className="mt-4">
-                                                <label className="flex items-start gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={acceptPolicy}
-                                                        onChange={(e) => setAcceptPolicy(e.target.checked)}
-                                                        className="mt-1 w-4 h-4 text-[#842E1B] border-gray-300 rounded focus:ring-[#842E1B]"
-                                                    />
-                                                    <span className="text-sm text-gray-600">
-                                                        {text.acknowledgePolicy}
-                                                    </span>
-                                                </label>
-                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -895,7 +886,7 @@ export default function CheckoutPage() {
                     {/* Step 3: Confirmation */}
                     {currentStep === 3 && (
                         <div className="max-w-3xl mx-auto">
-                            <div className="bg-white rounded-lg shadow-sm p-8">
+                            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
                                 <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">{text.summaryOrderConfirmation}</h2>
                                 <p className="text-gray-500 text-sm text-center mb-8">{text.orderConfirmationDesc}</p>
 
@@ -982,26 +973,11 @@ export default function CheckoutPage() {
                                 {/* Conditional Rendering: Policy & Confirm Button OR Continue Shopping */}
                                 {!orderConfirmed ? (
                                     <>
-                                        {/* Privacy Policy Checkbox */}
-                                        <div className="mb-6">
-                                            <label className="flex items-start gap-2 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={acceptPolicy}
-                                                    onChange={(e) => setAcceptPolicy(e.target.checked)}
-                                                    className="mt-1 w-4 h-4 text-[#842E1B] border-gray-300 rounded focus:ring-[#842E1B]"
-                                                />
-                                                <span className="text-sm text-gray-600">
-                                                    {text.acknowledgePolicy}
-                                                </span>
-                                            </label>
-                                        </div>
-
                                         {/* Confirm Order Button */}
                                         <form onSubmit={handleFormSubmit(onSubmit)}>
                                             <button
                                                 type="submit"
-                                                disabled={isProcessing || !acceptPolicy}
+                                                disabled={isProcessing}
                                                 className="w-full py-4 bg-[#7a3b2e] text-white text-lg rounded-lg hover:bg-[#5e2d23] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 {isProcessing ? text.processing : text.confirmMyOrder}
@@ -1059,7 +1035,7 @@ export default function CheckoutPage() {
                             </div>
                         </div>
                     )}
-                    <div className="absolute top-70 right-0 ">
+                    <div className="pointer-events-none absolute top-70 right-0 hidden lg:block" aria-hidden="true">
                         <Image src="/assets/images/checkout/bgCheckoutRight.svg" alt="bg-checkout" width={100} height={100} className="w-full h-full object-cover" />
                     </div>
                 </div>
@@ -1068,4 +1044,3 @@ export default function CheckoutPage() {
         </>
     );
 }
-

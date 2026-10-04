@@ -56,6 +56,7 @@ const ENTITY_LABELS: Record<string, string> = {
     reviews: msg("Review"),
     newsletter_subscribers: msg("Newsletter subscriber"),
     team_member: msg("Team member"),
+    access: msg("Access"),
 };
 
 const ACTIONS: Record<string, { label: string; color: string }> = {
@@ -65,10 +66,11 @@ const ACTIONS: Record<string, { label: string; color: string }> = {
     restore: { label: msg("Restored"), color: "gold" },
     purge: { label: msg("Erased for good"), color: "magenta" },
     remove_access: { label: msg("Access removed"), color: "orange" },
+    access_denied: { label: msg("Blocked attempt"), color: "volcano" },
 };
 
 // Columns that only add noise when a row is created.
-const HIDDEN_ON_CREATE = new Set(["id", "created_at", "updated_at", "deleted_at"]);
+const HIDDEN_ON_CREATE = new Set(["id", "created_at", "updated_at", "deleted_at", "search_text", "search_name"]);
 
 function formatValue(value: unknown): string {
     if (value === null || value === undefined) return "—";
@@ -151,7 +153,7 @@ export default function ActivityPage() {
                 ) : (
                     <>
                         {row.actor_email ?? row.actor_id}
-                        {row.actor_role && <Tag style={{ marginInlineStart: 8 }}>{t(row.actor_role === "admin" ? "Admin" : "Staff")}</Tag>}
+                        {row.actor_role && <Tag style={{ marginInlineStart: 8 }}>{t(row.actor_role === "owner" ? "Owner" : row.actor_role === "admin" ? "Admin" : "Staff")}</Tag>}
                     </>
                 ),
         },

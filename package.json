@@ -12,6 +12,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
     "@hookform/resolvers": "^5.9.1",
+    "@sentry/nextjs": "^11.4.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "antd": "^6.6.5",

@@ -1,6 +1,9 @@
 type AuthUser = { email?: string | null; app_metadata?: Record<string, unknown> };
 
-export type AdminRole = 'admin' | 'staff';
+export type AdminRole = 'owner' | 'admin' | 'staff';
+
+/** Owners and admins have every permission; only owners manage other owners and get owner alerts. */
+export const hasFullAccess = (role: AdminRole | null | undefined): boolean => role === 'owner' || role === 'admin';
 
 /**
  * What a staff member can be allowed to do. Admins implicitly have every permission,
@@ -36,38 +39,43 @@ export const PERMISSION_PRESETS: { label: string; permissions: Permission[] }[] 
 const isPermission = (value: unknown): value is Permission =>
     typeof value === 'string' && (ALL_PERMISSIONS as string[]).includes(value);
 
+const emailList = (value: string | undefined) =>
+    (value ?? '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
+
 /**
  * Back-office role of a signed-in user, or null for shoppers.
  * Only app_metadata is trusted: user_metadata is editable by the user themselves.
- * Emails in ADMIN_EMAILS are always admins.
+ * Emails in OWNER_EMAILS are always owners, and emails in ADMIN_EMAILS always admins.
  */
 export function getAdminRole(user: AuthUser | null): AdminRole | null {
     if (!user) return null;
 
     const role = user.app_metadata?.role;
-    if (role === 'admin') return 'admin';
-
-    const allowedEmails = (process.env.ADMIN_EMAILS ?? '')
-        .split(',')
-        .map((email) => email.trim().toLowerCase())
-        .filter(Boolean);
-    if (user.email && allowedEmails.includes(user.email.toLowerCase())) return 'admin';
+    const email = user.email?.toLowerCase();
+    if (role === 'owner' || (email && emailList(process.env.OWNER_EMAILS).includes(email))) return 'owner';
+    if (role === 'admin' || (email && emailList(process.env.ADMIN_EMAILS).includes(email))) return 'admin';
 
     return role === 'staff' ? 'staff' : null;
 }
 
-/** Permissions of a back-office user: every one for admins, app_metadata.permissions for staff. */
+/** True when the role comes from OWNER_EMAILS / ADMIN_EMAILS rather than the account itself (can't be changed in the Team page). */
+export function isRoleFromSettings(user: AuthUser | null): boolean {
+    const role = getAdminRole(user);
+    return (role === 'owner' || role === 'admin') && user?.app_metadata?.role !== role;
+}
+
+/** Permissions of a back-office user: every one for owners and admins, app_metadata.permissions for staff. */
 export function getPermissions(user: AuthUser | null): Permission[] {
     const role = getAdminRole(user);
-    if (role === 'admin') return ALL_PERMISSIONS;
+    if (hasFullAccess(role)) return ALL_PERMISSIONS;
     if (role !== 'staff') return [];
     const stored = user?.app_metadata?.permissions;
     return Array.isArray(stored) ? stored.filter(isPermission) : DEFAULT_STAFF_PERMISSIONS;
 }
 
-/** Full admins only. */
+/** Owners and admins. */
 export function isAdminUser(user: AuthUser | null): boolean {
-    return getAdminRole(user) === 'admin';
+    return hasFullAccess(getAdminRole(user));
 }
 
 /** Headers middleware.ts sets on authorized back-office API requests (client values are overwritten). */
@@ -89,7 +97,7 @@ export interface AdminActor {
 export function getAdminActor(headers: Headers): AdminActor {
     const role = headers.get(ADMIN_HEADERS.role);
     return {
-        role: role === 'admin' || role === 'staff' ? role : null,
+        role: role === 'owner' || role === 'admin' || role === 'staff' ? role : null,
         userId: headers.get(ADMIN_HEADERS.userId) || null,
         email: headers.get(ADMIN_HEADERS.email) || null,
         permissions: (headers.get(ADMIN_HEADERS.permissions) ?? '').split(',').filter(isPermission),

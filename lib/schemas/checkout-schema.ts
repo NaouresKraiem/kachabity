@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Checkout form validation schema
-// Only firstName, lastName, and phone are required to simplify checkout
+// Name, phone, and delivery address are required. Email is optional.
 export const checkoutSchema = z.object({
     firstName: z.string()
         .min(2, "First name must be at least 2 characters")
@@ -12,10 +12,9 @@ export const checkoutSchema = z.object({
         .max(50, "Last name must be less than 50 characters"),
 
     phone: z.string()
-        .min(8, "Phone number must be at least 8 digits")
-        .regex(/^[\d\s+()-]+$/, "Please enter a valid phone number"),
+        .regex(/^[24579]\d{7}$/, "Enter a valid 8-digit Tunisian phone number"),
 
-    // Optional fields
+    // Optional field
     email: z.union([
         z.string().email("Please enter a valid email address"),
         z.literal(""),
@@ -23,8 +22,9 @@ export const checkoutSchema = z.object({
     ]).optional(),
 
     address: z.string()
-        .max(200, "Address must be less than 200 characters")
-        .optional(),
+        .trim()
+        .min(1, "Delivery address is required")
+        .max(200, "Address must be less than 200 characters"),
 
     city: z.string()
         .max(50, "City must be less than 50 characters")
@@ -51,4 +51,3 @@ export const checkoutSchema = z.object({
 
 // TypeScript type inferred from schema
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
-

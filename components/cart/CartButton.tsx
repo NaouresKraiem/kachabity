@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
@@ -29,6 +30,10 @@ export default function CartButton() {
     // Extract locale from pathname
     const locale = pathname?.split('/')[1] || 'en';
     const t = translations[locale as keyof typeof translations] || translations.en;
+    // The header hydrates inside a Suspense boundary after the cart has loaded from storage;
+    // showing the count only once mounted keeps the first client render equal to the server HTML.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
     // Try to use cart context, fallback to defaults if outside provider
     let totalItems = 0;
@@ -50,7 +55,7 @@ export default function CartButton() {
         >
             <div className="relative">
                 <Image src="/assets/images/icons/addCart.svg" alt="cart" width={24} height={24} />
-                {totalItems > 0 && (
+                {mounted && totalItems > 0 && (
                     <span className="absolute -top-2 -right-2 bg-[#842E1B] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                         {totalItems}
                     </span>

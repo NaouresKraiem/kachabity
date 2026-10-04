@@ -14,7 +14,7 @@ const translations = {
         shopCollection: "Shop the collection",
         allProducts: "See all products",
         cashOnDelivery: "Cash on delivery",
-        freeDelivery: (amount: number) => `Free delivery from ${amount} ${CURRENCY}`,
+        freeDelivery: (amount: number) => `Free delivery above ${amount} ${CURRENCY}`,
     },
     fr: {
         title: "Kachabia, burnous et dengri, faits en Tunisie",
@@ -30,7 +30,7 @@ const translations = {
         shopCollection: "تسوّق المجموعة",
         allProducts: "كل المنتجات",
         cashOnDelivery: "الدفع عند الاستلام",
-        freeDelivery: (amount: number) => `توصيل مجاني ابتداءً من ${amount} ${CURRENCY}`,
+        freeDelivery: (amount: number) => `توصيل مجاني للطلبات التي تتجاوز ${amount} ${CURRENCY}`,
     },
 };
 

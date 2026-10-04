@@ -44,7 +44,7 @@ const getContent = (): Record<string, TermsContent> => ({
             shipping: {
                 title: "Shipping Policy",
                 content: [
-                    "We currently ship to addresses within Tunisia. Delivery lead times typically range from 2 to 7 business days depending on destination, product availability, and courier capacity.",
+                    "We currently ship to addresses within Tunisia. Orders are delivered within 48 hours after confirmation, subject to exceptional delays caused by product availability, courier capacity, weather, or public holidays.",
                     "Shipping fees are calculated at checkout and include handling and packaging. Orders over the free-shipping threshold listed on our website may qualify for complimentary delivery.",
                     "Once your parcel is transferred to the carrier, risk of loss passes to you. Please inspect your package upon receipt and contact us within 48 hours if anything is missing or damaged.",
                     "For the most up-to-date information on delivery windows, carrier partners, or international shipping availability, please review the dedicated Shipping Policy page."
@@ -198,7 +198,7 @@ const getContent = (): Record<string, TermsContent> => ({
             shipping: {
                 title: "سياسة الشحن",
                 content: [
-                    "نقوم حاليًا بالشحن داخل تونس. تتراوح مدة التوصيل عادةً بين 2 و7 أيام عمل حسب الوجهة وتوفر المنتج وطاقة شركات النقل.",
+                    "نقوم حاليًا بالشحن داخل تونس. يتم توصيل الطلبات خلال 48 ساعة من تأكيدها، مع احتمال حدوث تأخير استثنائي بسبب توفر المنتج أو طاقة شركات النقل أو الطقس أو العطل الرسمية.",
                     "تُحتسب رسوم الشحن عند إتمام الطلب وتشمل المناولة والتغليف. الطلبات التي تتجاوز حد الشحن المجاني المذكور على موقعنا قد تستفيد من توصيل مجاني.",
                     "بعد تسليم الطرد لشركة النقل يتحمّل العميل مخاطر الفقدان. يرجى فحص الطرد فور الاستلام وإبلاغنا خلال 48 ساعة في حال وجود نقص أو تلف.",
                     "للحصول على أحدث المعلومات حول شركات النقل، والمناطق المشمولة أو خيارات الشحن الدولي، يُرجى الاطلاع على صفحة سياسة الشحن."
@@ -317,4 +317,3 @@ export default function TermsAndConditions() {
         </>
     );
 }
-

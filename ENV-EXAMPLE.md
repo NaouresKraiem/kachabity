@@ -23,11 +23,22 @@ GMAIL_APP_PASSWORD=your-16-character-app-password
 # on each new server instance. Update it if you rotate the project's signing keys.
 SUPABASE_JWKS={"keys":[...]}
 
+# Back-office roles that don't depend on the account (comma-separated emails, server only).
+# Owners can do everything, are the only ones who manage other owners, and receive owner
+# alerts (deletes and unusual actions by admins and staff). Admins can do everything else.
+OWNER_EMAILS=you@yourdomain.com
+ADMIN_EMAILS=manager@yourdomain.com
+
 # Custom recipient for contact forms (defaults to GMAIL_USER)
 CONTACT_TO_EMAIL=business@yourdomain.com
 
 # Site Configuration
 NEXT_PUBLIC_SITE_URL=https://yourdomain.com
+
+# Optional external stock API key. Send it as the `x-api-key` request header
+# when calling GET /api/stock/inventory. Keep this value secret.
+STOCK_API_KEY=replace-with-a-long-random-key
+
 NEXT_PUBLIC_PHONE=+216 55 558 648
 NEXT_PUBLIC_ADRESS=Your Address
 NEXT_PUBLIC_LOCATION=Your Location
@@ -42,6 +53,19 @@ NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD=100
 NEXT_PUBLIC_DEFAULT_SHIPPING_COST=7
 NEXT_PUBLIC_CURRENCY=TND
 NEXT_PUBLIC_WALLET_NAME=Your Wallet Name
+
+# Deployment environment: "local" on developer machines, "production" on Netlify.
+# Read in code through lib/app-env.ts; also used as the Sentry environment.
+ENV=local
+
+# Sentry error monitoring (settings per ENV in lib/sentry-options.ts; `next dev` never reports)
+# DSN: Sentry → Project Settings → Client Keys (DSN). Public, safe in the browser.
+NEXT_PUBLIC_SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project-id>
+# Build-time only, for readable stack traces (source map upload). Set on Netlify.
+# Token: Sentry → Settings → Auth Tokens (Organization token). Server-only, keep secret.
+SENTRY_AUTH_TOKEN=sntrys_...
+SENTRY_ORG=your-org-slug
+SENTRY_PROJECT=your-project-slug
 ```
 
 ## How to Get Gmail App Password

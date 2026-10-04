@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server';
 import { supportedLanguages, defaultLanguage, detectLanguageFromHeader, isValidLocale } from './lib/language-utils';
-import { ADMIN_HEADERS, getAdminRole, getPermissions, type AdminRole, type Permission } from './lib/admin-auth';
+import { ADMIN_HEADERS, getAdminRole, getPermissions, hasFullAccess, type AdminRole, type Permission } from './lib/admin-auth';
 import { supabaseUrl, supabasePublishableKey } from './lib/supabase-env';
 import { TRASH_TABLES, isTrashTable } from './lib/trash-tables';
 
@@ -14,8 +14,8 @@ const ADMIN_LOGIN_PATH = '/admin/login';
  * - { any: [a, b] }: at least one of these permissions
  * - { all: [...] }: every one of these (deletes need the area's permission and `delete`;
  *   permanent deletes need it and `hard_delete`)
- * - { admin: true }: admins only (team management)
- * Admins have every permission.
+ * - { admin: true }: owners and admins only (team management)
+ * Owners and admins have every permission.
  */
 type Requirement = { any?: Permission[]; all?: Permission[]; admin?: boolean };
 
@@ -99,7 +99,7 @@ function withoutAdminHeaders(request: NextRequest): Headers {
 }
 
 function allows(requirement: Requirement, role: AdminRole, permissions: Permission[]): boolean {
-    if (role === 'admin') return true;
+    if (hasFullAccess(role)) return true;
     if (requirement.admin) return false;
     const any = requirement.any ?? [];
     return (any.length === 0 || any.some((p) => permissions.includes(p))) && (requirement.all ?? []).every((p) => permissions.includes(p));
@@ -149,8 +149,43 @@ async function getRequestUser(request: NextRequest, response: NextResponse) {
     };
 }
 
-export async function middleware(request: NextRequest) {
+// A signed-in staff member was refused: recorded in the activity log, which alerts the owner
+// (private.owner_alerts). Prefetches are skipped: they aren't something the person did.
+function logRefusal(request: NextRequest, event: NextFetchEvent, user: { id: string | null; email: string | null }, role: AdminRole) {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const prefetch = request.headers.get('next-router-prefetch') || request.headers.get('purpose') === 'prefetch';
+    if (!serviceKey || !supabaseUrl || !user.id || prefetch) return;
+    event.waitUntil(
+        fetch(`${supabaseUrl}/rest/v1/activity_log`, {
+            method: 'POST',
+            headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify({
+                actor_id: user.id,
+                actor_email: user.email,
+                actor_role: role,
+                action: 'access_denied',
+                entity: 'access',
+                label: `${request.method} ${request.nextUrl.pathname}`,
+                changes: { query: request.nextUrl.search || null },
+            }),
+        }).catch(() => undefined)
+    );
+}
+
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
     const pathname = request.nextUrl.pathname;
+    const method = request.method.toUpperCase();
+
+    // Allow trusted external systems to read inventory without an admin session.
+    // The key is server-side only and must be sent as `x-api-key`.
+    if (
+        pathname === '/api/stock/inventory' &&
+        method === 'GET' &&
+        process.env.STOCK_API_KEY &&
+        request.headers.get('x-api-key') === process.env.STOCK_API_KEY
+    ) {
+        return NextResponse.next();
+    }
 
 
     // Already-signed-in back-office users have no reason to see the login form.
@@ -178,6 +213,7 @@ export async function middleware(request: NextRequest) {
         }
         const permissions = getPermissions(user);
         if (!allows(needed, role, permissions)) {
+            if (user) logRefusal(request, event, user, role);
             if (pathname.startsWith('/api/')) {
                 return NextResponse.json({ success: false, error: "You don't have permission to do this." }, { status: 403 });
             }
@@ -241,5 +277,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/((?!_next|favicon.ico).*)'],
+    // /monitoring is the Sentry tunnel (next.config.ts): no locale prefix, no admin gate.
+    matcher: ['/((?!_next|favicon.ico|monitoring).*)'],
 };

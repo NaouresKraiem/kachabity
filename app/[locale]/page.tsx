@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Fragment, Suspense } from "react";
 import PromoProducts from "@/components/products/PromoProducts";
 import CustomerFeedback from "@/components/reviews/CustomerFeedback";
+import { SHOW_RATINGS } from "@/lib/config";
 import SaleBanner from "@/components/sections/SaleBanner";
 import Reels from "@/components/sections/Reels";
 import ServiceHighlights from "@/components/services/ServiceHighlights";
@@ -136,7 +137,7 @@ async function getHomeSections(): Promise<Record<'categories' | 'topProducts' | 
     settle(getPromoProducts()),
     settle(getSaleBanners()),
     settle(getReels()),
-    settle(getLatestReviews()),
+    SHOW_RATINGS ? settle(getLatestReviews()) : Promise.resolve(null),
   ]);
   return { categories, topProducts: top?.products, promoProducts: promo?.products, saleBanners, reels, reviews };
 }
@@ -166,7 +167,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     promo_products: <PromoProducts locale={locale} initialProducts={home.promoProducts} />,
     sale_banners: <SaleBanner initialPromotions={home.saleBanners} />,
     reels: <Reels initialReels={home.reels} />,
-    reviews: <CustomerFeedback initialReviews={home.reviews} />,
+    reviews: SHOW_RATINGS ? <CustomerFeedback initialReviews={home.reviews} /> : null,
     how_to_order: <HowToOrder locale={locale} freeShippingThreshold={landing.freeShippingThreshold} />,
     faq: <FAQ />,
   };

@@ -40,9 +40,7 @@ const getContent = (): Record<string, ShippingContent> => ({
             deliveryTimes: {
                 title: "3. Estimated Delivery Times",
                 content: [
-                    "Grand Tunis and Sahel: typically 2–3 business days after processing.",
-                    "Interior regions: typically 3–5 business days after processing.",
-                    "Remote areas: up to 7 business days. Delivery windows are estimates and may be affected by weather, carrier capacity, or public holidays. We will inform you of material delays."
+                    "Orders are delivered within 48 hours after confirmation. Delivery may be affected by exceptional weather, carrier capacity, or public holidays; we will inform you of any material delay."
                 ]
             },
             fees: {
@@ -105,9 +103,7 @@ const getContent = (): Record<string, ShippingContent> => ({
             deliveryTimes: {
                 title: "3. Délais Estimés",
                 content: [
-                    "Grand Tunis et Sahel : 2 à 3 jours ouvrables après traitement.",
-                    "Régions intérieures : 3 à 5 jours ouvrables après traitement.",
-                    "Zones éloignées : jusqu'à 7 jours ouvrables. Ces délais sont indicatifs et peuvent être impactés par les conditions météo, la capacité des transporteurs ou les jours fériés."
+                    "Les commandes sont livrées sous 48 heures après confirmation. Le délai peut être affecté par des conditions météo exceptionnelles, la capacité des transporteurs ou les jours fériés ; nous vous informerons de tout retard important."
                 ]
             },
             fees: {
@@ -170,9 +166,7 @@ const getContent = (): Record<string, ShippingContent> => ({
             deliveryTimes: {
                 title: "3. أوقات التوصيل المتوقعة",
                 content: [
-                    "الكبير تونس والساحل: 2 إلى 3 أيام عمل بعد المعالجة.",
-                    "الجهات الداخلية: 3 إلى 5 أيام عمل بعد المعالجة.",
-                    "المناطق البعيدة: حتى 7 أيام عمل. هذه المدد تقديرية وقد تتأثر بالطقس أو ضغط شركات الشحن أو العطل الرسمية."
+                    "يتم توصيل الطلبات خلال 48 ساعة من تأكيدها. قد يتأثر التوصيل بالظروف الجوية الاستثنائية أو ضغط شركات الشحن أو العطل الرسمية، وسنبلغكم بأي تأخير مهم."
                 ]
             },
             fees: {
@@ -258,5 +252,4 @@ export default function ShippingPolicyPage() {
         </>
     );
 }
-
 

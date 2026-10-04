@@ -1,0 +1,86 @@
+[    2042ms] [LOG] [] @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[    2435ms] [LOG] [] @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[    5621ms] Error: Kachabiti Sentry test: browser error (safe to resolve)
+    at eval (eval at <anonymous> (eval at evaluate (:368:30)), <anonymous>:1:83)
+    at u (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:76059)
+[    6652ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[   13029ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3217/_next/image?url=https%3A%2F%2Fhwxgibxahqdxkzuvfxvz.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fproducts%2Fproduct-1791100593912-4d4mfc35chd.jpeg&w=256&q=75:0
+[  223405ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-laine-zemnia-homme-224?_rsc=hzSnuEIku7rSEy2q:0
+[  223412ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-laine-zemnia-homme-224. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  227114ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-zemnia-demi-homme-241?_rsc=hzSnuEIku7rSEy2q:0
+[  227114ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-zemnia-demi-homme-241. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  230859ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-chakhma-pro-max-2-7066?_rsc=hzSnuEIku7rSEy2q:0
+[  230860ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-chakhma-pro-max-2-7066. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  234600ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/dengri-tunisien-simple-6583?_rsc=hzSnuEIku7rSEy2q:0
+[  234601ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/dengri-tunisien-simple-6583. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  238345ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-mlef-bouc-2638?_rsc=hzSnuEIku7rSEy2q:0
+[  238345ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-mlef-bouc-2638. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  242075ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-zemnia-rayee-4952?_rsc=hzSnuEIku7rSEy2q:0
+[  242075ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-zemnia-rayee-4952. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  245814ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-cachemire-3226?_rsc=hzSnuEIku7rSEy2q:0
+[  245815ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-cachemire-3226. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  249665ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/burnous-tunisien-laine-232?_rsc=hzSnuEIku7rSEy2q:0
+[  249665ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/burnous-tunisien-laine-232. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  253403ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-poil-de-chameau-1853?_rsc=hzSnuEIku7rSEy2q:0
+[  253404ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-poil-de-chameau-1853. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  257169ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/dengri-du-marie-5849?_rsc=hzSnuEIku7rSEy2q:0
+[  257172ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/dengri-du-marie-5849. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  260883ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-ennour-3742?_rsc=hzSnuEIku7rSEy2q:0
+[  260883ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-ennour-3742. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  264622ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/kachabia-wazra-tibar-7018?_rsc=hzSnuEIku7rSEy2q:0
+[  264622ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/kachabia-wazra-tibar-7018. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  268366ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3217/fr/products/blouza-djerbienne-homme-690?_rsc=hzSnuEIku7rSEy2q:0
+[  268366ms] [ERROR] Failed to fetch RSC payload for http://localhost:3217/fr/products/blouza-djerbienne-homme-690. Falling back to browser navigation. TypeError: Failed to fetch (localhost:3217)
+    at Object.apply (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:18:68824)
+    at _ (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:2569)
+    at async g (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:1:1427)
+    at async Object.i [as task] (http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:14:42242) @ http://localhost:3217/_next/static/chunks/6417-93a3df32c6ed3e95.js:9
+[  309240ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3217/_next/image?url=https%3A%2F%2Fhwxgibxahqdxkzuvfxvz.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fproducts%2Fwp%2F2026-03-whatsapp-image-2026-03-10-at-11-42-32.webp&w=256&q=75:0

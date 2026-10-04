@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from 'react-hot-toast';
@@ -18,6 +18,14 @@ const hando = localFont({
   variable: "--font-hando",
 });
 
+// viewport-fit=cover lets the phone tab bar and buy bar sit above the iPhone home indicator.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://kachabiti.tn"),
   title: "Kachabiti - Handcrafted Traditional Products | Premium Quality",
@@ -26,6 +34,11 @@ export const metadata: Metadata = {
   authors: [{ name: "Kachabiti" }],
   creator: "Kachabiti",
   publisher: "Kachabiti",
+  appleWebApp: {
+    capable: true,
+    title: "Kachabity",
+    statusBarStyle: "default",
+  },
   robots: {
     index: true,
     follow: true,
@@ -109,7 +122,7 @@ export default async function RootLayout({
       <body className={`${inter.className} ${hando.variable}`} suppressHydrationWarning>
           {children}
           <Toaster
-            position="top-right"
+            position="top-center"
             toastOptions={{
               success: {
                 style: {

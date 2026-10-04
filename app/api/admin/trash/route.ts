@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminActor } from '@/lib/admin-auth';
+import { getAdminActor, hasFullAccess } from '@/lib/admin-auth';
 import { invalidateCatalog } from '@/lib/catalog-cache';
 import supabase from '@/lib/supabase-admin';
 import { TRASH_TABLES, isTrashTable, type TrashTable } from '@/lib/trash-tables';
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         if (table === null) {
             const actor = getAdminActor(request.headers);
             const tables = (Object.keys(TRASH_TABLES) as TrashTable[]).filter((t) =>
-                actor.role === 'admin' || actor.permissions.includes(TRASH_TABLES[t].permission));
+                hasFullAccess(actor.role) || actor.permissions.includes(TRASH_TABLES[t].permission));
             const results = await Promise.all(tables.map((t) =>
                 supabase.from(t).select('id', { count: 'exact', head: true }).not('deleted_at', 'is', null)));
             const failed = results.find((r) => r.error);

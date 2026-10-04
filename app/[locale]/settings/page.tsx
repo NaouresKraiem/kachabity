@@ -714,7 +714,7 @@ export default function SettingsPage({ params }: { params: Promise<{ locale: Loc
                   </div>
                 ) : (
                   <div className="p-6">
-                    <div className="flex gap-6 overflow-x-auto pb-4">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-7 pb-4 sm:grid-cols-3 lg:grid-cols-4">
                       {savedItems.map((item) => (
                         <ProductListCard
                           key={item.id}

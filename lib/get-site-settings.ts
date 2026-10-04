@@ -56,7 +56,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
             return {
                 global_free_shipping_threshold: 500,
                 free_shipping_enabled: true,
-                default_shipping_cost: 7,
+                default_shipping_cost: 8,
                 shipping_tax_rate: 0,
                 general_tax_rate: 0.19
             };
@@ -65,7 +65,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         const settings: SiteSettings = {
             global_free_shipping_threshold: 500,
             free_shipping_enabled: true,
-            default_shipping_cost: 7,
+            default_shipping_cost: 8,
             shipping_tax_rate: 0,
             general_tax_rate: 0.19
         };
@@ -89,7 +89,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         return {
             global_free_shipping_threshold: 500,
             free_shipping_enabled: true,
-            default_shipping_cost: 7,
+            default_shipping_cost: 8,
             shipping_tax_rate: 0,
             general_tax_rate: 0.19
         };
@@ -186,4 +186,3 @@ export async function getAllCountryTaxRates(): Promise<CountryTaxRate[]> {
         return [];
     }
 }
-

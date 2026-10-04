@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logActivity } from '@/lib/activity-log';
 import supabase from '@/lib/supabase-admin';
-import { ALL_PERMISSIONS, DEFAULT_STAFF_PERMISSIONS, getAdminActor, getAdminRole, getPermissions, type Permission } from '@/lib/admin-auth';
+import { ALL_PERMISSIONS, DEFAULT_STAFF_PERMISSIONS, getAdminActor, getAdminRole, getPermissions, isRoleFromSettings, type AdminRole, type Permission } from '@/lib/admin-auth';
+import { syncBackOfficeUser } from '@/lib/back-office-users';
 
 export const dynamic = 'force-dynamic';
 
-// Back-office team (admins and staff). Middleware limits every method to admins.
+// Back-office team (owners, admins and staff). Middleware limits every method to owners and
+// admins; only owners can make someone an owner or change or delete an owner.
 
 // Supabase Auth admin calls fail with a status-0 "retryable" error when the connection drops;
 // retry those a couple of times instead of surfacing a spurious failure.
@@ -34,8 +36,8 @@ const member = (user: AuthUser) => ({
     email: user.email ?? '',
     role: getAdminRole(user),
     permissions: getPermissions(user),
-    // ADMIN_EMAILS admins can't be changed from here.
-    locked: getAdminRole(user) === 'admin' && user.app_metadata?.role !== 'admin',
+    // OWNER_EMAILS owners and ADMIN_EMAILS admins can't be changed from here.
+    locked: isRoleFromSettings(user),
     last_sign_in_at: user.last_sign_in_at ?? null,
     created_at: user.created_at,
 });
@@ -52,6 +54,16 @@ export async function GET() {
     return NextResponse.json({ success: true, data: team });
 }
 
+const isRole = (value: unknown): value is AdminRole => value === 'owner' || value === 'admin' || value === 'staff';
+
+const ownersOnly = () =>
+    NextResponse.json({ success: false, error: 'Only an owner can give the owner role or change an owner.' }, { status: 403 });
+
+// The account's own fields, for back_office_users.
+const syncMember = (user: AuthUser) => syncBackOfficeUser({
+    id: user.id, email: user.email ?? null, role: getAdminRole(user), permissions: getPermissions(user),
+});
+
 // Keeps only known permission names; undefined means "not provided".
 function parsePermissions(value: unknown): Permission[] | undefined {
     if (value === undefined) return undefined;
@@ -62,15 +74,16 @@ function parsePermissions(value: unknown): Permission[] | undefined {
 // POST { email, password, role, permissions? } creates a back-office account.
 export async function POST(request: NextRequest) {
     const { email, password, role, permissions } = await request.json();
-    if (typeof email !== 'string' || !email.includes('@') || (role !== 'admin' && role !== 'staff')) {
+    if (typeof email !== 'string' || !email.includes('@') || !isRole(role)) {
         return NextResponse.json({ success: false, error: 'A valid email and role are required' }, { status: 400 });
     }
+    if (role === 'owner' && getAdminActor(request.headers).role !== 'owner') return ownersOnly();
 
     const { data, error } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.createUser>>>(() => supabase.auth.admin.createUser({
         email: email.trim().toLowerCase(),
         password: typeof password === 'string' && password ? password : undefined,
         email_confirm: true,
-        // Admins have every permission, so only staff store a list.
+        // Owners and admins have every permission, so only staff store a list.
         app_metadata: role === 'staff' ? { role, permissions: parsePermissions(permissions) ?? DEFAULT_STAFF_PERMISSIONS } : { role },
     }));
     if (error) {
@@ -81,6 +94,7 @@ export async function POST(request: NextRequest) {
         );
     }
     const created = member(data.user as AuthUser);
+    await syncMember(data.user as AuthUser);
     await logActivity(getAdminActor(request.headers), {
         action: 'create', entity: 'team_member', entityId: created.id, label: created.email,
         changes: { role: created.role, permissions: created.permissions },
@@ -92,7 +106,7 @@ export async function POST(request: NextRequest) {
 // role null removes back-office access (the account stays).
 export async function PUT(request: NextRequest) {
     const { id, role, permissions } = await request.json();
-    if (!id || (role !== 'admin' && role !== 'staff' && role !== null)) {
+    if (!id || (!isRole(role) && role !== null)) {
         return NextResponse.json({ success: false, error: 'id and role are required' }, { status: 400 });
     }
     if (id === getAdminActor(request.headers).userId) {
@@ -101,6 +115,10 @@ export async function PUT(request: NextRequest) {
 
     const { data: existing, error: getError } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.getUserById>>>(() => supabase.auth.admin.getUserById(id));
     if (getError || !existing.user) return notFoundOr(getError);
+    if ((role === 'owner' || getAdminRole(existing.user) === 'owner') && getAdminActor(request.headers).role !== 'owner') return ownersOnly();
+    if (isRoleFromSettings(existing.user)) {
+        return NextResponse.json({ success: false, error: 'This role comes from the OWNER_EMAILS or ADMIN_EMAILS setting. Change it there.' }, { status: 400 });
+    }
 
     const appMetadata: Record<string, unknown> = { ...(existing.user.app_metadata ?? {}), role };
     const parsed = parsePermissions(permissions);
@@ -112,6 +130,7 @@ export async function PUT(request: NextRequest) {
     }
     const { data, error } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.updateUserById>>>(() => supabase.auth.admin.updateUserById(id, { app_metadata: appMetadata }));
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    await syncMember(data.user as AuthUser);
     await logActivity(getAdminActor(request.headers), {
         action: role === null ? 'remove_access' : 'update', entity: 'team_member', entityId: id, label: existing.user.email ?? null,
         changes: {
@@ -133,8 +152,9 @@ export async function DELETE(request: NextRequest) {
 
     const { data: existing, error: getError } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.getUserById>>>(() => supabase.auth.admin.getUserById(id));
     if (getError || !existing.user) return notFoundOr(getError);
-    if (getAdminRole(existing.user) === 'admin' && existing.user.app_metadata?.role !== 'admin') {
-        return NextResponse.json({ success: false, error: 'This admin comes from the ADMIN_EMAILS setting. Remove it there first.' }, { status: 400 });
+    if (getAdminRole(existing.user) === 'owner' && getAdminActor(request.headers).role !== 'owner') return ownersOnly();
+    if (isRoleFromSettings(existing.user)) {
+        return NextResponse.json({ success: false, error: 'This role comes from the OWNER_EMAILS or ADMIN_EMAILS setting. Remove it there first.' }, { status: 400 });
     }
 
     // Soft delete: access is removed first (so the account leaves the team list), then
@@ -145,6 +165,7 @@ export async function DELETE(request: NextRequest) {
     if (updateError) return NextResponse.json({ success: false, error: updateError.message }, { status: 400 });
     const { error } = await withRetry<Awaited<ReturnType<typeof supabase.auth.admin.deleteUser>>>(() => supabase.auth.admin.deleteUser(id, true));
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    await syncBackOfficeUser({ id, email: existing.user.email ?? null, role: null, permissions: [] });
     await logActivity(getAdminActor(request.headers), {
         action: 'delete', entity: 'team_member', entityId: id, label: existing.user.email ?? null,
         changes: { role: { from: getAdminRole(existing.user), to: null } },

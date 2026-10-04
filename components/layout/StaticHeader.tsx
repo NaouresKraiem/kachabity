@@ -8,6 +8,8 @@ import { useLanguageSafe } from '@/lib/language-context';
 import { getCategories } from '@/lib/categories-cache';
 import { isRTL } from '@/lib/language-utils';
 import CartButton from '../cart/CartButton';
+import SearchBox from './SearchBox';
+import MobileHeader from './MobileHeader';
 import supabase from '@/lib/supabaseClient';
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
@@ -109,8 +111,6 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
     const searchParams = useSearchParams();
 
     const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -198,20 +198,20 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
         }
     }, [mounted, searchParams]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
+    // Results page for a search, keeping the other filters already in the URL.
+    // Absolute, locale-prefixed path: a relative 'products' breaks on nested routes.
+    const searchResultsHref = (query: string) => {
         const params = new URLSearchParams(searchParams);
-        if (search.trim()) {
-            params.set("search", search.trim());
+        if (query) {
+            params.set("search", query);
         } else {
             params.delete("search");
         }
-        // Absolute, locale-prefixed path: a relative 'products' breaks on nested routes.
-        router.push(`/${locale}/products?${params.toString()}`);
+        return `/${locale}/products?${params.toString()}`;
     };
 
     return (
-        <header className="w-full " dir={mounted ? (rtl ? 'rtl' : 'ltr') : 'ltr'}>
+        <header className="sticky top-0 z-40 w-full sm:static" dir={mounted ? (rtl ? 'rtl' : 'ltr') : 'ltr'}>
             {/* Top Bar - Desktop */}
             <div className="bg-primary text-white py-4 min-h-[64px] hidden sm:block">
                 <div className={`max-w-7xl mx-auto flex justify-between items-center text-sm h-8 px-4`}>
@@ -283,82 +283,6 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                 </div>
             </div>
 
-            {/* Top Bar - Mobile */}
-            <div className="bg-primary text-white py-2 px-2 sm:hidden">
-                <div className={`max-w-7xl mx-auto flex justify-between items-center gap-2`}>
-                    {/* Left: Social Media Icons */}
-                    <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
-                        {Object.entries(headerConfig.social).map(([platform, data]) => (
-                            <a
-                                key={platform}
-                                href={data.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:text-gray-300 transition-colors"
-                                aria-label={`Follow us on ${platform}`}
-                            >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d={data.icon} />
-                                </svg>
-                            </a>
-                        ))}
-                    </div>
-
-                    {/* Right: Dark Mode + Language Selector */}
-                    <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
-                        {/* Dark Mode Toggle */}
-                        <button
-                            className="hover:text-gray-300 transition-colors"
-                            aria-label="Toggle dark mode"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                            </svg>
-                        </button>
-
-                        {/* Language Selector */}
-                        <div className="relative language-menu-container">
-                            <button
-                                onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
-                                className={`flex items-center ${mounted && rtl ? 'flex-row-reverse space-x-reverse space-x-1' : 'space-x-1'} hover:text-gray-300 transition-colors`}
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            {isLanguageMenuOpen && (
-                                <div className={`absolute ${mounted && rtl ? 'left-0' : 'right-0'} mt-2 w-48 bg-white rounded-md shadow-lg z-50 opacity-100 visible transition-all duration-200`}>
-                                    <div className="py-1">
-                                        {headerConfig.languages.map((lang) => {
-                                            const currentPath = pathname || '';
-                                            const pathWithoutLocale = currentPath.replace(/^\/(en|fr|ar)/, '') || '/';
-                                            let newPath = pathWithoutLocale === '/' ? `/${lang.code}` : `/${lang.code}${pathWithoutLocale}`;
-                                            const queryString = searchParams.toString();
-                                            if (queryString) {
-                                                newPath += `?${queryString}`;
-                                            }
-                                            return (
-                                                <Link
-                                                    key={lang.code}
-                                                    href={newPath}
-                                                    className={`flex items-center ${mounted && rtl ? 'flex-row-reverse space-x-reverse' : 'space-x-2'} px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
-                                                    onClick={() => setIsLanguageMenuOpen(false)}
-                                                >
-                                                    <span>{lang.flag}</span>
-                                                    <span>{lang.name}</span>
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
             {/* Main Header - Desktop */}
             <div className="bg-white border-b border-gray-200 py-4 px-4 hidden sm:block">
                 <div className="max-w-7xl mx-auto flex justify-between items-center min-h-[72px]">
@@ -375,22 +299,15 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
 
                     {/* Search - Keep original design */}
                     <div className="flex-1 max-w-lg mx-8">
-                        <div className="relative bg-[#FAF7F2] rounded-[15px] text-black">
-                            <form onSubmit={handleSearch}>
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder={t.searchPlaceholder + ' ...'}
-                                    className={`color-black w-full py-2 rounded-[15px] font-light border placeholder-[#969696] border-gray-300 br focus:outline-none focus:ring-2 focus:ring-[#7a3b2e] focus:border-transparent ${rtl ? 'pl-10 pr-4' : 'pl-4 pr-10'}`}
-                                />
-                                <button className={`absolute ${rtl ? 'left-2' : 'right-2'} top-1/2 transform -translate-y-1/2`} type="submit">
-                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
+                        <SearchBox
+                            locale={locale}
+                            rtl={rtl}
+                            value={search}
+                            onChange={setSearch}
+                            placeholder={t.searchPlaceholder + ' ...'}
+                            variant="desktop"
+                            resultsHref={searchResultsHref}
+                        />
                     </div>
 
                     {/* Account + Cart */}
@@ -408,242 +325,18 @@ export default function StaticHeader({ locale: propLocale }: StaticHeaderProps =
                     </div>
                 </div>
             </div>
-            {/* Mobile Header - New Design */}
-            <div className="bg-black text-white py-2 px-2 sm:hidden">
-                <div className={`max-w-7xl mx-auto flex justify-between items-center gap-2`}>
-                    {/* Left: Hamburger Menu + User Profile */}
-                    <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
-                        {/* Hamburger Menu Button */}
-                        <button
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="p-1 hover:text-gray-300 transition-colors"
-                            aria-label="Toggle menu"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                {isMobileMenuOpen ? (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                ) : (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                )}
-                            </svg>
-                        </button>
-
-                        {/* User Profile */}
-                        {user ? (
-                            <Link href={`/${locale}/settings`} className="flex items-center space-x-2">
-                                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-                                    {user.user_metadata?.avatar_url ? (
-                                        <Image
-                                            src={user.user_metadata.avatar_url}
-                                            alt={user.user_metadata?.full_name || user.email || 'User'}
-                                            width={32}
-                                            height={32}
-                                            className="object-cover w-full h-full"
-                                        />
-                                    ) : (
-                                        <span className="text-white text-xs font-medium">
-                                            {(user.user_metadata?.full_name || user.email || 'U').charAt(0).toUpperCase()}
-                                        </span>
-                                    )}
-                                </div>
-                                <span className="text-white text-sm font-medium">
-                                    {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
-                                </span>
-                            </Link>
-                        ) : (
-                            <Link href={`/${locale}/auth`} className="flex items-center space-x-2">
-                                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
-                                <span className="text-white text-sm font-medium">
-                                    {t.logIn}
-                                </span>
-                            </Link>
-                        )}
-                    </div>
-
-                    {/* Right: Action Icons (User Dropdown, Phone, Mail, Search) */}
-                    <div className={`flex items-center ${mounted && rtl ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
-                        {/* User Dropdown */}
-                        {user && (
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                    className="p-1 hover:text-gray-300 transition-colors"
-                                    aria-label="User menu"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                                {isUserMenuOpen && (
-                                    <div className={`absolute ${mounted && rtl ? 'left-0' : 'right-0'} mt-2 w-48 bg-white rounded-md shadow-lg z-50`}>
-                                        <div className="py-1">
-                                            <Link
-                                                href={`/${locale}/settings`}
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                onClick={() => setIsUserMenuOpen(false)}
-                                            >
-                                                {t.myAccount}
-                                            </Link>
-                                            <button
-                                                onClick={async () => {
-                                                    await supabase.auth.signOut();
-                                                    router.push(`/${locale}`);
-                                                    setIsUserMenuOpen(false);
-                                                }}
-                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                            >
-                                                {t.logOut}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Phone Icon */}
-                        <a
-                            href={`tel:${headerConfig.contact.phone.replace(/\s/g, '')}`}
-                            className="p-1 hover:text-gray-300 transition-colors"
-                            aria-label="Phone"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                        </a>
-
-                        {/* Search Icon */}
-                        <button
-                            onClick={() => setIsMobileMenuOpen(true)}
-                            className="p-1 hover:text-gray-300 transition-colors"
-                            aria-label="Search"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile Menu Content */}
-                {isMobileMenuOpen && (
-                    <div className="mt-3 pb-2 space-y-3">
-                        {/* Mobile Search Bar */}
-                        <div className="relative bg-gray-800 rounded-lg">
-                            <form onSubmit={handleSearch}>
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder={t.searchPlaceholder + ' ...'}
-                                    className="w-full py-2 px-4 pr-10 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent placeholder-gray-400"
-                                />
-                                <button className={`absolute ${rtl ? 'left-2' : 'right-2'} top-1/2 transform -translate-y-1/2`} type="submit">
-                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
-
-                        {/* Mobile Navigation Menu */}
-                        <nav className="flex flex-col space-y-1">
-                            {headerConfig.navigation.map((item) => (
-                                item.label === "Categories" ? (
-                                    <div key={item.href} className="relative">
-                                        <button
-                                            onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                                            className="text-white hover:text-gray-300 transition flex items-center justify-between w-full py-2 px-2"
-                                        >
-                                            <span>{t.categories}</span>
-                                            <svg
-                                                className={`w-4 h-4 transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`}
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                        {isCategoriesOpen && (
-                                            <div className="pl-4 space-y-1">
-                                                <Link
-                                                    href={`/${locale}/categories`}
-                                                    className="block py-2 text-gray-300 hover:text-white transition"
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                >
-                                                    {t.allCategories}
-                                                </Link>
-                                                {categories.map((category) => (
-                                                    <Link
-                                                        key={category.id}
-                                                        href={`/${locale}/products?category=${category.slug}`}
-                                                        className="block py-2 text-gray-300 hover:text-white transition"
-                                                        style={{ paddingInlineStart: (category.depth ?? 0) * 16 }}
-                                                        onClick={() => setIsMobileMenuOpen(false)}
-                                                    >
-                                                        {getCategoryName(category, locale)}
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : item.label === "Discounts" ?
-                                    <Link
-                                        key={`/${locale}/products?promo=true`}
-                                        href={`/${locale}/products?promo=true`}
-                                        className="text-white hover:text-gray-300 transition py-2 px-2 block"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        {t.discounts}
-                                    </Link>
-                                    : item.label === "About Us" ?
-                                        <Link
-                                            key={item.href}
-                                            href={`/${locale}${item.href}`}
-                                            className="text-white hover:text-gray-300 transition py-2 px-2 block"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            {t.aboutUs}
-                                        </Link>
-                                        : item.label === "Contact Us" ?
-                                            <Link
-                                                key={item.href}
-                                                href={`/${locale}${item.href}`}
-                                                className="text-white hover:text-gray-300 transition py-2 px-2 block"
-                                                onClick={() => setIsMobileMenuOpen(false)}
-                                            >
-                                                {t.contactUs}
-                                            </Link>
-                                            :
-                                            (
-                                                <Link
-                                                    key={item.href}
-                                                    href={item.href}
-                                                    className="text-white hover:text-gray-300 transition py-2 px-2 block"
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                >
-                                                    {item.label}
-                                                </Link>
-                                            )
-                            ))}
-                            <div
-                                className={`cursor-pointer flex items-center ${mounted && rtl ? 'flex-row-reverse space-x-reverse space-x-2' : 'space-x-2'} border border-[#FFFFFF] px-4 py-2 rounded-[11px] mt-2`}
-                                onClick={() => {
-                                    router.push(`/${locale}/products`);
-                                    setIsMobileMenuOpen(false);
-                                }}
-                            >
-                                <Image src="/assets/images/icons/Cup.svg" alt="handmade" width={16} height={16} />
-                                <span className="font-medium text-sm">{t.handmade}</span>
-                            </div>
-                        </nav>
-                    </div>
-                )}
-            </div>
+            {/* Phones: compact bar with menu drawer and search panel */}
+            <MobileHeader
+                locale={locale}
+                rtl={rtl}
+                user={user}
+                categories={categories.map((c) => ({ id: c.id, slug: c.slug, label: getCategoryName(c, locale), depth: c.depth ?? 0 }))}
+                search={search}
+                onSearchChange={setSearch}
+                searchPlaceholder={t.searchPlaceholder.trim() + ' …'}
+                resultsHref={searchResultsHref}
+                labels={t}
+            />
 
             {/* Navigation Bar - Desktop */}
             <div className="bg-black text-white py-3 px-4 min-h-[52px] hidden sm:block">

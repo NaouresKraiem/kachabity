@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
+  // ENV ("local" or "production") as seen by browser, server and edge code; read it via lib/app-env.ts.
+  env: {
+    NEXT_PUBLIC_APP_ENV: process.env.ENV || "local",
+  },
   experimental: {
     // Keep visited pages in the client router cache so back/forward and revisits are instant.
     staleTimes: { dynamic: 30, static: 180 },
@@ -45,4 +50,43 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry: build-time setup and source map upload. Uploads only run when
+// SENTRY_AUTH_TOKEN, SENTRY_ORG and SENTRY_PROJECT are set (on Netlify); without
+// them the build works as before and stack traces show minified code.
+export default withSentryConfig(nextConfig, {
+  // For all available options, see:
+  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
+
+  org: "kachabiti",
+
+  project: "kachabiti-web",
+
+  // Only print logs for uploading source maps in CI
+  silent: !process.env.CI,
+
+  // For all available options, see:
+  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+
+  // Upload a larger set of source maps for prettier stack traces (increases build time)
+  widenClientFileUpload: true,
+
+  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+  // This can increase your server load as well as your hosting bill.
+  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
+  // side errors will fail.
+  tunnelRoute: "/monitoring",
+
+  webpack: {
+    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
+    // See the following for more information:
+    // https://docs.sentry.io/product/crons/
+    // https://vercel.com/docs/cron-jobs
+    automaticVercelMonitors: true,
+
+    // Tree-shaking options for reducing bundle size
+    treeshake: {
+      // Automatically tree-shake Sentry logger statements to reduce bundle size
+      removeDebugLogging: true,
+    },
+  },
+});

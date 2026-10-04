@@ -1,3 +1,6 @@
+/** Star ratings and reviews on the storefront (cards, product page, home). Off for now. */
+export const SHOW_RATINGS = false;
+
 
 export const headerConfig = {
     contact: {
@@ -35,8 +38,8 @@ export const headerConfig = {
         { code: "ar", name: "العربية", flag: "🇹🇳" }
     ],
     invoices: {
-        free_shipping_threshold: process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD ,
-        default_shipping_cost:process.env.NEXT_PUBLIC_DEFAULT_SHIPPING_COST,
+        free_shipping_threshold: process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD || "500",
+        default_shipping_cost: process.env.NEXT_PUBLIC_DEFAULT_SHIPPING_COST || "8",
         currency: process.env.NEXT_PUBLIC_CURRENCY || "DT",
         wallet_name: process.env.NEXT_PUBLIC_WALLET_NAME || "Dasun Wallet"
     }

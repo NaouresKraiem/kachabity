@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { triggerAbandonedCartCampaign } from '@/lib/abandoned-cart-email';
+import { reportError } from '@/lib/report-error';
 
 export async function POST(request: NextRequest) {
     try {
@@ -20,6 +21,7 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error('Error sending recovery emails:', error);
+        reportError(error, 'abandoned-cart-email');
         return NextResponse.json(
             { success: false, error: 'Failed to send recovery emails' },
             { status: 500 }

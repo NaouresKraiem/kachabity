@@ -13,12 +13,12 @@ export default function FooterSection({ section }: FooterSectionProps) {
             <h3 className="text-lg font-semibold text-[#2b1a16] mb-4">
                 {section.title}
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-0.5 sm:space-y-2">
                 {section.links.map((link) => (
                     <li key={link.href}>
                         <Link
                             href={link.href}
-                            className="text-gray-600 hover:text-[#842E1B] transition-colors text-sm"
+                            className="inline-flex min-h-11 items-center text-gray-600 hover:text-[#842E1B] transition-colors text-sm sm:min-h-0"
                         >
                             {link.label}
                         </Link>

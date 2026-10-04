@@ -15,6 +15,16 @@ export interface ShippingRate {
     display_order: number;
 }
 
+const FREE_SHIPPING_STEP = 0.01;
+
+function qualifiesForFreeShipping(subtotal: number, threshold: number): boolean {
+    return subtotal > threshold;
+}
+
+function amountNeededForFreeShipping(subtotal: number, threshold: number): number {
+    return Math.max(0, Number((threshold + FREE_SHIPPING_STEP - subtotal).toFixed(2)));
+}
+
 /**
  * Map a checkout country name to the code used by shipping_rates and
  * country_tax_rates. Unknown countries fall back to Tunisia.
@@ -86,9 +96,9 @@ export async function calculateShipping(
         if (error || !data) {
             console.error('Error fetching shipping rate:', error);
             // Fallback to default settings
-            const isFree = settings.free_shipping_enabled && subtotal >= settings.global_free_shipping_threshold;
+            const isFree = settings.free_shipping_enabled && qualifiesForFreeShipping(subtotal, settings.global_free_shipping_threshold);
             const cost = isFree ? 0 : settings.default_shipping_cost;
-            const amountNeeded = isFree ? 0 : Math.max(0, settings.global_free_shipping_threshold - subtotal);
+            const amountNeeded = isFree ? 0 : amountNeededForFreeShipping(subtotal, settings.global_free_shipping_threshold);
 
             return {
                 cost,
@@ -106,9 +116,9 @@ export async function calculateShipping(
         const threshold = data.free_shipping_threshold ?? settings.global_free_shipping_threshold;
 
         // Check if order qualifies for free shipping
-        const isFree = settings.free_shipping_enabled && subtotal >= threshold;
+        const isFree = settings.free_shipping_enabled && qualifiesForFreeShipping(subtotal, threshold);
         const cost = isFree ? 0 : data.base_rate;
-        const amountNeeded = isFree ? 0 : Math.max(0, threshold - subtotal);
+        const amountNeeded = isFree ? 0 : amountNeededForFreeShipping(subtotal, threshold);
 
         return {
             cost,
@@ -121,7 +131,7 @@ export async function calculateShipping(
     } catch (error) {
         console.error('Error in calculateShipping:', error);
         return {
-            cost: 7,
+            cost: 8,
             isFree: false,
             rate: null,
             amountNeeded: 500,
@@ -211,17 +221,16 @@ export async function checkFreeShippingEligibility(
             .single();
 
         const threshold = data?.free_shipping_threshold ?? settings.global_free_shipping_threshold;
-        const isEligible = settings.free_shipping_enabled && subtotal >= threshold;
-        const amountNeeded = isEligible ? 0 : Math.max(0, threshold - subtotal);
+        const isEligible = settings.free_shipping_enabled && qualifiesForFreeShipping(subtotal, threshold);
+        const amountNeeded = isEligible ? 0 : amountNeededForFreeShipping(subtotal, threshold);
 
         return { isEligible, amountNeeded, threshold };
     }
 
     // Use global threshold
     const threshold = settings.global_free_shipping_threshold;
-    const isEligible = settings.free_shipping_enabled && subtotal >= threshold;
-    const amountNeeded = isEligible ? 0 : Math.max(0, threshold - subtotal);
+    const isEligible = settings.free_shipping_enabled && qualifiesForFreeShipping(subtotal, threshold);
+    const amountNeeded = isEligible ? 0 : amountNeededForFreeShipping(subtotal, threshold);
 
     return { isEligible, amountNeeded, threshold };
 }
-

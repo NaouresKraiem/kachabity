@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useParams } from "next/navigation";
+import { useSearchParams, useParams, useRouter } from "next/navigation";
 import supabase from "@/lib/supabaseClient";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProductListCard from "@/components/products/ProductListCard";
@@ -12,6 +12,7 @@ import { useQuickAdd } from "@/lib/quick-add";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 import { goToLogin } from "@/lib/customer-auth";
 import { isRTL } from "@/lib/language-utils";
+import { searchProductIds } from "@/lib/product-search";
 
 interface Product {
     id: string;
@@ -58,6 +59,9 @@ const content = {
         addToCart: "Add",
         discount: "Discount",
         noProducts: "No products found",
+        resultsFor: "Results for “{query}”",
+        clearSearch: "Clear search",
+        trySearch: "Check the spelling or try a shorter or more general word",
         showingResults: "Showing {count} products",
         applyFilters: "Filter",
         loadingProducts: "Loading products...",
@@ -76,6 +80,9 @@ const content = {
         addToCart: "Ajouter",
         discount: "Réduction",
         noProducts: "Aucun produit trouvé",
+        resultsFor: "Résultats pour « {query} »",
+        clearSearch: "Effacer la recherche",
+        trySearch: "Vérifiez l'orthographe ou essayez un mot plus court ou plus général",
         showingResults: "Affichage de {count} produits",
         applyFilters: "Filtrer",
         loadingProducts: "Chargement des produits...",
@@ -94,6 +101,9 @@ const content = {
         addToCart: "أضف",
         discount: "خصم",
         noProducts: "لم يتم العثور على منتجات",
+        resultsFor: "نتائج البحث عن «{query}»",
+        clearSearch: "مسح البحث",
+        trySearch: "تحقق من الكتابة أو جرّب كلمة أقصر أو أعم",
         showingResults: "عرض {count} منتجات",
         applyFilters: "تصفية",
         loadingProducts: "جاري تحميل المنتجات...",
@@ -183,6 +193,15 @@ export default function ProductsPage() {
     const promoOnly = searchParams.get('promo');
     const sortParam = searchParams.get('sort');
     const search = searchParams?.get('search') || "";
+    const router = useRouter();
+
+    // Drops ?search= and keeps the other filters.
+    const clearSearch = () => {
+        const params = new URLSearchParams(searchParams?.toString());
+        params.delete('search');
+        const rest = params.toString();
+        router.push(`/${locale}/products${rest ? `?${rest}` : ''}`);
+    };
 
     // Initialize: Fetch categories, colors, sizes and user favorites
     useEffect(() => {
@@ -315,8 +334,20 @@ export default function ProductsPage() {
                 .eq('status', 'active')
 
 
+            // Search: ranked matches from Postgres (names, descriptions, categories in every
+            // language, typo-tolerant); the other filters below narrow them further.
+            let searchRanks: Map<string, number> | null = null;
             if (search) {
-                query = query.ilike('name', `%${search}%`);
+                const hits = await searchProductIds(search);
+                if (hits.length === 0) {
+                    setProducts([]);
+                    setTotalCount(0);
+                    setProductsLoading(false);
+                    setLoading(false);
+                    return;
+                }
+                searchRanks = new Map(hits.map((hit) => [hit.id, hit.rank]));
+                query = query.in('id', hits.map((hit) => hit.id));
             }
 
             // Apply promo filter (products with active discounts)
@@ -432,18 +463,25 @@ export default function ProductsPage() {
                 query = query.order('created_at', { ascending: false });
             }
 
-            // Apply pagination
+            // A search without an explicit sort is shown most relevant first: the matches (at
+            // most a few hundred) are fetched at once, ranked, then paginated here.
             const from = (currentPage - 1) * ITEMS_PER_PAGE;
             const to = from + ITEMS_PER_PAGE - 1;
-            query = query.range(from, to);
+            const byRelevance = searchRanks !== null && !sortParam;
+            if (!byRelevance) query = query.range(from, to);
 
             // Execute query
             const { data, error, count } = await query;
 
             if (error) throw error;
             if (data) {
+                let rows = data as unknown as (Product & { product_discounts?: ProductDiscount[] })[];
+                if (byRelevance && searchRanks) {
+                    const ranks = searchRanks;
+                    rows = [...rows].sort((a, b) => (ranks.get(b.id) ?? 0) - (ranks.get(a.id) ?? 0)).slice(from, to + 1);
+                }
                 // Discounts come embedded in the same query (no second round trip).
-                setProducts(data.map((p: { id: string; product_discounts?: ProductDiscount[] }) => ({
+                setProducts(rows.map((p) => ({
                     ...p,
                     discount_percent: embeddedDiscountPercent(p),
                 })));
@@ -715,7 +753,7 @@ export default function ProductsPage() {
                         </p>
                         <button
                             onClick={() => setIsFilterDrawerOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#842E1B] text-white rounded-lg hover:bg-[#6b2516] transition font-medium text-sm"
+                            className="flex h-11 items-center gap-2 rounded-full border border-[#d9cfc3] bg-white px-4 text-sm font-medium text-[#2b1a16] transition hover:border-[#2b1a16]"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -735,6 +773,22 @@ export default function ProductsPage() {
 
                         {/* Right Side - Product Grid */}
                         <div className="lg:col-span-3">
+                            {/* Search heading */}
+                            {search && (
+                                <div className="mb-4 flex flex-wrap items-center gap-3">
+                                    <h1 className="text-xl font-semibold text-gray-900">
+                                        {text.resultsFor.replace('{query}', search)}
+                                    </h1>
+                                    <button
+                                        type="button"
+                                        onClick={clearSearch}
+                                        className="text-sm font-medium text-[#842E1B] underline underline-offset-4 hover:text-[#6b2516]"
+                                    >
+                                        {text.clearSearch}
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Results Count - Desktop only */}
                             {!productsLoading && (
                                 <div className="mb-6 hidden lg:block">
@@ -746,11 +800,11 @@ export default function ProductsPage() {
 
                             {/* Loading Skeleton */}
                             {productsLoading ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-3">
                                     {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
-                                        <div key={index} className="animate-pulse overflow-hidden rounded-lg border border-gray-100 bg-white">
-                                            <div className="aspect-square w-full bg-gray-200" />
-                                            <div className="space-y-2 p-4">
+                                        <div key={index} className="animate-pulse">
+                                            <div className="aspect-[4/5] w-full rounded-2xl bg-gray-200" />
+                                            <div className="space-y-2 pt-3">
                                                 <div className="h-4 w-3/4 rounded bg-gray-200" />
                                                 <div className="h-3 w-1/2 rounded bg-gray-200" />
                                                 <div className="h-3 w-1/3 rounded bg-gray-200" />
@@ -764,10 +818,10 @@ export default function ProductsPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                     </svg>
                                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{text.noProducts}</h3>
-                                    <p className="text-gray-600">{text.tryAdjustingFilters}</p>
+                                    <p className="text-gray-600">{search ? text.trySearch : text.tryAdjustingFilters}</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 pb-4">
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-3 pb-4">
                                     {products.map(product => (
                                         <ProductListCard
                                             key={product.id}
@@ -847,7 +901,7 @@ export default function ProductsPage() {
                         style={{ [rtl ? 'right' : 'left']: 0 }}
                         dir={rtl ? 'rtl' : 'ltr'}
                     >
-                        <div className={`sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10 ${rtl ? 'flex-row-reverse' : ''}`}>
+                        <div className={`sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10 `}>
                             <h2 className="text-xl font-bold text-gray-900">{text.filter}</h2>
                             <button
                                 onClick={() => setIsFilterDrawerOpen(false)}

@@ -52,11 +52,21 @@ function PermissionPicker({ value = [], onChange }: { value?: Permission[]; onCh
 const ROLE_OPTIONS = [
     { value: "staff", label: msg("Staff") },
     { value: "admin", label: msg("Admin") },
+    { value: "owner", label: msg("Owner") },
 ];
+
+const ROLE_TAGS: Record<AdminRole, { color: string; label: string }> = {
+    owner: { color: "gold", label: msg("Owner") },
+    admin: { color: "purple", label: msg("Admin") },
+    staff: { color: "blue", label: msg("Staff") },
+};
 
 export default function TeamPage() {
     const { t } = useAdminT();
-    const { email: myEmail } = useAdminRole();
+    const { email: myEmail, isOwner } = useAdminRole();
+    // Only owners give the owner role or change an owner.
+    const roleOptions = ROLE_OPTIONS.filter((o) => isOwner || o.value !== "owner").map((o) => ({ ...o, label: t(o.label) }));
+    const canManage = (m: Member) => isOwner || m.role !== "owner";
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
@@ -87,6 +97,7 @@ export default function TeamPage() {
             message.success(
                 permissions
                     ? t("Access updated for {email}", { email: member.email })
+                    : role === "owner" ? t("{email} is now an owner", { email: member.email })
                     : role === "admin" ? t("{email} is now an admin", { email: member.email })
                     : role ? t("{email} is now staff", { email: member.email })
                     : t("{email} no longer has access", { email: member.email })
@@ -130,19 +141,27 @@ export default function TeamPage() {
             title: t("Role"),
             key: "role",
             render: (_, m) =>
-                m.locked || m.email === myEmail ? (
-                    <Tooltip title={m.locked ? t("Set by the ADMIN_EMAILS server setting") : t("You can't change your own role")}>
-                        <Tag color={m.role === "admin" ? "purple" : "blue"}>{m.role === "admin" ? t("Admin") : t("Staff")}</Tag>
+                m.locked || m.email === myEmail || !canManage(m) ? (
+                    <Tooltip
+                        title={
+                            m.locked ? t("Set by the OWNER_EMAILS or ADMIN_EMAILS server setting")
+                            : m.email === myEmail ? t("You can't change your own role")
+                            : t("Only an owner can change an owner")
+                        }
+                    >
+                        <Tag color={ROLE_TAGS[m.role].color}>{t(ROLE_TAGS[m.role].label)}</Tag>
                     </Tooltip>
                 ) : (
-                    <Select size="small" style={{ width: 110 }} value={m.role} options={ROLE_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))} onChange={(role) => changeRole(m, role)} />
+                    <Select size="small" style={{ width: 110 }} value={m.role} options={roleOptions} onChange={(role) => changeRole(m, role)} />
                 ),
         },
         {
             title: t("Access"),
             key: "permissions",
             render: (_, m) =>
-                m.role === "admin" ? (
+                m.role === "owner" ? (
+                    <Text type="secondary">{t("Everything, plus owner alerts")}</Text>
+                ) : m.role === "admin" ? (
                     <Text type="secondary">{t("Everything, including team")}</Text>
                 ) : (
                     <Space size={[4, 4]} wrap>
@@ -163,7 +182,7 @@ export default function TeamPage() {
                     <Link href={`/admin/activity?actor=${m.id}`}>
                         <Button type="text">{t("Activity")}</Button>
                     </Link>
-                    {!m.locked && m.email !== myEmail && (
+                    {!m.locked && m.email !== myEmail && canManage(m) && (
                         <>
                             <Popconfirm
                                 title={t("Remove {email}'s access?", { email: m.email })}
@@ -241,10 +260,18 @@ export default function TeamPage() {
                     >
                         <Input.Password autoComplete="new-password" />
                     </Form.Item>
-                    <Form.Item name="role" label={t("Role")} extra={newRole === "admin" ? "Admins can do everything, including managing the team." : undefined}>
-                        <Select options={ROLE_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))} />
+                    <Form.Item
+                        name="role"
+                        label={t("Role")}
+                        extra={
+                            newRole === "owner" ? t("Owners can do everything and are alerted about deletes and unusual actions by admins and staff.")
+                            : newRole === "admin" ? t("Admins can do everything, including managing the team.")
+                            : undefined
+                        }
+                    >
+                        <Select options={roleOptions} />
                     </Form.Item>
-                    {newRole !== "admin" && (
+                    {newRole === "staff" && (
                         <Form.Item name="permissions" label={t("What they can do")}>
                             <PermissionPicker />
                         </Form.Item>

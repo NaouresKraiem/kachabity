@@ -25,6 +25,7 @@ import {
     SettingOutlined,
     TeamOutlined,
     DatabaseOutlined,
+    BellOutlined,
     HomeOutlined,
     DeleteOutlined,
 } from "@ant-design/icons";
@@ -34,6 +35,7 @@ import { AdminRoleProvider, useAdminRole } from "@/lib/admin-role-context";
 import type { Permission } from "@/lib/admin-auth";
 import { AdminI18nProvider, msg, useAdminT } from "@/lib/admin-i18n";
 import AdminLanguageSwitcher from "@/components/admin/AdminLanguageSwitcher";
+import NotificationBell from "@/components/admin/NotificationBell";
 import enUS from "antd/locale/en_US";
 import frFR from "antd/locale/fr_FR";
 import arEG from "antd/locale/ar_EG";
@@ -139,6 +141,11 @@ const menuItems: MenuItem[] = [
         key: "/admin/variants",
         icon: <AppstoreOutlined />,
         label: msg("Variants"),
+    },
+    {
+        key: "/admin/notifications",
+        icon: <BellOutlined />,
+        label: msg("Notifications"),
     },
     {
         key: "/admin/team",
@@ -417,9 +424,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                             <AdminLanguageSwitcher />
+                            {role && <NotificationBell />}
                             {role && (
                                 <span style={{ color: "#6b7280", fontSize: 13, marginInlineEnd: 8 }}>
-                                    {email} · {role === "admin" ? t("Admin") : t("Staff")}
+                                    {email} · {role === "owner" ? t("Owner") : role === "admin" ? t("Admin") : t("Staff")}
                                 </span>
                             )}
                             <Button type="primary" href="/" target="_blank" style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}>

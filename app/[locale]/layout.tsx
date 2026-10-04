@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import MobileTabBar from "@/components/layout/MobileTabBar";
 import { LanguageProvider } from '@/lib/language-context';
+import { isRTL } from '@/lib/language-utils';
 import { CartProvider } from '@/lib/cart-context';
 import CartDrawer from '@/components/cart/CartDrawer';
 import StaticHeader from '@/components/layout/StaticHeader';
@@ -100,8 +102,12 @@ export default async function LocaleLayout({
                 <Suspense>
                     <StaticHeader />
                 </Suspense>
-                {children}
-                <Footer />
+                {/* Page content and footer follow the locale's direction (Arabic is right-to-left). */}
+                <div dir={isRTL(locale) ? "rtl" : "ltr"}>
+                    {children}
+                    <Footer />
+                </div>
+                <MobileTabBar locale={locale} />
                 <CartDrawer />
                 <Script
                     id="json-ld-organization"

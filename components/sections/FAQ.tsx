@@ -19,7 +19,7 @@ const translations = {
             },
             {
                 question: "What shipping options are available?",
-                answer: "We offer shipping within Tunisia and internationally. Shipping costs and delivery times vary depending on your location. You can view detailed shipping information during checkout. For orders within Tunisia, standard delivery typically takes 3-5 business days."
+                answer: "We currently deliver within Tunisia. Shipping costs are shown at checkout, and orders are delivered within 48 hours after confirmation."
             },
             {
                 question: "How can I track my order?",
@@ -48,7 +48,7 @@ const translations = {
             },
             {
                 question: "Quelles options d'expédition sont disponibles?",
-                answer: "Nous proposons l'expédition en Tunisie et à l'international. Les coûts d'expédition et les délais de livraison varient selon votre emplacement. Vous pouvez consulter les informations détaillées d'expédition lors du paiement. Pour les commandes en Tunisie, la livraison standard prend généralement 3 à 5 jours ouvrables."
+                answer: "Nous livrons actuellement en Tunisie. Les frais sont affichés lors du paiement et les commandes sont livrées sous 48 heures après confirmation."
             },
             {
                 question: "Comment puis-je suivre ma commande?",
@@ -192,4 +192,3 @@ export default function FAQ() {
         </section>
     );
 }
-

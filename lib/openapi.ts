@@ -543,6 +543,27 @@ export const openApiSpec = {
                 },
             },
         },
+        '/api/admin/notifications': {
+            get: {
+                tags: ['Team'],
+                summary: "The signed-in user's notifications (new orders, owner alerts)",
+                parameters: ['limit', 'before', 'kind', 'unread'].map((name) => ({ name, in: 'query', required: false, schema: { type: 'string' } })),
+                responses: { 200: { description: '{ rows, unread, hasMore }; title/body are { en, fr, ar }' } },
+            },
+            put: {
+                tags: ['Team'],
+                summary: 'Mark notifications read: { ids: number[] } or { all: true }',
+                responses: { 200: messageResponse('Marked read') },
+            },
+        },
+        '/api/admin/notifications/push': {
+            get: { tags: ['Team'], summary: 'Web Push public key for desktop notifications', responses: { 200: { description: '{ publicKey }' } } },
+            post: { tags: ['Team'], summary: 'Register this browser: { subscription: PushSubscriptionJSON, locale }', responses: { 200: messageResponse('Saved') } },
+            delete: { tags: ['Team'], summary: 'Stop desktop notifications for a browser: { endpoint } (soft delete)', responses: { 200: messageResponse('Removed') } },
+        },
+        '/api/admin/notifications/test': {
+            post: { tags: ['Team'], summary: 'Send yourself a test notification (admin and desktop)', responses: { 200: messageResponse('Sent') } },
+        },
         '/api/admin/activity': {
             get: {
                 tags: ['Team'],

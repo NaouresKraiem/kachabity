@@ -15,7 +15,7 @@ import ImageLightbox from "@/components/ui/ImageLightbox";
 import { getProductName, getProductDescription } from "@/lib/utils/product-utils";
 import { loadProductDetail, type ProductDetailData } from "@/lib/product-detail";
 import toast from "react-hot-toast";
-import { headerConfig } from "@/lib/config";
+import { headerConfig, SHOW_RATINGS } from "@/lib/config";
 import { authHref, customerName, useCustomer } from "@/lib/customer-auth";
 import { isRTL } from "@/lib/language-utils";
 import { reemKufi } from "@/lib/fonts";
@@ -176,8 +176,8 @@ const content = {
         seeMoreReviews: "Show more reviews",
         cashOnDelivery: "Pay in cash when your order arrives",
         deliveryCostLine: "Home delivery: {cost} TND",
-        freeFrom: "Free delivery from {amount} TND",
-        deliveryTime: "Delivered within 1 to 3 business days",
+        freeFrom: "Free delivery above {amount} TND",
+        deliveryTime: "Delivered within 48 hours",
         callUs: "Call us",
         products: "Products",
         basedOn: "Based on {count} reviews",
@@ -230,8 +230,8 @@ const content = {
         seeMoreReviews: "Afficher plus d'avis",
         cashOnDelivery: "Paiement en espèces à la livraison",
         deliveryCostLine: "Livraison à domicile : {cost} TND",
-        freeFrom: "Livraison offerte dès {amount} TND",
-        deliveryTime: "Livrée sous 1 à 3 jours ouvrables",
+        freeFrom: "Livraison gratuite au-delà de {amount} TND",
+        deliveryTime: "Livrée sous 48 heures",
         callUs: "Appelez-nous",
         products: "Produits",
         basedOn: "Sur la base de {count} avis",
@@ -284,8 +284,8 @@ const content = {
         seeMoreReviews: "عرض المزيد من التقييمات",
         cashOnDelivery: "الدفع نقداً عند استلام طلبك",
         deliveryCostLine: "التوصيل إلى المنزل: {cost} دينار",
-        freeFrom: "توصيل مجاني ابتداءً من {amount} دينار",
-        deliveryTime: "يصلك خلال 1 إلى 3 أيام عمل",
+        freeFrom: "التوصيل المجاني للطلبات التي تتجاوز {amount} دينار",
+        deliveryTime: "يصلك خلال 48 ساعة",
         callUs: "اتصل بنا",
         products: "المنتجات",
         basedOn: "بناءً على {count} تقييم",
@@ -311,6 +311,16 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
+    // Phones: a sticky buy bar shows whenever the main add-to-cart row is out of view.
+    const [buyRowEl, setBuyRowEl] = useState<HTMLDivElement | null>(null);
+    const [buyRowVisible, setBuyRowVisible] = useState(true);
+    const [touchStartX, setTouchStartX] = useState<number | null>(null);
+    useEffect(() => {
+        if (!buyRowEl) return;
+        const observer = new IntersectionObserver(([entry]) => setBuyRowVisible(entry.isIntersecting), { threshold: 0.1 });
+        observer.observe(buyRowEl);
+        return () => observer.disconnect();
+    }, [buyRowEl]);
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -354,6 +364,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
 
                 // Show the product now; reviews fill in below (they change often, so they aren't cached).
                 setLoading(false);
+                if (!SHOW_RATINGS) return;
                 const { data: reviewsData } = await supabase
                     .from('reviews')
                     .select(`
@@ -642,7 +653,24 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
 
                 <div className="grid gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
                     {/* Gallery */}
-                    <div className="lg:sticky lg:top-6 lg:self-start">
+                    <div
+                        className="relative lg:sticky lg:top-6 lg:self-start"
+                        onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+                        onTouchEnd={(e) => {
+                            if (touchStartX === null || galleryImages.length < 2) return;
+                            const dx = e.changedTouches[0].clientX - touchStartX;
+                            setTouchStartX(null);
+                            if (Math.abs(dx) < 40) return;
+                            // Swiping toward the reading direction's start shows the next photo.
+                            const forward = rtl ? dx > 0 : dx < 0;
+                            setSelectedImage((i) => (i + (forward ? 1 : galleryImages.length - 1)) % galleryImages.length);
+                        }}
+                    >
+                        {galleryImages.length > 1 && (
+                            <span className="pointer-events-none absolute end-3 top-3 z-10 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white sm:hidden" dir="ltr">
+                                {selectedImage + 1} / {galleryImages.length}
+                            </span>
+                        )}
                         <ImageLightbox
                             images={galleryImages.map((img) => ({ src: img.url, alt: img.alt || productName }))}
                             index={selectedImage}
@@ -659,7 +687,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                         aria-pressed={selectedImage === index}
                                         className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] bg-[#f3efe9] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--wool-maroon)] ${selectedImage === index ? 'ring-2 ring-[var(--wool-maroon)] ring-offset-2' : 'opacity-75 hover:opacity-100'}`}
                                     >
-                                        <Image src={img.url} alt="" fill sizes="80px" className="object-cover" />
+                                        <Image src={img.url} alt="" fill sizes="80px" className="object-cover object-top" />
                                     </button>
                                 ))}
                             </div>
@@ -678,10 +706,12 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                         </h1>
 
                         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                            {SHOW_RATINGS && (
                             <a href="#reviews" className="flex items-center gap-2 text-[#5b4a42] hover:text-[var(--wool-maroon)]">
                                 <Stars value={averageRating} />
                                 <span>{reviewCount > 0 ? `${averageRating.toFixed(1)} (${reviewCount} ${text.reviews})` : text.noRatingYet}</span>
                             </a>
+                            )}
                             <span className={`inline-flex items-center gap-1.5 font-medium ${inStock ? 'text-[#3f7a3a]' : 'text-[#a33a2a]'}`}>
                                 <span className={`h-2 w-2 rounded-full ${inStock ? 'bg-[#3f7a3a]' : 'bg-[#a33a2a]'}`} aria-hidden="true" />
                                 {inStock ? text.inStock : text.outOfStock}
@@ -724,7 +754,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                                 aria-label={colorName}
                                                 aria-pressed={selected}
                                                 title={colorName}
-                                                className={`relative h-9 w-9 rounded-full border border-black/10 outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--wool-maroon)] focus-visible:ring-offset-2 ${selected ? 'ring-2 ring-[var(--wool-maroon)] ring-offset-2' : 'hover:scale-105'} ${!hasStock ? 'opacity-40' : ''}`}
+                                                className={`relative h-10 w-10 rounded-full border border-black/10 outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--wool-maroon)] focus-visible:ring-offset-2 ${selected ? 'ring-2 ring-[var(--wool-maroon)] ring-offset-2' : 'hover:scale-105'} ${!hasStock ? 'opacity-40' : ''}`}
                                                 style={{ backgroundColor: color.hex_code || '#cccccc' }}
                                             >
                                                 {!hasStock && <span className="absolute inset-0 m-auto h-px w-10 -rotate-45 bg-[#5b4a42]" aria-hidden="true" />}
@@ -767,7 +797,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                         )}
 
                         {/* Quantity and add to cart */}
-                        <div className="flex gap-3">
+                        <div ref={setBuyRowEl} className="flex gap-3">
                             <div className="inline-flex h-12 shrink-0 items-center rounded-full border border-[#d9cfc3]" role="group" aria-label={text.quantity}>
                                 <button
                                     type="button"
@@ -804,6 +834,42 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                 disabled={!inStock}
                                 className="h-12 flex-1 justify-center rounded-full! bg-[var(--wool-maroon)]! text-base hover:bg-[#6b2516]!"
                             />
+                        </div>
+
+                        {/* Phones: sticky buy bar while the row above is out of view */}
+                        <div className="h-24 sm:hidden" aria-hidden="true" />
+                        <div
+                            className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#ece4da] bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur transition-transform duration-200 motion-reduce:transition-none sm:hidden ${
+                                buyRowVisible ? "translate-y-full" : "translate-y-0"
+                            }`}
+                            aria-hidden={buyRowVisible}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-baseline gap-2" dir="ltr">
+                                        <span className="text-lg font-semibold text-[var(--wool-maroon)]">{Math.round(discountedPrice)} {currency}</span>
+                                        {hasDiscount && <span className="text-sm text-[#a3958c] line-through">{Math.round(basePrice)} {currency}</span>}
+                                    </div>
+                                    {variantLabel && <p className="truncate text-xs text-[#6f5f57]">{variantLabel}</p>}
+                                </div>
+                                <AddToCartButton
+                                    product={{
+                                        id: product.id,
+                                        name: product.name,
+                                        name_ar: product.name_ar,
+                                        name_fr: product.name_fr,
+                                        variantId: selectedVariant?.id,
+                                        variantLabel: variantLabel || undefined,
+                                        price: Math.round(discountedPrice),
+                                        image: selectedVariant?.image_url || productImages[0]?.url || product.image_url || '',
+                                        rating: averageRating,
+                                        reviewCount: reviewCount
+                                    }}
+                                    quantity={quantity}
+                                    disabled={!inStock}
+                                    className="h-12 w-auto! shrink-0 justify-center rounded-full! bg-[var(--wool-maroon)]! px-6! text-base hover:bg-[#6b2516]!"
+                                />
+                            </div>
                         </div>
 
                         {/* Ordering terms */}
@@ -887,6 +953,8 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                 </aside>
             </section>
 
+            {SHOW_RATINGS && (
+            <>
             {/* Reviews */}
             <section id="reviews" className="scroll-mt-6 bg-[#f7f3ee]">
                 <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-14 lg:py-16">
@@ -985,6 +1053,8 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                     </div>
                 </div>
             </section>
+            </>
+            )}
 
             {/* More to explore */}
             {(similarProducts.length > 0 || relatedCategories.length > 0) && (
@@ -1000,7 +1070,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                         <li key={item.id}>
                                             <Link href={`/${locale}/products/${item.slug}`} className="group block outline-none">
                                                 <div className="relative aspect-[3/4] overflow-hidden rounded-[14px] bg-[#f3efe9] group-focus-visible:ring-2 group-focus-visible:ring-[var(--wool-maroon)] group-focus-visible:ring-offset-2">
-                                                    <Image src={item.image_url || '/assets/images/logo.svg'} alt={itemName} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-top" />
+                                                    <Image src={item.image_url || '/assets/images/logo.svg'} alt={itemName} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-top object-top" />
                                                 </div>
                                                 <p className="mt-3 line-clamp-2 text-sm font-medium group-hover:underline underline-offset-4">{itemName}</p>
                                                 <p className="mt-1 text-sm" dir="ltr">
