@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { App, Layout, Menu, Typography, Button, ConfigProvider, Drawer, Grid } from "antd";
 import { AntdAppBridge } from "@/components/admin/antd-app";
+import { useMobileTableLabels } from "@/components/admin/mobile-table-labels";
 import { installAdminFetchCache } from "@/components/admin/admin-fetch-cache";
 import type { MenuProps } from "antd";
 import {
@@ -274,6 +275,48 @@ function AdminConfig({ children }: { children: React.ReactNode }) {
                             .admin-root .ant-statistic-content { font-size: 20px; }
                             .admin-root .ant-picker-dropdown .ant-picker-panels { flex-direction: column; }
                         }
+                        /* Phones: table rows become cards, each cell labelled with its column (see mobile-table-labels.ts). */
+                        .admin-mobile .ant-table-content, .admin-mobile .ant-table-body { overflow: visible !important; }
+                        .admin-mobile .ant-table table { width: 100% !important; min-width: 0 !important; table-layout: auto !important; }
+                        .admin-mobile .ant-table colgroup, .admin-mobile .ant-table-thead, .admin-mobile .ant-table-measure-row { display: none; }
+                        .admin-mobile .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) {
+                            display: block; margin-bottom: 10px; padding: 6px 12px;
+                            border: 1px solid #ececec; border-radius: 12px; background: #fff;
+                        }
+                        .admin-mobile .ant-table-tbody > tr.ant-table-expanded-row { margin-top: -6px; padding: 8px; background: #fafafa; }
+                        .admin-mobile .ant-table-tbody > tr > td {
+                            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px;
+                            padding: 7px 0 !important; border: none !important; border-bottom: 1px dashed #f0f0f0 !important;
+                            text-align: end; position: static !important; width: auto !important; min-width: 0; word-break: break-word;
+                        }
+                        .admin-mobile .ant-table-tbody > tr > td:last-child { border-bottom: none !important; }
+                        .admin-mobile .ant-table-tbody > tr > td::before {
+                            content: attr(data-label); flex-shrink: 0; max-width: 45%;
+                            color: #8c8c8c; font-size: 12px; text-align: start;
+                        }
+                        .admin-mobile .ant-table-tbody > tr > td[data-label=""]::before, .admin-mobile .ant-table-tbody > tr > td:not([data-label])::before { display: none; }
+                        .admin-mobile .ant-table-tbody > tr > td[data-label=""] { justify-content: flex-end; }
+                        .admin-mobile .ant-table-tbody > tr > td.ant-table-selection-column { justify-content: flex-start; border-bottom: none !important; padding-bottom: 0 !important; }
+                        .admin-mobile .ant-table-tbody > tr.ant-table-expanded-row > td { display: block; text-align: start; }
+                        .admin-mobile .ant-table-tbody > tr.ant-table-expanded-row > td::before { display: none; }
+                        .admin-mobile .ant-table-tbody > tr > td > * { min-width: 0; max-width: 100%; margin-inline-start: auto; }
+                        .admin-mobile .ant-table-tbody > tr > td .ant-space { flex-wrap: wrap; justify-content: flex-end; }
+                        .admin-mobile .ant-table-cell-row-hover, .admin-mobile .ant-table-tbody > tr:hover > td { background: transparent !important; }
+                        .admin-mobile .ant-table { background: transparent; }
+                        .admin-mobile .ant-pagination { flex-wrap: wrap; row-gap: 8px; justify-content: center; }
+                        .admin-mobile .ant-pagination-options { display: none; }
+                        /* Pages that add their own 24px frame: the layout already pads on phones. */
+                        .admin-mobile > div[style*="padding: 24px"], .admin-mobile > div[style*="padding:24px"],
+                        .admin-mobile > .ant-spin-nested-loading > .ant-spin-container > div[style*="padding: 24px"],
+                        .admin-mobile > .ant-spin-nested-loading > .ant-spin-container > div[style*="padding:24px"] {
+                            padding: 0 !important; background: transparent !important; min-height: 0 !important;
+                        }
+                        /* Header rows (title + actions) wrap instead of squeezing. */
+                        .admin-mobile [style*="justify-content: space-between"], .admin-mobile [style*="justify-content:space-between"] { flex-wrap: wrap; row-gap: 12px; }
+                        .admin-mobile .ant-alert { flex-wrap: wrap; }
+                        .admin-mobile .ant-alert-action, .admin-mobile .ant-alert-actions { margin-inline-start: 0; flex-basis: 100%; margin-top: 10px; padding-inline-start: 28px; }
+                        .admin-mobile .ant-breadcrumb { font-size: 13px; }
+                        .admin-mobile .ant-picker-range { width: 100%; }
                     `}</style>
                     {children}
                 </div>
@@ -294,6 +337,8 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     const screens = Grid.useBreakpoint();
     const mobile = screens.md === false;
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [contentEl, setContentEl] = useState<HTMLDivElement | null>(null);
+    useMobileTableLabels(contentEl, mobile);
     useEffect(() => setDrawerOpen(false), [pathname]);
     // Highlight the clicked entry immediately instead of waiting for navigation to finish.
     const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -512,7 +557,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
                             minWidth: 0,
                         }}
                     >
-                        <div style={{ maxWidth: 1320, margin: "0 auto", minWidth: 0 }}>{children}</div>
+                        <div ref={setContentEl} className={mobile ? "admin-mobile" : undefined} style={{ maxWidth: 1320, margin: "0 auto", minWidth: 0 }}>{children}</div>
                     </Content>
                 </Layout>
             </Layout>

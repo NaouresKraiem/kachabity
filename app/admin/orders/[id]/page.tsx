@@ -301,7 +301,7 @@ export default function OrderDetailPage() {
 
                 {/* Customer Information */}
                 <Card title={t("Customer Information")}>
-                    <Descriptions column={2}>
+                    <Descriptions column={{ xs: 1, sm: 1, md: 2 }}>
                         <Descriptions.Item label={t("Name")}>
                             {order.customer_first_name} {order.customer_last_name}
                         </Descriptions.Item>

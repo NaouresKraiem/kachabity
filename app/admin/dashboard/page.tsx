@@ -226,7 +226,7 @@ export default function CartAnalyticsPage() {
                     <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>
                         {t("Dashboard")}
                     </h1>
-                    {showAnalytics && <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {showAnalytics && <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <RangePicker
                             value={dateRange}
                             onChange={(dates) => {
