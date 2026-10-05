@@ -136,7 +136,8 @@ const content = {
         category: "Category",
         status: "Status",
         inStock: "In Stock",
-        outOfStock: "Out of Stock",
+        onOrder: "Made to order",
+        onOrderNote: "This item is prepared after you order. We'll call you to confirm the delivery date.",
         reviews: "reviews",
         quantity: "Quantity",
         selectColor: "Select Color",
@@ -190,7 +191,8 @@ const content = {
         category: "Catégorie",
         status: "Statut",
         inStock: "En stock",
-        outOfStock: "Rupture de stock",
+        onOrder: "Sur commande",
+        onOrderNote: "Cet article est préparé après votre commande. Nous vous appellerons pour confirmer la date de livraison.",
         reviews: "avis",
         quantity: "Quantité",
         selectColor: "Sélectionner la couleur",
@@ -244,7 +246,8 @@ const content = {
         category: "الفئة",
         status: "الحالة",
         inStock: "متوفر",
-        outOfStock: "غير متوفر",
+        onOrder: "حسب الطلب",
+        onOrderNote: "يُحضَّر هذا المنتج بعد طلبك، وسنتصل بك لتأكيد موعد التوصيل.",
         reviews: "تقييم",
         quantity: "الكمية",
         selectColor: "اختر اللون",
@@ -604,6 +607,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
     // Get current stock - use variant stock if available
     const currentStock = selectedVariant?.stock ?? product.stock ?? 0;
     const stockTracked = !!product.stock_tracked;
+    // Out-of-stock items can still be ordered: they're made to order ("sur commande").
     const inStock = !stockTracked || currentStock > 0;
     const variantLabel = selectedVariant
         ? [selectedVariant.colors?.display_name || selectedVariant.colors?.name, selectedVariant.sizes?.name].filter(Boolean).join(' / ')
@@ -712,11 +716,12 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                 <span>{reviewCount > 0 ? `${averageRating.toFixed(1)} (${reviewCount} ${text.reviews})` : text.noRatingYet}</span>
                             </a>
                             )}
-                            <span className={`inline-flex items-center gap-1.5 font-medium ${inStock ? 'text-[#3f7a3a]' : 'text-[#a33a2a]'}`}>
-                                <span className={`h-2 w-2 rounded-full ${inStock ? 'bg-[#3f7a3a]' : 'bg-[#a33a2a]'}`} aria-hidden="true" />
-                                {inStock ? text.inStock : text.outOfStock}
+                            <span className={`inline-flex items-center gap-1.5 font-medium ${inStock ? 'text-[#3f7a3a]' : 'text-[#9a6200]'}`}>
+                                <span className={`h-2 w-2 rounded-full ${inStock ? 'bg-[#3f7a3a]' : 'bg-[#c98a1a]'}`} aria-hidden="true" />
+                                {inStock ? text.inStock : text.onOrder}
                             </span>
                         </div>
+                        {!inStock && <p className="mt-2 text-sm text-[#6f5f57]">{text.onOrderNote}</p>}
 
                         {/* Price */}
                         <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1" dir="ltr">
@@ -744,7 +749,6 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                 <div className="flex flex-wrap gap-3">
                                     {availableColors.map((color) => {
                                         const colorName = color.display_name || color.name;
-                                        const hasStock = product.product_variants?.some((v) => v.color_id === color.id && (!stockTracked || v.stock > 0) && v.is_available !== false);
                                         const selected = selectedColor === color.id;
                                         return (
                                             <button
@@ -754,10 +758,9 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                                 aria-label={colorName}
                                                 aria-pressed={selected}
                                                 title={colorName}
-                                                className={`relative h-10 w-10 rounded-full border border-black/10 outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--wool-maroon)] focus-visible:ring-offset-2 ${selected ? 'ring-2 ring-[var(--wool-maroon)] ring-offset-2' : 'hover:scale-105'} ${!hasStock ? 'opacity-40' : ''}`}
+                                                className={`relative h-10 w-10 rounded-full border border-black/10 outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--wool-maroon)] focus-visible:ring-offset-2 ${selected ? 'ring-2 ring-[var(--wool-maroon)] ring-offset-2' : 'hover:scale-105'}`}
                                                 style={{ backgroundColor: color.hex_code || '#cccccc' }}
                                             >
-                                                {!hasStock && <span className="absolute inset-0 m-auto h-px w-10 -rotate-45 bg-[#5b4a42]" aria-hidden="true" />}
                                             </button>
                                         );
                                     })}
@@ -810,7 +813,7 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                 <span className="w-8 text-center font-medium" aria-live="polite">{quantity}</span>
                                 <button
                                     type="button"
-                                    onClick={() => setQuantity(stockTracked ? Math.min(Math.max(currentStock, 1), quantity + 1) : quantity + 1)}
+                                    onClick={() => setQuantity(quantity + 1)}
                                     className="h-12 w-11 rounded-e-full text-lg outline-none hover:bg-[#f3efe9] focus-visible:ring-2 focus-visible:ring-[var(--wool-maroon)]"
                                     aria-label="+"
                                 >
@@ -831,7 +834,6 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                     reviewCount: reviewCount
                                 }}
                                 quantity={quantity}
-                                disabled={!inStock}
                                 className="h-12 flex-1 justify-center rounded-full! bg-[var(--wool-maroon)]! text-base hover:bg-[#6b2516]!"
                             />
                         </div>
@@ -866,7 +868,6 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
                                         reviewCount: reviewCount
                                     }}
                                     quantity={quantity}
-                                    disabled={!inStock}
                                     className="h-12 w-auto! shrink-0 justify-center rounded-full! bg-[var(--wool-maroon)]! px-6! text-base hover:bg-[#6b2516]!"
                                 />
                             </div>

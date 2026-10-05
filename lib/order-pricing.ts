@@ -121,7 +121,6 @@ export async function priceOrder(
 
     const allVariants = (variantsResult.data ?? []) as unknown as CatalogVariant[];
     const variants: (PricedVariant | null)[] = [];
-    const requested = new Map<string, number>(); // units per variant across lines
 
     for (const line of lines) {
         const productVariants = allVariants.filter((v) => v.product_id === line.id);
@@ -150,11 +149,7 @@ export async function priceOrder(
         }
 
         if (variant) {
-            const units = (requested.get(variant.id) ?? 0) + line.quantity;
-            requested.set(variant.id, units);
-            if (tracked.get(line.id) && units > variant.stock) {
-                return { ok: false, code: 'OUT_OF_STOCK' };
-            }
+            // No stock check: units beyond the stock are made to order ("sur commande").
             const color = variant.colors ? variant.colors.display_name || variant.colors.name : null;
             const label = [color, variant.sizes?.name].filter(Boolean).join(' / ');
             variants.push({ id: variant.id, label });
