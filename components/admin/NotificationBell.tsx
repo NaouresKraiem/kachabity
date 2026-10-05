@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { App, Badge, Button, Divider, Empty, Popover, Space, Spin, Typography } from "antd";
+import { App, Badge, Button, Divider, Drawer, Empty, Grid, Popover, Space, Spin, Typography } from "antd";
 import { BellOutlined, NotificationOutlined } from "@ant-design/icons";
 import { createAdminBrowserClient } from "@/lib/supabase-browser";
 import { useAdminRole } from "@/lib/admin-role-context";
@@ -43,7 +43,12 @@ function chime(urgent: boolean) {
  * Supabase Realtime with a sound and a pop-up, plus the switch for mobile/desktop push notifications.
  */
 export default function NotificationBell() {
-    const { t, locale } = useAdminT();
+    const { t, locale, dir } = useAdminT();
+    // Phones get a bottom sheet instead of the popover, which can't fit next to the header icons.
+    const mobile = Grid.useBreakpoint().md === false;
+    const toastPlacement = mobile ? "top" as const : dir === "rtl" ? "topLeft" as const : "topRight" as const;
+    const toastPlacementRef = useRef(toastPlacement);
+    toastPlacementRef.current = toastPlacement;
     const { id: userId } = useAdminRole();
     const { notification } = App.useApp();
     const router = useRouter();
@@ -103,7 +108,7 @@ export default function NotificationBell() {
                         notification.open({
                             message: text.title,
                             description: text.body,
-                            placement: "topRight",
+                            placement: toastPlacementRef.current,
                             duration: urgent ? 0 : 8,
                             type: row.severity === "critical" ? "error" : row.severity === "warning" ? "warning" : row.kind === "order" ? "success" : "info",
                             onClick: () => {
@@ -172,14 +177,14 @@ export default function NotificationBell() {
     };
 
     const content = (
-        <div style={{ width: 380, maxWidth: "calc(100vw - 32px)" }}>
+        <div style={{ width: mobile ? "100%" : 380, maxWidth: "100%" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <Text strong>{t("Notifications")}</Text>
                 <Button type="link" size="small" disabled={unread === 0} onClick={() => markRead({ all: true })}>
                     {t("Mark all as read")}
                 </Button>
             </div>
-            <div style={{ maxHeight: 420, overflowY: "auto", marginInline: -12 }}>
+            <div style={{ maxHeight: mobile ? "calc(85vh - 190px)" : 420, overflowY: "auto", marginInline: -12 }}>
                 {loading ? (
                     <div style={{ textAlign: "center", padding: 24 }}><Spin /></div>
                 ) : items.length === 0 ? (
@@ -190,8 +195,8 @@ export default function NotificationBell() {
             </div>
             <Divider style={{ margin: "8px 0" }} />
             <Space orientation="vertical" style={{ width: "100%" }} size={4}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                    <Space size={6}>
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                    <Space size={6} style={{ minWidth: 0 }}>
                         <NotificationOutlined />
                         <Text type="secondary" style={{ fontSize: 12 }}>
                             {desktop === "on" ? t("Push notifications: on")
@@ -214,9 +219,22 @@ export default function NotificationBell() {
         </div>
     );
 
+    const bell = <Button type="text" aria-label={t("Notifications")} onClick={mobile ? () => setOpen(true) : undefined} icon={<Badge count={unread} size="small" overflowCount={99}><BellOutlined style={{ fontSize: 18 }} /></Badge>} />;
+
+    if (mobile) {
+        return (
+            <>
+                {bell}
+                <Drawer open={open} onClose={() => setOpen(false)} placement="bottom" size="85vh" closable={false} styles={{ body: { padding: "16px 16px calc(12px + env(safe-area-inset-bottom))" } }}>
+                    {content}
+                </Drawer>
+            </>
+        );
+    }
+
     return (
-        <Popover content={content} trigger="click" open={open} onOpenChange={setOpen} placement="bottomRight" arrow={false}>
-            <Button type="text" aria-label={t("Notifications")} icon={<Badge count={unread} size="small" overflowCount={99}><BellOutlined style={{ fontSize: 18 }} /></Badge>} />
+        <Popover content={content} trigger="click" open={open} onOpenChange={setOpen} placement={dir === "rtl" ? "bottomLeft" : "bottomRight"} arrow={false}>
+            {bell}
         </Popover>
     );
 }

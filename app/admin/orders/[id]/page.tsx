@@ -16,9 +16,10 @@ import {
     Table,
     Select,
     Divider,
+    Image,
 } from "antd";
 import { message } from "@/components/admin/antd-app";
-import { ORDER_STATUS_OPTIONS, validateOrder } from "@/components/admin/order-status";
+import { ORDER_ITEM_IMAGE_FALLBACK, ORDER_STATUS_OPTIONS, validateOrder } from "@/components/admin/order-status";
 import type { ColumnsType } from "antd/es/table";
 import {
     ArrowLeftOutlined,
@@ -170,9 +171,19 @@ export default function OrderDetailPage() {
             dataIndex: "product_name",
             key: "product_name",
             render: (name: string, item: OrderItem) => (
-                <div>
-                    {name}
-                    {item.variant_label && <div><Text type="secondary" style={{ fontSize: 12 }}>{item.variant_label}</Text></div>}
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <Image
+                        src={item.product_image || undefined}
+                        alt={name}
+                        width={56}
+                        height={56}
+                        fallback={ORDER_ITEM_IMAGE_FALLBACK}
+                        style={{ objectFit: "cover", objectPosition: "top", borderRadius: 8, border: "1px solid #f0f0f0", flexShrink: 0 }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                        {name}
+                        {item.variant_label && <div><Text type="secondary" style={{ fontSize: 12 }}>{item.variant_label}</Text></div>}
+                    </div>
                 </div>
             ),
         },

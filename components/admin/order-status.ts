@@ -34,3 +34,6 @@ export async function validateOrder(orderId: string) {
         body: JSON.stringify({ id: orderId, status: "processing" }),
     });
 }
+
+/** Grey square shown when an order line has no photo, or its photo no longer loads. */
+export const ORDER_ITEM_IMAGE_FALLBACK = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"><rect width="44" height="44" fill="#f5f5f5"/></svg>');

@@ -14,9 +14,12 @@ import {
     Tag,
     Typography,
     Space,
+    Image,
+    Badge,
+    Tooltip,
 } from "antd";
 import { message } from "@/components/admin/antd-app";
-import { ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS, orderStatusLabel, validateOrder } from "@/components/admin/order-status";
+import { ORDER_ITEM_IMAGE_FALLBACK, ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS, orderStatusLabel, validateOrder } from "@/components/admin/order-status";
 import { useAdminRole } from "@/lib/admin-role-context";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -40,6 +43,7 @@ interface OrderRow {
     status: string;
     payment_status: string;
     created_at: string;
+    items?: { id: string; product_name: string; product_image: string | null; quantity: number; variant_label: string | null }[];
 }
 
 export default function AdminOrdersPage() {
@@ -206,6 +210,34 @@ export default function AdminOrdersPage() {
                     <div style={{ fontSize: 12, color: "#999" }}>{record.customer_email}</div>
                 </div>
             ),
+        },
+        {
+            title: t("Products"),
+            key: "items",
+            render: (_: any, record: OrderRow) => {
+                const items = record.items ?? [];
+                const shown = items.slice(0, 3);
+                return (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "nowrap" }}>
+                        {shown.map((item) => (
+                            <Tooltip key={item.id} title={`${item.quantity} × ${item.product_name}${item.variant_label ? ` (${item.variant_label})` : ""}`}>
+                                <Badge count={item.quantity > 1 ? item.quantity : 0} size="small" color="#7a3b2e">
+                                    <Image
+                                        src={item.product_image || undefined}
+                                        alt={item.product_name}
+                                        width={40}
+                                        height={40}
+                                        preview={false}
+                                        fallback={ORDER_ITEM_IMAGE_FALLBACK}
+                                        style={{ objectFit: "cover", objectPosition: "top", borderRadius: 6, border: "1px solid #f0f0f0" }}
+                                    />
+                                </Badge>
+                            </Tooltip>
+                        ))}
+                        {items.length > shown.length && <Text type="secondary">+{items.length - shown.length}</Text>}
+                    </div>
+                );
+            },
         },
         {
             title: t("Total"),

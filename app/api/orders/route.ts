@@ -147,10 +147,11 @@ export async function GET(request: NextRequest) {
         const status = searchParams.get('status');
 
         // Build query
-        // A single order embeds its items, so the detail page needs one round trip.
+        // A single order embeds its items, so the detail page needs one round trip; the list
+        // embeds just what it needs to show product thumbnails.
         let query = supabase
             .from('orders')
-            .select(id ? '*, items:order_items(*)' : '*')
+            .select(id ? '*, items:order_items(*)' : '*, items:order_items(id, product_name, product_image, quantity, variant_label)')
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
