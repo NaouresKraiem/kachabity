@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getCachedProductDetail } from "@/lib/catalog-cache";
 import { getProductName, getProductDescription } from "@/lib/utils/product-utils";
+import { getSiteSettings } from "@/lib/get-site-settings";
 import ProductDetailClient from "./ProductDetailClient";
 
 type Params = Promise<{ locale: string; slug: string }>;
@@ -22,6 +23,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ProductPage({ params }: { params: Params }) {
     const { slug } = await params;
-    const initialData = await getCachedProductDetail(slug);
-    return <ProductDetailClient initialData={initialData} />;
+    const [initialData, settings] = await Promise.all([getCachedProductDetail(slug), getSiteSettings()]);
+    // Same free-shipping threshold as checkout (site_settings), not the build-time env value.
+    const freeShippingThreshold = settings.free_shipping_enabled ? settings.global_free_shipping_threshold : null;
+    return <ProductDetailClient initialData={initialData} freeShippingThreshold={freeShippingThreshold} />;
 }

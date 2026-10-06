@@ -27,7 +27,7 @@ const SHOW_HERO_CAROUSEL = false;
 
 interface LandingData {
   showcase: LandingProduct[];
-  ringExtras: LandingProduct[];
+  ringPicks: LandingProduct[];
   newArrivals: LandingProduct[];
   spotlight: SpotlightCollection | null;
   freeShippingThreshold: number | null;
@@ -38,16 +38,16 @@ interface LandingData {
 // (Admin → Landing page).
 async function loadLandingData(locale: string): Promise<LandingData> {
   const config = await getLandingConfig();
-  const [showcase, ringExtras, newArrivals, spotlight, settings] = await Promise.all([
+  const [showcase, ringPicks, newArrivals, spotlight, settings] = await Promise.all([
     getLandingPicks(locale, 'showcase'),
-    getLandingPicks(locale, 'ring'),
+    getLandingPicks(locale, 'ring', false),
     getNewArrivals(locale, config.lists.new_arrivals),
     getSpotlightCollection(locale, config.lists.spotlight, config.spotlightCategoryId),
     getSiteSettings(),
   ]);
   return {
     showcase,
-    ringExtras,
+    ringPicks,
     newArrivals,
     spotlight,
     freeShippingThreshold: settings.free_shipping_enabled ? settings.global_free_shipping_threshold : null,
@@ -59,21 +59,31 @@ async function loadLandingData(locale: string): Promise<LandingData> {
 // Errors are caught outside the cache so a failed load isn't cached.
 async function getLandingData(locale: string): Promise<LandingData> {
   try {
-    return await cachedCatalogQuery(`landing-v6-${locale}`, () => loadLandingData(locale))();
+    return await cachedCatalogQuery(`landing-v7-${locale}`, () => loadLandingData(locale))();
   } catch (error) {
     console.error('Error fetching landing page data:', error);
-    return { showcase: [], ringExtras: [], newArrivals: [], spotlight: null, freeShippingThreshold: null, layout: DEFAULT_LANDING_CONFIG.layout };
+    return { showcase: [], ringPicks: [], newArrivals: [], spotlight: null, freeShippingThreshold: null, layout: DEFAULT_LANDING_CONFIG.layout };
   }
 }
 
-// The 3D ring: the showcase pieces first, then the extra pieces.
+const RING_MAX = 16;
+const RING_MIN = 8; // fewer cards look sparse, and the 3D ring needs at least 4
+
+// The 3D ring: exactly the admin's ring picks, in order, repeated to fill the ring when there are
+// few of them. With no picks, the showcase pieces then the newest products.
 function ringProducts(data: LandingData): LandingProduct[] {
-  const picks: LandingProduct[] = [];
-  for (const product of [...data.showcase, ...data.ringExtras]) {
-    if (picks.length === 16) break;
-    if (product.image && !picks.some((p) => p.id === product.id)) picks.push(product);
+  const picked = data.ringPicks.filter((p) => p.image).slice(0, RING_MAX);
+  if (picked.length > 0) {
+    const cards = [...picked];
+    while (cards.length < RING_MIN) cards.push(...picked);
+    return cards;
   }
-  return picks;
+  const cards: LandingProduct[] = [];
+  for (const product of [...data.showcase, ...data.newArrivals]) {
+    if (cards.length === RING_MAX) break;
+    if (product.image && !cards.some((p) => p.id === product.id)) cards.push(product);
+  }
+  return cards;
 }
 
 // Hero rows change rarely (edited in the Supabase dashboard): serve them from the Next.js data cache.

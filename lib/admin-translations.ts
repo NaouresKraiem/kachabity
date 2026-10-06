@@ -655,7 +655,7 @@ const entries: Entry[] = [
     ["Header showcase", "Vitrine de l'en-tête", "واجهة الرأس"],
     ["The pieces in the header photo. Pick 3. With none picked, the newest products are shown.", "Les pièces de la photo d'en-tête. Choisissez-en 3. Sans choix, les produits les plus récents sont affichés.", "القطع الظاهرة في صورة الرأس. اختر 3. إن لم تختر شيئاً تظهر أحدث المنتجات."],
     ["3D ring", "Anneau 3D", "الحلقة ثلاثية الأبعاد"],
-    ["Extra pieces turning in the header ring, after the showcase ones (16 cards in all).", "Pièces supplémentaires qui tournent dans l'anneau de l'en-tête, après celles de la vitrine (16 cartes en tout).", "قطع إضافية تدور في حلقة الرأس بعد قطع الواجهة (16 بطاقة في المجموع)."],
+    ["Pieces turning in the 3D ring at the top of the home page, in this order (up to 16). Fewer than 8 repeat to fill the ring. Leave empty to use the showcase pieces and the newest products.", "Pièces qui tournent dans l'anneau 3D en haut de la page d'accueil, dans cet ordre (16 au maximum). S'il y en a moins de 8, elles se répètent pour remplir l'anneau. Laissez vide pour utiliser les pièces de la vitrine et les nouveautés.", "القطع التي تدور في الحلقة ثلاثية الأبعاد أعلى الصفحة الرئيسية بهذا الترتيب (16 كحد أقصى). إذا كانت أقل من 8 تتكرر لملء الحلقة. اتركها فارغة لاستخدام قطع الواجهة وأحدث المنتجات."],
     ["Products shown", "Produits affichés", "عدد المنتجات المعروضة"],
     ["Add a product (newest first)", "Ajouter un produit (les plus récents d'abord)", "أضف منتجاً (الأحدث أولاً)"],
     ["No products picked", "Aucun produit choisi", "لم يتم اختيار أي منتج"],

@@ -138,11 +138,11 @@ async function getProductsByIds(locale: string, ids: string[], categories: Categ
     return toLandingProducts(rows, categories, locale);
 }
 
-// A section's picks. Showcase and ring fall back to the newest products when nothing is picked.
-export async function getLandingPicks(locale: string, section: Exclude<LandingSection, 'new_arrivals'>): Promise<LandingProduct[]> {
+// A section's picks. Unless `fallback` is false, an empty section falls back to the newest products.
+export async function getLandingPicks(locale: string, section: Exclude<LandingSection, 'new_arrivals'>, fallback = true): Promise<LandingProduct[]> {
     const [ids, categories] = await Promise.all([getPickedIds(section), getCategories()]);
     const picks = await getProductsByIds(locale, ids, categories);
-    if (picks.length > 0) return picks;
+    if (picks.length > 0 || !fallback) return picks;
     return getNewestProducts(locale, section === 'showcase' ? 3 : 11, [], categories);
 }
 

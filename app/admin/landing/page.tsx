@@ -60,7 +60,7 @@ const PICKERS: PickerInfo[] = [
     { key: "promo_products", title: "Promotions", help: "Pinned products come first, then the latest discounts. A product only shows here while it has an active discount." },
     { key: "spotlight", title: "Collection spotlight", help: "One category with its products. Pinned products come first, then the category's best sellers." },
     { key: "showcase", title: "Header showcase", help: "The pieces in the header photo. Pick 3. With none picked, the newest products are shown." },
-    { key: "ring", title: "3D ring", help: "Extra pieces turning in the header ring, after the showcase ones (16 cards in all)." },
+    { key: "ring", title: "3D ring", help: "Pieces turning in the 3D ring at the top of the home page, in this order (up to 16). Fewer than 8 repeat to fill the ring. Leave empty to use the showcase pieces and the newest products." },
 ];
 
 const isListSection = (key: LandingSection): key is ListSection =>

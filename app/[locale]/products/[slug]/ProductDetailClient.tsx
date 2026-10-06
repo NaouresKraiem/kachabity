@@ -298,7 +298,7 @@ const content = {
     }
 };
 
-export default function ProductDetailClient({ initialData }: { initialData?: ProductDetailData | null }) {
+export default function ProductDetailClient({ initialData, freeShippingThreshold }: { initialData?: ProductDetailData | null; freeShippingThreshold?: number | null }) {
     const params = useParams();
     const searchParams = useSearchParams();
     const locale = (params.locale as string) || 'en';
@@ -623,7 +623,6 @@ export default function ProductDetailClient({ initialData }: { initialData?: Pro
     const selectedColorObj = availableColors.find((c) => c.id === selectedColor);
     const selectedSizeObj = availableSizes.find((s) => s.id === selectedSize);
     const shippingCost = headerConfig.invoices.default_shipping_cost;
-    const freeShippingThreshold = headerConfig.invoices.free_shipping_threshold;
     const galleryImages = productImages.filter((img) => img.url && img.url.trim() !== '');
     const productUrl = `/${locale}/products/${slug}`;
 

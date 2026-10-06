@@ -54,7 +54,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
             console.error('Error fetching site settings:', error);
             // Return defaults
             return {
-                global_free_shipping_threshold: 500,
+                global_free_shipping_threshold: 300,
                 free_shipping_enabled: true,
                 default_shipping_cost: 8,
                 shipping_tax_rate: 0,
@@ -63,7 +63,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         }
 
         const settings: SiteSettings = {
-            global_free_shipping_threshold: 500,
+            global_free_shipping_threshold: 300,
             free_shipping_enabled: true,
             default_shipping_cost: 8,
             shipping_tax_rate: 0,
@@ -87,7 +87,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     } catch (error) {
         console.error('Error in getSiteSettings:', error);
         return {
-            global_free_shipping_threshold: 500,
+            global_free_shipping_threshold: 300,
             free_shipping_enabled: true,
             default_shipping_cost: 8,
             shipping_tax_rate: 0,

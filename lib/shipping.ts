@@ -134,8 +134,8 @@ export async function calculateShipping(
             cost: 8,
             isFree: false,
             rate: null,
-            amountNeeded: 500,
-            threshold: 500,
+            amountNeeded: 300,
+            threshold: 300,
             error: error as Error
         };
     }
