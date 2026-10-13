@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { COLISSIMO_GOVERNORATES } from "@/lib/colissimo-data";
 
 // Checkout form validation schema
-// Name, phone, and delivery address are required. Email is optional.
+// Name, phone, governorate, city and delivery address are required. Email is optional.
 export const checkoutSchema = z.object({
     firstName: z.string()
         .min(2, "First name must be at least 2 characters")
@@ -26,13 +27,15 @@ export const checkoutSchema = z.object({
         .min(1, "Delivery address is required")
         .max(200, "Address must be less than 200 characters"),
 
-    city: z.string()
-        .max(50, "City must be less than 50 characters")
-        .optional(),
-
+    // Delivery details as the delivery company (Colissimo) needs them: one of its governorates
+    // (stored under its exact spelling) and the city.
     state: z.string()
-        .max(50, "State/Province must be less than 50 characters")
-        .optional(),
+        .refine((value) => COLISSIMO_GOVERNORATES.includes(value), "Choose your governorate"),
+
+    city: z.string()
+        .trim()
+        .min(1, "City is required")
+        .max(100, "City must be less than 100 characters"),
 
     zipCode: z.string()
         .max(10, "Postal code must be less than 10 characters")

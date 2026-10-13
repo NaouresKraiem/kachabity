@@ -771,6 +771,53 @@ export const openApiSpec = {
         '/api/stock/tracking': {
             put: { tags: ['Stock'], summary: 'Switch website stock tracking for products', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { product_ids: { type: 'array', items: { type: 'string', format: 'uuid' } }, tracked: { type: 'boolean' } } } } } }, responses: { 200: messageResponse('Updated') } },
         },
+        '/api/delivery': {
+            get: {
+                tags: ['Operations'],
+                summary: 'Colissimo parcels (orders permission)',
+                description: 'Live parcels with their order, plus which Colissimo tokens are configured.',
+                parameters: [{ name: 'order_id', in: 'query', schema: { type: 'string', format: 'uuid' } }],
+                responses: { 200: messageResponse('{ rows, configured: { add, tracking } }') },
+            },
+            post: {
+                tags: ['Operations'],
+                summary: 'Send an order to Colissimo, add a parcel by barcode, or refresh statuses',
+                description: '`create` creates the parcel at Colissimo (with `order_id`, for that order, which it marks shipped; without, a parcel entered by hand); `import` adds an existing parcel after checking it with the tracking API; `refresh` asks Colissimo for the status of the given parcels (default: all that can still change). Delivered parcels mark their order delivered, "Livre paye" also paid.',
+                requestBody: {
+                    required: true,
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: ['action'],
+                                properties: {
+                                    action: { type: 'string', enum: ['create', 'import', 'refresh'] },
+                                    order_id: { type: 'string', format: 'uuid' },
+                                    barcode: { type: 'string' },
+                                    ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
+                                    parcel: {
+                                        type: 'object',
+                                        description: 'Colissimo fields: nom, gouvernerat, ville, adresse, tel, tel2, designation, nb_article, prix, msg, echange (oui/non), article, nb_echange, ouvrir (0/1), fragile (0/1), type_colis (1-3)',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    200: messageResponse('Parcel or refresh summary'),
+                    409: errorResponse(409, 'Order already has a parcel, or is cancelled'),
+                    502: errorResponse(502, 'Colissimo refused the request or could not be reached'),
+                    503: errorResponse(503, 'Colissimo tokens not configured'),
+                },
+            },
+            delete: {
+                tags: ['Operations'],
+                summary: 'Remove parcels from the list (soft delete; not cancelled at Colissimo)',
+                parameters: [{ name: 'ids', in: 'query', required: true, schema: { type: 'string' } }],
+                responses: { 200: messageResponse('Removed') },
+            },
+        },
         '/api/stock/costs': {
             get: { tags: ['Stock'], summary: 'Purchase costs (admin)', responses: { 200: messageResponse('Costs'), 403: errorResponse(403, 'Admins only') } },
             put: { tags: ['Stock'], summary: 'Set or clear a product cost (admin)', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { product_id: { type: 'string', format: 'uuid' }, cost: { type: 'number', nullable: true } } } } } }, responses: { 200: messageResponse('Saved'), 403: errorResponse(403, 'Admins only') } },

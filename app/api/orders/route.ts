@@ -9,6 +9,7 @@ import type { Order, OrderItem } from '@/lib/orders';
 import { getAdminActor } from '@/lib/admin-auth';
 import { invalidateCatalog } from '@/lib/catalog-cache';
 import { stockErrorMessage } from '@/lib/stock';
+import { COLISSIMO_GOVERNORATES } from '@/lib/colissimo-data';
 
 const orderItemSchema = z.object({
     id: z.guid(),
@@ -27,8 +28,8 @@ const createOrderSchema = z.object({
     customerLastName: z.string().trim().min(1),
     customerPhone: z.string().trim().regex(/^[24579]\d{7}$/, 'Invalid Tunisian phone number'),
     shippingAddress: z.string().trim().min(1, 'Shipping address is required').max(200),
-    shippingCity: z.string().optional(),
-    shippingState: z.string().optional(),
+    shippingCity: z.string().trim().min(1, 'City is required').max(100),
+    shippingState: z.enum(COLISSIMO_GOVERNORATES as [string, ...string[]], { message: 'Choose a governorate' }),
     shippingZip: z.string().optional(),
     shippingCountry: z.string().optional(),
     items: z.array(orderItemSchema).min(1),
@@ -151,9 +152,11 @@ export async function GET(request: NextRequest) {
         // embeds just what it needs to show product thumbnails.
         let query = supabase
             .from('orders')
-            .select(id ? '*, items:order_items(*)' : '*, items:order_items(id, product_name, product_image, quantity, variant_label)')
+            .select(id ? '*, items:order_items(*)' : '*, items:order_items(id, product_name, product_image, quantity, variant_label), deliveries(status, barcode)')
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
+
+        if (!id) query = query.is('deliveries.deleted_at', null);
 
         // Filter by ID if provided
         if (id) {

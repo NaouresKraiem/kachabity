@@ -39,6 +39,11 @@ NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 # when calling GET /api/stock/inventory. Keep this value secret.
 STOCK_API_KEY=replace-with-a-long-random-key
 
+# Colissimo delivery (Admin → Delivery). Both tokens come from the Colissimo sender
+# account, Paramètres → APIs. Server-only: keep them secret.
+COLISSIMO_ADD_TOKEN=your-colissimo-add-token
+COLISSIMO_TRACKING_TOKEN=your-colissimo-tracking-token
+
 NEXT_PUBLIC_PHONE=+216 55 558 648
 NEXT_PUBLIC_ADRESS=Your Address
 NEXT_PUBLIC_LOCATION=Your Location

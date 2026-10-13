@@ -30,6 +30,7 @@ import {
     BellOutlined,
     HomeOutlined,
     DeleteOutlined,
+    CarOutlined,
 } from "@ant-design/icons";
 import { antdTheme } from "@/lib/antd-config";
 import { createAdminBrowserClient } from "@/lib/supabase-browser";
@@ -91,6 +92,11 @@ const menuItems: MenuItem[] = [
         key: "/admin/orders",
         icon: <ShoppingCartOutlined />,
         label: msg("Orders"),
+    },
+    {
+        key: "/admin/delivery",
+        icon: <CarOutlined />,
+        label: msg("Delivery"),
     },
     {
         key: "stock",
@@ -216,6 +222,7 @@ const MENU_PERMISSIONS: Record<string, Permission | "admin"> = {
     categories: "products",
     "/admin/variants": "products",
     "/admin/orders": "orders",
+    "/admin/delivery": "orders",
     stock: "stock",
     "/admin/promotions": "discounts",
     "/admin/sale-banners": "marketing",

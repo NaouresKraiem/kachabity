@@ -19,16 +19,18 @@ import {
     Tooltip,
 } from "antd";
 import { message } from "@/components/admin/antd-app";
-import { ORDER_ITEM_IMAGE_FALLBACK, ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS, orderStatusLabel, validateOrder } from "@/components/admin/order-status";
+import { ORDER_ITEM_IMAGE_FALLBACK, ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS, errorCode, orderStatusLabel, validateOrder } from "@/components/admin/order-status";
 import { useAdminRole } from "@/lib/admin-role-context";
 import type { ColumnsType } from "antd/es/table";
 import {
     DeleteOutlined,
     EyeOutlined,
+    CarOutlined,
     SearchOutlined,
     ReloadOutlined,
 } from "@ant-design/icons";
 import { DATE_LOCALES, useAdminT } from "@/lib/admin-i18n";
+import DeliveryStatusTag from "@/components/admin/delivery/DeliveryStatusTag";
 
 const { Title, Text } = Typography;
 
@@ -44,6 +46,7 @@ interface OrderRow {
     payment_status: string;
     created_at: string;
     items?: { id: string; product_name: string; product_image: string | null; quantity: number; variant_label: string | null }[];
+    deliveries?: { status: string; barcode: string | null }[];
 }
 
 export default function AdminOrdersPage() {
@@ -126,10 +129,21 @@ export default function AdminOrdersPage() {
     const handleValidate = async (order: OrderRow) => {
         setValidatingId(order.id);
         try {
-            await validateOrder(order.id);
-            message.success(t("Order {order_number} validated", { order_number: order.order_number }));
+            const result = await validateOrder(order.id);
+            if (result.delivery?.barcode) {
+                message.success(t("Order {order_number} validated, Colissimo parcel {barcode}", { order_number: order.order_number, barcode: result.delivery.barcode }));
+            } else {
+                message.success(t("Order {order_number} validated", { order_number: order.order_number }));
+            }
+            if (result.warning) message.warning(t(result.warning));
             fetchOrders();
         } catch (e) {
+            if (errorCode(e) === "NEEDS_DETAILS") {
+                // Missing delivery details: finish them in the send form on the order's page.
+                message.info(t("Complete the delivery details to validate this order"));
+                router.push(`/admin/orders/${order.id}?send=1`);
+                return;
+            }
             message.error(t((e as Error).message));
         } finally {
             setValidatingId(null);
@@ -251,7 +265,17 @@ export default function AdminOrdersPage() {
             dataIndex: "status",
             key: "status",
             sorter: (a, b) => a.status.localeCompare(b.status),
-            render: (status: string) => <Tag color={ORDER_STATUS_COLORS[status] || "default"}>{t(orderStatusLabel(status))}</Tag>,
+            render: (status: string, record: OrderRow) => (
+                <Space orientation="vertical" size={4}>
+                    <Tag color={ORDER_STATUS_COLORS[status] || "default"}>{t(orderStatusLabel(status))}</Tag>
+                    {record.deliveries?.[0] && (
+                        <Space size={4}>
+                            <CarOutlined style={{ color: "#8c8c8c" }} />
+                            <DeliveryStatusTag status={record.deliveries[0].status} />
+                        </Space>
+                    )}
+                </Space>
+            ),
         },
         {
             title: t("Payment"),
@@ -288,7 +312,7 @@ export default function AdminOrdersPage() {
                     {record.status === "pending" && (
                         <Popconfirm
                             title={t("Validate order {order_number}?", { order_number: record.order_number })}
-                            description={t("This confirms the order and takes its items out of stock.")}
+                            description={t("This creates its Colissimo parcel, confirms the order and takes its items out of stock.")}
                             okText={t("Validate")}
                             onConfirm={() => handleValidate(record)}
                         >

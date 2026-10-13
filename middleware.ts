@@ -43,6 +43,7 @@ const PAGE_PERMISSIONS: [string, Requirement][] = [
     ['/admin/categories', { any: ['products'] }],
     ['/admin/variants', { any: ['products'] }],
     ['/admin/orders', { any: ['orders'] }],
+    ['/admin/delivery', { any: ['orders'] }],
     ['/admin/stock', { any: ['stock'] }],
     ['/admin/promotions', { any: ['discounts'] }],
     ['/admin/sale-banners', { any: ['marketing'] }],
@@ -85,6 +86,8 @@ function requirementFor(request: NextRequest): Requirement | null {
         return { any: ['products', 'discounts', 'marketing', 'stock'] };
     }
     if (pathname === '/api/orders' && method !== 'POST') return withDelete(method, ['orders']);
+    // Colissimo parcels: sending orders, tracking and removing them from the list.
+    if (under('/api/delivery')) return withDelete(method, ['orders']);
     const area = MUTATION_PERMISSIONS[pathname];
     if (area && method !== 'GET') return withDelete(method, area);
     return null;

@@ -106,7 +106,7 @@ export default function NotificationBell() {
                         chime(urgent);
                         const text = notificationText(row, localeRef.current);
                         notification.open({
-                            message: text.title,
+                            title: text.title,
                             description: text.body,
                             placement: toastPlacementRef.current,
                             duration: urgent ? 0 : 8,

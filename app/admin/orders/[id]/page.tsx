@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
     Button,
@@ -19,13 +19,14 @@ import {
     Image,
 } from "antd";
 import { message } from "@/components/admin/antd-app";
-import { ORDER_ITEM_IMAGE_FALLBACK, ORDER_STATUS_OPTIONS, validateOrder } from "@/components/admin/order-status";
+import { ORDER_ITEM_IMAGE_FALLBACK, ORDER_STATUS_OPTIONS, errorCode, validateOrder } from "@/components/admin/order-status";
 import type { ColumnsType } from "antd/es/table";
 import {
     ArrowLeftOutlined,
     SaveOutlined,
 } from "@ant-design/icons";
 import { DATE_LOCALES, useAdminT } from "@/lib/admin-i18n";
+import OrderDeliveryCard from "@/components/admin/delivery/OrderDeliveryCard";
 
 const { Title, Text } = Typography;
 
@@ -74,11 +75,9 @@ export default function OrderDetailPage() {
     const [status, setStatus] = useState<string>("");
     const [paymentStatus, setPaymentStatus] = useState<string>("");
 
-    useEffect(() => {
-        if (!id) return;
-
-        const fetchOrder = async () => {
-            setLoading(true);
+    // `quiet` reloads in place (after the delivery card changed the order) without the page spinner.
+    const fetchOrder = useCallback(async (quiet = false) => {
+            if (!quiet) setLoading(true);
             try {
                 const response = await fetch(`/api/orders?id=${id}`);
                 const result = await response.json();
@@ -97,21 +96,37 @@ export default function OrderDetailPage() {
             } finally {
                 setLoading(false);
             }
-        };
-
-        fetchOrder();
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- t only changes the error text
     }, [id, router]);
 
+    useEffect(() => {
+        if (id) fetchOrder();
+    }, [id, fetchOrder]);
+
     const [validating, setValidating] = useState(false);
+    // Bumped to make the delivery card reload, or open its send form (?send=1 from the orders list).
+    const [deliveryVersion, setDeliveryVersion] = useState(0);
+    const searchParams = useSearchParams();
+    const [sendRequest, setSendRequest] = useState(() => (searchParams.get("send") === "1" ? 1 : 0));
     const handleValidate = async () => {
         if (!order) return;
         setValidating(true);
         try {
-            const updated = await validateOrder(order.id);
-            setOrder({ ...order, status: updated.status, stock_deducted: updated.stock_deducted });
-            setStatus(updated.status);
-            message.success(t("Order {order_number} validated", { order_number: order.order_number }));
+            const result = await validateOrder(order.id);
+            if (result.delivery?.barcode) {
+                message.success(t("Order {order_number} validated, Colissimo parcel {barcode}", { order_number: order.order_number, barcode: result.delivery.barcode }));
+            } else {
+                message.success(t("Order {order_number} validated", { order_number: order.order_number }));
+            }
+            if (result.warning) message.warning(t(result.warning));
+            setDeliveryVersion((v) => v + 1);
+            fetchOrder(true);
         } catch (e) {
+            if (errorCode(e) === "NEEDS_DETAILS") {
+                message.info(t("Complete the delivery details to validate this order"));
+                setSendRequest((n) => n + 1);
+                return;
+            }
             message.error(t((e as Error).message));
         } finally {
             setValidating(false);
@@ -257,7 +272,7 @@ export default function OrderDetailPage() {
                         type="warning"
                         showIcon
                         title={t("This order is waiting for validation")}
-                        description={t("Validating confirms the order and takes its items out of the online location's stock. Check the customer's details first.")}
+                        description={t("Validating creates the Colissimo parcel, confirms the order and takes its items out of the online location's stock. Check the customer's details first.")}
                         action={
                             <Button type="primary" loading={validating} onClick={handleValidate} style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}>
                                 {t("Validate order")}
@@ -309,6 +324,14 @@ export default function OrderDetailPage() {
                         </Button>
                     </Space>
                 </Card>
+
+                <OrderDeliveryCard
+                    order={order}
+                    orderStatus={order.status}
+                    onOrderChanged={() => fetchOrder(true)}
+                    reloadSignal={deliveryVersion}
+                    openSendSignal={sendRequest}
+                />
 
                 {/* Customer Information */}
                 <Card title={t("Customer Information")}>

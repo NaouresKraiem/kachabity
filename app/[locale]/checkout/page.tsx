@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cartLineKey, useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
+import { governorateLabel, governorateOptions } from "@/lib/colissimo-data";
 import { createOrder } from "@/lib/orders";
 import { calculateShipping, getCountryCode } from "@/lib/shipping";
 import { getCountryTaxRate } from "@/lib/get-site-settings";
@@ -30,14 +31,16 @@ const content = {
         orderNo: "Order No.",
         paymentMethod: "Payment",
         shippingAddress: "Shipping Address",
-        billingAddress: "Billing Address",
+        deliveryAddress: "Delivery Address",
         firstName: "First Name",
         lastName: "Last Name",
         emailAddress: "Email Address",
         streetAddress: "Street Address",
-        stateProvince: "State/Province",
-        city: "City",
-        zipPostalCode: "Zip/Postal Code",
+        city: "City / Delegation",
+        governorate: "Governorate",
+        chooseGovernorate: "Choose your governorate",
+        governorateRequired: "Choose your governorate",
+        cityRequired: "Enter your city",
         phone: "Phone",
         continue: "Continue",
         confirmMyOrder: "Confirm my order",
@@ -70,10 +73,7 @@ const content = {
         enterLastName: "Enter your Last Name",
         enterEmail: "Enter your Email Address",
         enterStreetAddress: "Enter your Street Address",
-        enterState: "Enter your State",
-        enterCity: "Enter your City",
-        enterPostalCode: "Enter your Postal Code",
-        country: "Country",
+        enterCity: "e.g. Akouda",
         orderConfirmedSuccess: "Order Confirmed Successfully!",
         checkEmailForDetails: "Check your email for order details",
         failedToCreateOrder: "Failed to create order. Please try again.",
@@ -95,14 +95,16 @@ const content = {
         orderNo: "N° de commande",
         paymentMethod: "Paiement",
         shippingAddress: "Adresse de livraison",
-        billingAddress: "Adresse de facturation",
+        deliveryAddress: "Adresse de livraison",
         firstName: "Prénom",
         lastName: "Nom",
         emailAddress: "Adresse e-mail",
         streetAddress: "Adresse",
-        stateProvince: "État/Province",
-        city: "Ville",
-        zipPostalCode: "Code postal",
+        city: "Ville / Délégation",
+        governorate: "Gouvernorat",
+        chooseGovernorate: "Choisissez votre gouvernorat",
+        governorateRequired: "Choisissez votre gouvernorat",
+        cityRequired: "Entrez votre ville",
         phone: "Téléphone",
         continue: "Continuer",
         confirmMyOrder: "Confirmer ma commande",
@@ -135,10 +137,7 @@ const content = {
         enterLastName: "Entrez votre nom",
         enterEmail: "Entrez votre adresse e-mail",
         enterStreetAddress: "Entrez votre adresse",
-        enterState: "Entrez votre état/province",
-        enterCity: "Entrez votre ville",
-        enterPostalCode: "Entrez votre code postal",
-        country: "Pays",
+        enterCity: "ex. Akouda",
         orderConfirmedSuccess: "Commande confirmée avec succès!",
         checkEmailForDetails: "Vérifiez votre e-mail pour les détails de la commande",
         failedToCreateOrder: "Échec de la création de la commande. Veuillez réessayer.",
@@ -160,14 +159,16 @@ const content = {
         orderNo: "رقم الطلب",
         paymentMethod: "الدفع",
         shippingAddress: "عنوان الشحن",
-        billingAddress: "عنوان الفواتير",
+        deliveryAddress: "عنوان التوصيل",
         firstName: "الاسم الأول",
         lastName: "اسم العائلة",
         emailAddress: "البريد الإلكتروني",
         streetAddress: "العنوان",
-        stateProvince: "الولاية/المحافظة",
-        city: "المدينة",
-        zipPostalCode: "الرمز البريدي",
+        city: "المدينة / المعتمدية",
+        governorate: "الولاية",
+        chooseGovernorate: "اختر ولايتك",
+        governorateRequired: "اختر ولايتك",
+        cityRequired: "أدخل مدينتك",
         phone: "الهاتف",
         continue: "متابعة",
         confirmMyOrder: "تأكيد طلبي",
@@ -200,10 +201,7 @@ const content = {
         enterLastName: "أدخل اسم العائلة",
         enterEmail: "أدخل عنوان بريدك الإلكتروني",
         enterStreetAddress: "أدخل عنوان الشارع",
-        enterState: "أدخل الولاية/المحافظة",
-        enterCity: "أدخل المدينة",
-        enterPostalCode: "أدخل الرمز البريدي",
-        country: "البلد",
+        enterCity: "مثال: أكودة",
         orderConfirmedSuccess: "تم تأكيد الطلب بنجاح!",
         checkEmailForDetails: "تحقق من بريدك الإلكتروني للحصول على تفاصيل الطلب",
         failedToCreateOrder: "فشل إنشاء الطلب. يرجى المحاولة مرة أخرى.",
@@ -500,44 +498,44 @@ export default function CheckoutPage() {
                 <div className=" mx-auto px-4">
                     {/* Step Progress */}
                     <div className="mb-12">
-                        <div className="flex items-center justify-center gap-4">
-                            {/* Step 1: Summary Order */}
+                        <div className="flex items-center justify-center gap-2 sm:gap-4">
+                            {/* Step 1: Summary Order (on phones only the current step shows its label, so the row fits) */}
                             <div className="flex items-center">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${currentStep > 1 ? 'bg-green-600' : currentStep === 1 ? 'bg-[#7a3b2e]' : 'bg-gray-300'}`}>
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className={`h-8 w-8 shrink-0 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold ${currentStep > 1 ? 'bg-green-600' : currentStep === 1 ? 'bg-[#7a3b2e]' : 'bg-gray-300'}`}>
                                         {currentStep > 1 ? '✓' : '1'}
                                     </div>
-                                    <span className={`font-medium ${currentStep === 1 ? 'text-[#7a3b2e]' : currentStep > 1 ? 'text-green-600' : 'text-gray-600'}`}>
+                                    <span className={`text-sm sm:text-base font-medium ${currentStep === 1 ? '' : 'hidden sm:inline'} ${currentStep === 1 ? 'text-[#7a3b2e]' : currentStep > 1 ? 'text-green-600' : 'text-gray-600'}`}>
                                         {text.summaryOrder}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Divider */}
-                            <div className={`w-16 h-0.5 ${currentStep > 1 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+                            <div className={`w-6 sm:w-16 h-0.5 shrink-0 ${currentStep > 1 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
 
                             {/* Step 2: Information */}
                             <div className="flex items-center">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${currentStep > 2 ? 'bg-green-600' : currentStep === 2 ? 'bg-[#7a3b2e]' : 'bg-gray-300'}`}>
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className={`h-8 w-8 shrink-0 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold ${currentStep > 2 ? 'bg-green-600' : currentStep === 2 ? 'bg-[#7a3b2e]' : 'bg-gray-300'}`}>
                                         {currentStep > 2 ? '✓' : '2'}
                                     </div>
-                                    <span className={`font-medium ${currentStep === 2 ? 'text-[#7a3b2e]' : currentStep > 2 ? 'text-green-600' : 'text-gray-600'}`}>
+                                    <span className={`text-sm sm:text-base font-medium ${currentStep === 2 ? '' : 'hidden sm:inline'} ${currentStep === 2 ? 'text-[#7a3b2e]' : currentStep > 2 ? 'text-green-600' : 'text-gray-600'}`}>
                                         {text.information}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Divider */}
-                            <div className={`w-16 h-0.5 ${currentStep > 2 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+                            <div className={`w-6 sm:w-16 h-0.5 shrink-0 ${currentStep > 2 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
 
                             {/* Step 3: Payment */}
                             <div className="flex items-center">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${currentStep === 3 ? 'bg-green-600' : 'bg-gray-300'}`}>
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className={`h-8 w-8 shrink-0 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold ${currentStep === 3 ? 'bg-green-600' : 'bg-gray-300'}`}>
                                         {currentStep === 3 ? '✓' : '3'}
                                     </div>
-                                    <span className={`font-medium ${currentStep === 3 ? 'text-green-600' : 'text-gray-600'}`}>
+                                    <span className={`text-sm sm:text-base font-medium ${currentStep === 3 ? '' : 'hidden sm:inline'} ${currentStep === 3 ? 'text-green-600' : 'text-gray-600'}`}>
                                         {text.payment}
                                     </span>
                                 </div>
@@ -588,7 +586,7 @@ export default function CheckoutPage() {
                                     <p className="text-sm text-[#7a3b2e] mb-6">{text.deliveryTime}</p>
 
                                     <div className="space-y-6">
-                                        <h3 className="text-xl font-bold text-gray-900">{text.billingAddress}</h3>
+                                        <h3 className="text-xl font-bold text-gray-900">{text.deliveryAddress}</h3>
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
@@ -643,6 +641,45 @@ export default function CheckoutPage() {
                                                 <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
                                             )}
                                         </div>
+                                        {/* Delivery details as Colissimo needs them: governorate, city, address. */}
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            <div>
+                                                <label htmlFor="checkout-state" className="block text-sm font-medium text-gray-700 mb-2">
+                                                    {text.governorate} <span className="text-red-600">*</span>
+                                                </label>
+                                                <select
+                                                    id="checkout-state"
+                                                    {...register("state")}
+                                                    autoComplete="address-level1"
+                                                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] bg-white ${errors.state ? 'border-red-500' : 'border-gray-300'} ${formState ? '' : 'text-[#9b9b9b]'}`}
+                                                >
+                                                    <option value="" disabled>{text.chooseGovernorate}</option>
+                                                    {governorateOptions(locale).map((g) => (
+                                                        <option key={g.value} value={g.value} className="text-black">{g.label}</option>
+                                                    ))}
+                                                </select>
+                                                {errors.state && (
+                                                    <p className="mt-1 text-sm text-red-600">{text.governorateRequired}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label htmlFor="checkout-city" className="block text-sm font-medium text-gray-700 mb-2">
+                                                    {text.city} <span className="text-red-600">*</span>
+                                                </label>
+                                                <input
+                                                    id="checkout-city"
+                                                    type="text"
+                                                    {...register("city")}
+                                                    autoComplete="address-level2"
+                                                    placeholder={text.enterCity}
+                                                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
+                                                />
+                                                {errors.city && (
+                                                    <p className="mt-1 text-sm text-red-600">{text.cityRequired}</p>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 {text.streetAddress} <span className="text-red-600">*</span>
@@ -673,76 +710,6 @@ export default function CheckoutPage() {
                                             {errors.email && (
                                                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
                                             )}
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.stateProvince} <span className="text-gray-400 font-normal">({text.optional})</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    {...register("state")}
-                                                    autoComplete="address-level1"
-                                                    placeholder={text.enterState}
-                                                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.state ? 'border-red-500' : 'border-gray-300'}`}
-                                                />
-                                                {errors.state && (
-                                                    <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.city} <span className="text-gray-400 font-normal">({text.optional})</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    {...register("city")}
-                                                    autoComplete="address-level2"
-                                                    placeholder={text.enterCity}
-                                                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
-                                                />
-                                                {errors.city && (
-                                                    <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.zipPostalCode} <span className="text-gray-400 font-normal">({text.optional})</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    {...register("zipCode")}
-                                                    autoComplete="postal-code" inputMode="numeric"
-                                                    placeholder={text.enterPostalCode}
-                                                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.zipCode ? 'border-red-500' : 'border-gray-300'}`}
-                                                />
-                                                {errors.zipCode && (
-                                                    <p className="mt-1 text-sm text-red-600">{errors.zipCode.message}</p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {text.country} <span className="text-gray-400 font-normal">({text.optional})</span>
-                                                </label>
-                                                <select
-                                                    {...register("country")}
-                                                    autoComplete="country-name"
-                                                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#842E1B] focus:border-transparent text-black placeholder:text-[#C9C9C9] ${errors.country ? 'border-red-500' : 'border-gray-300'}`}
-                                                >
-                                                    <option value="Tunisia">Tunisia</option>
-                                                    <option value="Algeria">Algeria</option>
-                                                    <option value="Morocco">Morocco</option>
-                                                    <option value="Libya">Libya</option>
-                                                    <option value="Egypt">Egypt</option>
-                                                </select>
-                                                {errors.country && (
-                                                    <p className="mt-1 text-sm text-red-600">{errors.country.message}</p>
-                                                )}
-                                            </div>
                                         </div>
 
 
@@ -917,10 +884,7 @@ export default function CheckoutPage() {
                                         <div>
                                             <p className="text-sm text-gray-500 mb-1">{text.shippingAddress}</p>
                                             <p className="font-semibold text-gray-900">
-                                                {formCity && formState ? `${formCity}, ${formState}` :
-                                                    formCity ? formCity :
-                                                        formState ? formState :
-                                                            text.shippingAddress}
+                                                {[formCity, governorateLabel(formState, locale)].filter(Boolean).join(", ") || text.shippingAddress}
                                             </p>
                                         </div>
                                     </div>
