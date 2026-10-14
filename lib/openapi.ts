@@ -844,6 +844,15 @@ export const openApiSpec = {
         '/api/admin/me': {
             get: { tags: ['Team'], summary: 'Role and permissions of the signed-in back-office user', responses: { 200: messageResponse('{ role, email }') } },
         },
+        '/api/admin/performance': {
+            get: {
+                tags: ['Team'],
+                summary: 'Orders added per agent and how they ended (owners and admins)',
+                description: 'One row per agent (agent_id null: website orders) over orders created in [from, to): orders, revenue (not cancelled), delivered, returned, cancelled, in progress, items. Default period: last 30 days.',
+                parameters: [{ name: 'from', in: 'query', schema: { type: 'string', format: 'date-time' } }, { name: 'to', in: 'query', schema: { type: 'string', format: 'date-time' } }],
+                responses: { 200: messageResponse('{ from, to, rows }'), 403: errorResponse(403, 'Admins only') },
+            },
+        },
         '/api/admin/team': {
             get: { tags: ['Team'], summary: 'List admins and staff', responses: { 200: messageResponse('Members') } },
             post: { tags: ['Team'], summary: 'Create a back-office account', requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { email: { type: 'string' }, password: { type: 'string' }, role: { type: 'string', enum: ['admin', 'staff'] }, permissions: { type: 'array', items: { type: 'string', enum: ALL_PERMISSIONS }, description: 'Staff only; admins have every permission' } } } } } }, responses: { 200: messageResponse('Created'), 409: errorResponse(409, 'Account exists') } },

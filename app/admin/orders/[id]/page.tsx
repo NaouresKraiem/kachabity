@@ -60,6 +60,8 @@ interface Order {
     payment_status: string;
     stock_deducted?: boolean;
     created_at: string;
+    created_by?: string | null;
+    created_by_email?: string | null;
     items: OrderItem[];
 }
 
@@ -341,6 +343,9 @@ export default function OrderDetailPage() {
                         </Descriptions.Item>
                         <Descriptions.Item label={t("Email")}>{order.customer_email}</Descriptions.Item>
                         <Descriptions.Item label={t("Phone")}>{order.customer_phone || "—"}</Descriptions.Item>
+                        <Descriptions.Item label={t("Added by")}>
+                            {order.created_by ? order.created_by_email ?? t("an agent") : t("Website (customers)")}
+                        </Descriptions.Item>
                     </Descriptions>
                 </Card>
 

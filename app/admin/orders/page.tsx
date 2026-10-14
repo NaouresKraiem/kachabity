@@ -26,6 +26,7 @@ import {
     DeleteOutlined,
     EyeOutlined,
     CarOutlined,
+    UserOutlined,
     SearchOutlined,
     ReloadOutlined,
 } from "@ant-design/icons";
@@ -47,6 +48,8 @@ interface OrderRow {
     created_at: string;
     items?: { id: string; product_name: string; product_image: string | null; quantity: number; variant_label: string | null }[];
     deliveries?: { status: string; barcode: string | null }[];
+    created_by?: string | null;
+    created_by_email?: string | null;
 }
 
 export default function AdminOrdersPage() {
@@ -58,6 +61,12 @@ export default function AdminOrdersPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
+    // Who added the order: "all", "website" (customers) or an agent's user id (?added_by= from Agent performance).
+    const [addedByFilter, setAddedByFilter] = useState<string>("all");
+    useEffect(() => {
+        const addedBy = new URLSearchParams(window.location.search).get("added_by");
+        if (addedBy) setAddedByFilter(addedBy);
+    }, []);
     const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
     const [bulkDeleting, setBulkDeleting] = useState(false);
 
@@ -97,19 +106,31 @@ export default function AdminOrdersPage() {
     }, [fetchOrders]);
 
     const filteredOrders = useMemo(() => {
+        const term = searchTerm.toLowerCase();
         return orders.filter((order) => {
-            const matchesSearch =
-                order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customer_first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customer_last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customer_email.toLowerCase().includes(searchTerm.toLowerCase());
+            // Email is optional, so it can be null.
+            const matchesSearch = [order.order_number, order.customer_first_name, order.customer_last_name, order.customer_email, order.customer_phone, order.created_by_email]
+                .some((value) => (value ?? "").toLowerCase().includes(term));
 
             const matchesPaymentStatus =
                 paymentStatusFilter === "all" ? true : order.payment_status === paymentStatusFilter;
 
-            return matchesSearch && matchesPaymentStatus;
+            const matchesAddedBy =
+                addedByFilter === "all" ? true
+                    : addedByFilter === "website" ? !order.created_by
+                        : order.created_by === addedByFilter;
+
+            return matchesSearch && matchesPaymentStatus && matchesAddedBy;
         });
-    }, [orders, searchTerm, paymentStatusFilter]);
+    }, [orders, searchTerm, paymentStatusFilter, addedByFilter]);
+
+    // Agents who added at least one of the loaded orders, for the "Added by" filter.
+    const agentOptions = useMemo(() => {
+        const agents = new Map<string, string>();
+        for (const order of orders) if (order.created_by) agents.set(order.created_by, order.created_by_email ?? order.created_by);
+        if (addedByFilter !== "all" && addedByFilter !== "website" && !agents.has(addedByFilter)) agents.set(addedByFilter, t("Selected agent"));
+        return [...agents].map(([value, label]) => ({ value, label }));
+    }, [orders, addedByFilter, t]);
 
     const formatPrice = (price: number) => {
         return `${price.toFixed(3)} DT`;
@@ -222,6 +243,9 @@ export default function AdminOrdersPage() {
                         {record.customer_first_name} {record.customer_last_name}
                     </div>
                     <div style={{ fontSize: 12, color: "#999" }}>{record.customer_email}</div>
+                    {record.created_by && (
+                        <Tag icon={<UserOutlined />} style={{ marginTop: 4 }}>{t("Added by {email}", { email: record.created_by_email ?? t("an agent") })}</Tag>
+                    )}
                 </div>
             ),
         },
@@ -429,6 +453,16 @@ export default function AdminOrdersPage() {
                             { value: "refunded", label: t("Refunded") },
                         ]}
                         style={{ width: 160 }}
+                    />
+                    <Select
+                        value={addedByFilter}
+                        onChange={(value) => setAddedByFilter(value)}
+                        options={[
+                            { value: "all", label: t("Added by: anyone") },
+                            { value: "website", label: t("Website (customers)") },
+                            ...agentOptions,
+                        ]}
+                        style={{ width: 220, maxWidth: "100%" }}
                     />
                     <Input
                         placeholder={t("Search orders...")}

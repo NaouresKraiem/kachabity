@@ -31,6 +31,7 @@ import {
     HomeOutlined,
     DeleteOutlined,
     CarOutlined,
+    TrophyOutlined,
 } from "@ant-design/icons";
 import { antdTheme } from "@/lib/antd-config";
 import { createAdminBrowserClient } from "@/lib/supabase-browser";
@@ -161,6 +162,11 @@ const menuItems: MenuItem[] = [
         label: msg("Team"),
     },
     {
+        key: "/admin/performance",
+        icon: <TrophyOutlined />,
+        label: msg("Agent performance"),
+    },
+    {
         key: "/admin/activity",
         icon: <HistoryOutlined />,
         label: msg("Activity"),
@@ -230,6 +236,7 @@ const MENU_PERMISSIONS: Record<string, Permission | "admin"> = {
     "/admin/landing": "marketing",
     "/admin/team": "admin",
     "/admin/activity": "admin",
+    "/admin/performance": "admin",
     "/admin/trash": "hard_delete",
 };
 

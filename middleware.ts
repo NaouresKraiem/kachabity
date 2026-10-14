@@ -38,6 +38,7 @@ const MUTATION_PERMISSIONS: Record<string, Permission[]> = {
 const PAGE_PERMISSIONS: [string, Requirement][] = [
     ['/admin/team', { admin: true }],
     ['/admin/activity', { admin: true }],
+    ['/admin/performance', { admin: true }],
     ['/admin/trash', { all: ['hard_delete'] }],
     ['/admin/products', { any: ['products'] }],
     ['/admin/categories', { any: ['products'] }],
@@ -65,7 +66,7 @@ function requirementFor(request: NextRequest): Requirement | null {
         return PAGE_PERMISSIONS.find(([prefix]) => under(prefix))?.[1] ?? { any: [] };
     }
 
-    if (under('/api/admin/team') || under('/api/admin/activity')) return { admin: true };
+    if (under('/api/admin/team') || under('/api/admin/activity') || under('/api/admin/performance')) return { admin: true };
     // Permanent deletes: `hard_delete` plus the permission of the area the table belongs to.
     if (under('/api/admin/trash')) {
         const table = searchParams.get('table');
