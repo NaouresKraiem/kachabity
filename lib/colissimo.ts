@@ -108,5 +108,6 @@ export async function trackParcel(barcode: string) {
         status: String(json.etat ?? 'Inconnu').trim() || 'Inconnu',
         reason: String(json.motif ?? '').trim(),
         previousStatus: String(json.pre_etat ?? '').trim(),
+        previousReason: String(json.pre_motif ?? '').trim(),
     };
 }

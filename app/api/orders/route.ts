@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { reportError } from '@/lib/report-error';
 import supabase from '@/lib/supabase-admin';
-import { randomBytes } from 'crypto';
+import { generateOrderNumber } from '@/lib/order-number';
 import { z } from 'zod';
 import { priceOrder } from '@/lib/order-pricing';
 import { sendOrderConfirmationEmail } from '@/lib/order-confirmation-email';
@@ -38,12 +38,6 @@ const createOrderSchema = z.object({
     total: z.number().nonnegative(),
     orderNotes: z.string().max(2000).optional(),
 });
-
-function generateOrderNumber(): string {
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = randomBytes(4).toString('hex').toUpperCase();
-    return `ORD-${timestamp}-${random}`;
-}
 
 // Links the order to the shopper only when their access token checks out.
 async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {

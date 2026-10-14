@@ -6,6 +6,8 @@ import { reportError } from '@/lib/report-error';
 import { invalidateCatalog } from '@/lib/catalog-cache';
 import { ColissimoError, colissimoConfigured, createParcel, trackParcel, type ParcelRequest } from '@/lib/colissimo';
 import { COLISSIMO_GOVERNORATES, FINAL_STATUSES, parcelFromOrder } from '@/lib/colissimo-data';
+import { buildManualOrderLines, ManualLineError, type ManualLineInput } from '@/lib/manual-order-lines';
+import { generateOrderNumber } from '@/lib/order-number';
 
 // Parcels sent to Colissimo (Admin → Delivery, and the order page).
 // GET lists them; POST sends an order, adds an existing parcel by barcode or refreshes statuses;
@@ -33,10 +35,20 @@ const parcelSchema = z.object({
 });
 
 const bodySchema = z.discriminatedUnion('action', [
-    // order_id is optional: a parcel can also be entered by hand, without an order.
-    z.object({ action: z.literal('create'), order_id: z.guid().optional(), parcel: parcelSchema }),
+    // order_id is optional: a parcel can also be entered by hand. With `items` (and no order_id),
+    // an order is created for those products and validated, so they leave the stock.
+    z.object({
+        action: z.literal('create'),
+        order_id: z.guid().optional(),
+        parcel: parcelSchema,
+        items: z.array(z.object({ product_id: z.guid(), variant_id: z.guid().nullish(), quantity: z.number().int().min(1).max(999) })).max(50).optional(),
+    }),
     // Validating an order: its parcel is built from the order and sent, then the order is validated.
     z.object({ action: z.literal('validate'), order_id: z.guid() }),
+    // Prices for products picked in "New parcel" (catalog prices and discounts), without saving.
+    z.object({ action: z.literal('quote'), items: z.array(z.object({ product_id: z.guid(), variant_id: z.guid().nullish(), quantity: z.number().int().min(1).max(999) })).min(1).max(50) }),
+    // Look up one parcel's status at Colissimo without saving anything.
+    z.object({ action: z.literal('track'), barcode: z.string().trim().regex(/^\d{6,20}$/, 'Barcode must be digits') }),
     z.object({ action: z.literal('import'), barcode: z.string().trim().regex(/^\d{6,20}$/, 'Barcode must be digits'), order_id: z.guid().optional() }),
     z.object({ action: z.literal('refresh'), ids: z.array(z.guid()).max(200).optional() }),
 ]);
@@ -74,11 +86,19 @@ export async function POST(request: NextRequest) {
     const body = parsed.data;
     const actor = getAdminActor(request.headers);
     try {
-        if (body.action === 'create') return await sendParcel(body.order_id ?? null, body.parcel as ParcelRequest, actor);
+        if (body.action === 'create') {
+            if (!body.order_id && body.items?.length) return await sendNewOrder(body.parcel as ParcelRequest, body.items, actor);
+            return await sendParcel(body.order_id ?? null, body.parcel as ParcelRequest, actor);
+        }
         if (body.action === 'validate') return await validateOrder(body.order_id, actor);
+        if (body.action === 'quote') return NextResponse.json({ success: true, data: { lines: await buildManualOrderLines(body.items) } });
+        if (body.action === 'track') return await lookUpParcel(body.barcode);
         if (body.action === 'import') return await importParcel(body.barcode, body.order_id ?? null, actor);
         return await refreshStatuses(body.ids, actor);
     } catch (error) {
+        if (error instanceof ManualLineError) {
+            return NextResponse.json({ success: false, error: error.message, code: 'INVALID_ITEMS' }, { status: 422 });
+        }
         if (error instanceof ColissimoError) {
             return NextResponse.json({ success: false, error: error.message, code: 'COLISSIMO' }, { status: 502 });
         }
@@ -137,6 +157,53 @@ async function sendParcel(orderId: string | null, parcel: ParcelRequest, actor: 
     return NextResponse.json({ success: true, data: { delivery: result.delivery, order: result.order, warning: result.warning } });
 }
 
+// "New parcel" with products: price the lines from the catalog, create the parcel at Colissimo,
+// then save the order, its lines and the parcel and validate the order (stock) in one transaction
+// (create_order_with_delivery). If Colissimo refuses, nothing is created. A new order can't be
+// sent twice, so no reservation is needed (the form blocks double submits).
+async function sendNewOrder(parcel: ParcelRequest, items: ManualLineInput[], actor: Actor) {
+    if (!colissimoConfigured().add) {
+        return NextResponse.json({ success: false, error: 'Colissimo is not set up: add COLISSIMO_ADD_TOKEN to the server environment', code: 'NOT_CONFIGURED' }, { status: 503 });
+    }
+    const lines = await buildManualOrderLines(items); // create_order ignores the extra `stock` field
+    const subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0);
+    const [firstName, ...rest] = parcel.nom.trim().split(/\s+/);
+
+    const created = await createParcel(parcel);
+    const { data: result, error } = await supabase.rpc('create_order_with_delivery', {
+        p_order: {
+            order_number: generateOrderNumber(),
+            customer_first_name: firstName,
+            customer_last_name: rest.join(' '),
+            customer_phone: parcel.tel,
+            shipping_address: parcel.adresse,
+            shipping_city: parcel.ville,
+            shipping_state: parcel.gouvernerat,
+            shipping_country: 'Tunisia',
+            // The cash to collect is what the customer pays; above the products, it's the delivery fee.
+            subtotal,
+            shipping_cost: Math.max(0, parcel.prix - subtotal),
+            total: parcel.prix,
+            order_notes: parcel.msg || null,
+        },
+        p_items: lines,
+        p_delivery: { barcode: created.barcode, label_url: created.labelUrl, label_zebra_url: created.labelZebraUrl, request: parcel },
+        p_actor: actor.userId,
+        p_actor_email: actor.email,
+    });
+    if (error) {
+        reportError(error, 'admin-delivery', { action: 'create-order' });
+        return NextResponse.json({
+            success: false,
+            error: `Colissimo created parcel ${created.barcode}, but saving the order failed. Add it with "Add by barcode".`,
+            code: 'SAVE_FAILED',
+            barcode: created.barcode,
+        }, { status: 500 });
+    }
+    invalidateCatalog(); // the products left the stock
+    return NextResponse.json({ success: true, data: { delivery: result.delivery, order: result.order, warning: null } });
+}
+
 // The Validate button: create the order's Colissimo parcel from its details, then validate it
 // (complete_delivery). If a detail Colissimo needs is missing or invalid, nothing is sent and the
 // admin completes it in the send form (NEEDS_DETAILS). Without Colissimo tokens, the order is
@@ -177,6 +244,20 @@ async function validateOrder(orderId: string, actor: Actor) {
         }, { status: 422 });
     }
     return sendParcel(orderId, parcel.data as ParcelRequest, actor);
+}
+
+// "Check a parcel": Colissimo's current status for any barcode, plus the parcel in our list if
+// there is one. Read-only: the list isn't updated (use "Check" on the row for that).
+async function lookUpParcel(barcode: string) {
+    if (!colissimoConfigured().tracking) {
+        return NextResponse.json({ success: false, error: 'Colissimo tracking is not set up: add COLISSIMO_TRACKING_TOKEN to the server environment', code: 'NOT_CONFIGURED' }, { status: 503 });
+    }
+    const [tracked, { data: listed, error }] = await Promise.all([
+        trackParcel(barcode),
+        supabase.from('deliveries').select(DELIVERY_SELECT).eq('barcode', barcode).is('deleted_at', null).maybeSingle(),
+    ]);
+    if (error) throw error;
+    return NextResponse.json({ success: true, data: { barcode, ...tracked, delivery: listed ?? null } });
 }
 
 // A parcel created on Colissimo's website: checked with the tracking API, then listed.

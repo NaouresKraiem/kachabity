@@ -52,6 +52,16 @@ export async function deliveryApi<T>(init?: { method?: string; body?: unknown; q
     return result.data as T;
 }
 
+/** Colissimo's answer for one barcode (action `track`), and the parcel in our list if any. */
+export interface TrackResult {
+    barcode: string;
+    status: string;
+    reason: string;
+    previousStatus: string;
+    previousReason: string;
+    delivery: Delivery | null;
+}
+
 export interface RefreshResult {
     checked: number;
     changed: number;

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Form, Input, InputNumber, Modal, Radio, Select, Switch, Typography } from "antd";
+import { Alert, Divider, Form, Input, InputNumber, Modal, Radio, Select, Switch, Typography } from "antd";
 import { message } from "@/components/admin/antd-app";
 import { useAdminT } from "@/lib/admin-i18n";
 import { COLISSIMO_GOVERNORATES, parcelFromOrder, type OrderForParcel } from "@/lib/colissimo-data";
 import { deliveryApi, type Delivery } from "./delivery-api";
+import ParcelProducts, { type ProductLine, type QuotedLine } from "./ParcelProducts";
 
 const { Text } = Typography;
 
@@ -59,16 +60,41 @@ export default function SendParcelModal({ order, open, onClose, onSent }: {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const exchange = Form.useWatch("echange", form);
+    // Parcel entered by hand: its products (an order is created so they leave the stock).
+    const [lines, setLines] = useState<ProductLine[]>([]);
+    const [quote, setQuote] = useState<QuotedLine[] | null>([]);
+    const withProducts = !order && lines.length > 0;
 
     useEffect(() => {
         if (open) {
             form.resetFields();
             form.setFieldsValue(order ? initialValues(order) : BLANK);
             setError(null);
+            setLines([]);
+            setQuote([]);
         }
     }, [open, order, form]);
 
+    // Contents, item count and cash follow the products (the cash stays editable for a delivery fee).
+    const onQuote = (quoted: QuotedLine[] | null) => {
+        setQuote(quoted);
+        if (!quoted || quoted.length === 0) return;
+        form.setFieldsValue({
+            designation: quoted
+                .map((l) => `${l.quantity > 1 ? `${l.quantity}× ` : ""}${l.product_name.trim()}${l.variant_label ? ` (${l.variant_label})` : ""}`)
+                .join(", ")
+                .slice(0, 250),
+            nb_article: quoted.reduce((sum, l) => sum + l.quantity, 0),
+            prix: quoted.reduce((sum, l) => sum + l.subtotal, 0),
+        });
+    };
+
     const submit = async () => {
+        // Products first: contents, item count and cash are filled from complete product lines.
+        if (withProducts && !quote) {
+            setError(t("Choose a product and a size/colour on every product line, or remove the line."));
+            return;
+        }
         let values: FormValues;
         try {
             values = await form.validateFields();
@@ -78,11 +104,12 @@ export default function SendParcelModal({ order, open, onClose, onSent }: {
         setSending(true);
         setError(null);
         try {
-            const result = await deliveryApi<{ delivery: Delivery; warning: string | null }>({
+            const result = await deliveryApi<{ delivery: Delivery; order?: { order_number: string } | null; warning: string | null }>({
                 method: "POST",
                 body: {
                     action: "create",
                     order_id: order?.id,
+                    items: withProducts ? lines.map((l) => ({ product_id: l.product_id, variant_id: l.variant_id ?? null, quantity: l.quantity })) : undefined,
                     parcel: {
                         nom: values.nom,
                         tel: values.tel,
@@ -103,7 +130,11 @@ export default function SendParcelModal({ order, open, onClose, onSent }: {
                     },
                 },
             });
-            message.success(t("Parcel {barcode} created at Colissimo", { barcode: result.delivery.barcode ?? "" }));
+            if (withProducts && result.order) {
+                message.success(t("Order {order_number} created and parcel {barcode} sent to Colissimo", { order_number: result.order.order_number, barcode: result.delivery.barcode ?? "" }));
+            } else {
+                message.success(t("Parcel {barcode} created at Colissimo", { barcode: result.delivery.barcode ?? "" }));
+            }
             onSent(result.delivery, result.warning);
         } catch (e) {
             setError((e as Error).message);
@@ -162,14 +193,30 @@ export default function SendParcelModal({ order, open, onClose, onSent }: {
                 <Form.Item name="adresse" label={t("Address")} rules={[{ required: true, message: t("Required") }]}>
                     <Input maxLength={250} />
                 </Form.Item>
+                {!order && (
+                    <>
+                        <Divider titlePlacement="start" style={{ marginTop: 4 }}>{t("Products")}</Divider>
+                        <Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
+                            {t("Pick the products in the parcel: an order is created for them and they leave the stock. Leave empty for a parcel without products.")}
+                        </Text>
+                        <ParcelProducts lines={lines} onChange={setLines} onQuote={onQuote} />
+                        <Divider style={{ margin: "16px 0" }} />
+                    </>
+                )}
                 <Form.Item name="designation" label={t("Contents")} rules={[{ required: true, message: t("Required") }]}>
-                    <Input.TextArea rows={2} maxLength={250} showCount />
+                    <Input.TextArea rows={2} maxLength={250} showCount disabled={withProducts} />
                 </Form.Item>
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                     <Form.Item name="nb_article" label={t("Number of items")} rules={[{ required: true, message: t("Required") }]} style={{ flex: "1 1 140px" }}>
-                        <InputNumber min={1} max={999} precision={0} style={{ width: "100%" }} />
+                        <InputNumber min={1} max={999} precision={0} style={{ width: "100%" }} disabled={withProducts} />
                     </Form.Item>
-                    <Form.Item name="prix" label={t("Cash to collect (TND)")} rules={[{ required: true, message: t("Required") }]} style={{ flex: "1 1 140px" }}>
+                    <Form.Item
+                        name="prix"
+                        label={t("Cash to collect (TND)")}
+                        rules={[{ required: true, message: t("Required") }]}
+                        extra={withProducts ? t("The products' total. Add the delivery fee if the customer pays it.") : undefined}
+                        style={{ flex: "1 1 140px" }}
+                    >
                         <InputNumber min={0} max={100000} step={1} style={{ width: "100%" }} />
                     </Form.Item>
                 </div>

@@ -11,6 +11,7 @@ import { DATE_LOCALES, useAdminT } from "@/lib/admin-i18n";
 import { statusInfo, type StatusGroup } from "@/lib/colissimo-data";
 import DeliveryStatusTag from "@/components/admin/delivery/DeliveryStatusTag";
 import SendParcelModal from "@/components/admin/delivery/SendParcelModal";
+import ParcelLookup from "@/components/admin/delivery/ParcelLookup";
 import { deliveryApi, type Delivery, type DeliveryList, type RefreshResult } from "@/components/admin/delivery/delivery-api";
 
 const { Title, Text } = Typography;
@@ -232,6 +233,8 @@ export default function DeliveryPage() {
                     description={t("Add COLISSIMO_ADD_TOKEN and COLISSIMO_TRACKING_TOKEN (from your Colissimo account, Paramètres → APIs) to the server environment.")}
                 />
             )}
+
+            <ParcelLookup disabled={!data?.configured.tracking} onAdded={load} />
 
             <Card>
                 <Space orientation="vertical" size="middle" style={{ width: "100%" }}>

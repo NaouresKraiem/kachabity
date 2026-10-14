@@ -781,8 +781,8 @@ export const openApiSpec = {
             },
             post: {
                 tags: ['Operations'],
-                summary: 'Send an order to Colissimo, add a parcel by barcode, or refresh statuses',
-                description: '`create` creates the parcel at Colissimo (with `order_id`, for that order, which it marks shipped; without, a parcel entered by hand); `import` adds an existing parcel after checking it with the tracking API; `refresh` asks Colissimo for the status of the given parcels (default: all that can still change). Delivered parcels mark their order delivered, "Livre paye" also paid.',
+                summary: 'Send an order to Colissimo, look up or add a parcel by barcode, or refresh statuses',
+                description: '`create` creates the parcel at Colissimo (with `order_id`, for that order, which it marks shipped; without, a parcel entered by hand); `create` with `items` and no `order_id` also creates an order for those products and validates it (they leave the stock); `quote` prices `items` from the catalog without saving; `validate` builds the parcel from the order, sends it and validates the order; `track` returns the Colissimo status of a barcode (etat, motif, previous status) without saving; `import` adds an existing parcel after checking it with the tracking API; `refresh` asks Colissimo for the status of the given parcels (default: all that can still change). Delivered parcels mark their order delivered, "Livre paye" also paid.',
                 requestBody: {
                     required: true,
                     content: {
@@ -791,7 +791,8 @@ export const openApiSpec = {
                                 type: 'object',
                                 required: ['action'],
                                 properties: {
-                                    action: { type: 'string', enum: ['create', 'import', 'refresh'] },
+                                    action: { type: 'string', enum: ['create', 'validate', 'quote', 'track', 'import', 'refresh'] },
+                                    items: { type: 'array', description: 'create (without order_id) and quote: products of a parcel entered by hand', items: { type: 'object', properties: { product_id: { type: 'string', format: 'uuid' }, variant_id: { type: 'string', format: 'uuid', nullable: true }, quantity: { type: 'integer', minimum: 1 } } } },
                                     order_id: { type: 'string', format: 'uuid' },
                                     barcode: { type: 'string' },
                                     ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
