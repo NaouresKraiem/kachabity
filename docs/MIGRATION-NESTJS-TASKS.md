@@ -123,7 +123,8 @@ async rewrites() {
 ### 0.9 Run and deploy NestJS
 - `api/Dockerfile` (Node 22, `npm ci --omit=dev`, `node dist/main`) and a root
   `docker-compose.yml` to run it locally (Next.js keeps `npm run dev`).
-- Pick the first host: a small VPS, or a container host (Railway, Fly, Render) next to Netlify.
+- Host (proposed in MIGRATION-NESTJS.md → Hosting and cost): a small VPS behind Cloudflare, which
+  later also takes Postgres and `web`. Free Node hosts sleep when idle, and Workers can't run NestJS.
   `NEST_URL` points there; it can move later.
 - **Check:** the deployed `/api/health` answers over HTTPS; Sentry receives a test error.
 

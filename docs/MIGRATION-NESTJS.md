@@ -6,6 +6,10 @@ one short database cut-over.
 
 Task-by-task steps for phase 0 and the first module: [MIGRATION-NESTJS-TASKS.md](MIGRATION-NESTJS-TASKS.md).
 
+**Decided (2026-10-23): the full migration, phases 0–6.** The end state is no Supabase: NestJS for
+the API, auth, files, realtime, push, jobs and e-mail, and a plain Postgres. Hosting: see
+[Hosting and cost](#hosting-and-cost).
+
 ## Where we start (measured on this branch)
 
 | Piece | Today | Size |
@@ -40,7 +44,7 @@ kachabity/
   schema by `kysely-codegen`. It reads like today's `supabase.from(...)` chains, keeps raw SQL easy
   for the many `select fn(...)` calls, and doesn't take over migrations. Migrations stay plain SQL
   files, run with `dbmate`.
-- **One server to start**: `web` and `api` in Docker Compose on one VPS; Postgres managed or on the
+- **One server**: `web` and `api` in Docker Compose on one VPS behind Cloudflare; Postgres managed or on the
   same machine with daily backups; files on Cloudflare R2 (S3-compatible, free egress).
 - **Routing**: the browser keeps calling `/api/...`; Next.js rewrites `/api/:path*` to the NestJS
   server. Front-end URLs don't change, and routes can move one at a time.
@@ -62,6 +66,7 @@ kachabity/
 | `service_role` / `anon` / `authenticated` grants | one application role (`kachabity_app`) + one read-only role for reporting | Grants rewritten in one migration. |
 | Extensions `pg_trgm`, `unaccent`, `pg_cron` | available on standard Postgres 17 | `pg_net` and Vault are dropped. |
 | Auth e-mails (confirm sign-up, reset password) and rate limits | NestJS sends them with nodemailer in en/fr/ar; `@nestjs/throttler` on sign-in, sign-up and reset | Supabase did both for free; check the live "Confirm email" setting and copy its behaviour. |
+| E-mail in general (order confirmation, abandoned cart, auth) | One NestJS `MailModule` around the existing nodemailer code (`lib/order-confirmation-email.ts`, `lib/abandoned-cart-email.ts`), same `GMAIL_USER` / `GMAIL_APP_PASSWORD` | NestJS has no mailer of its own; nodemailer is already a dependency and works the same in NestJS, so no new library. If Gmail's daily sending limit is reached, swap the transport for an SMTP provider (Brevo, Resend…) without touching the templates. |
 | `/api-docs` (OpenAPI built by hand in `lib/openapi*.ts`) | `@nestjs/swagger` generated from the controllers | Until then, keep `lib/openapi*.ts` in step with each ported route. |
 
 ## Database changes (one migration set, written once)
@@ -175,20 +180,42 @@ Rules while porting:
 
 ### Phase 6: Clean up (2–3 days)
 - Remove `@supabase/*`, `lib/supabase*.ts`, `supabase/functions` and the Supabase-only env vars.
-- Move hosting from Netlify to the VPS (or keep Netlify for `web` only); update `CLAUDE.md`.
+- Move the Next.js app from Netlify to the VPS (same `docker compose` as the local setup in
+  docs/DOCKER.md, minus Supabase); update `CLAUDE.md`.
 
 **Total: about 9–14 weeks for one developer**, most of it in phase 1.
 
-## Hosting and cost (estimates to confirm)
+## Hosting and cost
+
+**Recommended: one small VPS + Cloudflare's free plan.** The VPS runs `web`, `api` and Postgres
+with Docker Compose (the setup already proven locally, docs/DOCKER.md). Cloudflare sits in front for
+DNS, HTTPS, the CDN and caching, and R2 holds the product photos and documents.
 
 | Item | Option | Rough monthly cost |
 |---|---|---|
-| App server (web + api) | Hetzner CPX31 (4 vCPU, 8 GB) or an OVH equivalent | ~15 € |
-| Postgres | same VPS with backups, or a managed instance | 0–25 € |
-| Files + CDN | Cloudflare R2 (no egress fees) | ~0–5 € |
-| Backups | R2 or a Hetzner storage box | ~3 € |
+| Server (web + api + Postgres) | Hetzner (2–4 vCPU, 4–8 GB) or an OVH equivalent; upgrade in place as traffic grows | ~5–15 € |
+| DNS, HTTPS, CDN, cache | Cloudflare free plan | 0 € |
+| Files | Cloudflare R2 (free allowance, no egress fees) | ~0 € at this size |
+| Backups | nightly `pg_dump` + WAL to R2 | ~0–1 € |
 
-Check current prices and compare with the last three Supabase invoices before deciding.
+Prices are estimates; confirm them before ordering.
+
+Free hosting options checked (October 2026) and why they're not the plan:
+- **Vercel Hobby:** free, but Vercel's fair-use rules restrict Hobby to non-commercial projects, and
+  a shop that takes orders is commercial. That means Pro (about $20/month per seat, plus usage), and
+  NestJS and Postgres would still need a host elsewhere.
+- **Cloudflare Workers / Pages for Next.js (OpenNext):** a possible home for `web`, but the free
+  plan caps a Worker at 3 MiB compressed. With antd in the admin, this app likely needs the paid
+  plan (10 MiB, about $5/month). Measure it with `opennextjs-cloudflare build` before choosing.
+- **NestJS on Cloudflare Workers:** not a fit. Workers isn't Node.js: no long-lived `pg` pool, no
+  native modules (argon2/bcrypt), and the SSE stream and cron jobs need a server. Cloudflare
+  Containers is paid.
+- **Free Node hosts:** Render's free web services sleep when idle and take 30–60 s to wake, so
+  checkout and the admin would stall. Fly.io and Railway only give trial credit. Free-tier
+  Postgres services (Render, Neon…) expire, sleep, or cap storage.
+
+A VPS costs a few euros a month, and nothing on it sleeps or hits a size cap. It also runs the same
+containers as the local setup.
 
 ## Risks and how the plan handles them
 
@@ -203,9 +230,15 @@ Check current prices and compare with the last three Supabase invoices before de
 | NestJS is down while areas point to it | No automatic fallback: uptime alert on `/api/health`, and rollback is removing the area from `NEST_ROUTES` (needs a redeploy, since rewrites are fixed at build time) |
 | Extra hop (Netlify → NestJS → database) slows pages | Host NestJS in the database's region; compare response times before and after each area |
 
-## Decisions needed before phase 0
+## Decisions
 
-1. **Database host:** managed Postgres or self-managed on the VPS?
-2. **Hosting:** keep Netlify for the Next.js app, or move everything to one VPS?
-3. **ERP work:** merge it to `main` and apply its migrations to the live database before starting?
-4. **NestJS host for phase 1:** a small VPS, or a container host (Railway, Fly, Render) next to Netlify?
+Taken:
+- Full migration, phases 0–6 (2026-10-23).
+- E-mail moves into NestJS with the existing nodemailer code.
+
+Proposed, to confirm:
+1. **Hosting:** one VPS (Hetzner or OVH) behind Cloudflare's free plan, Postgres on the same VPS
+   with nightly backups to R2. During phase 1, NestJS runs on that VPS and Netlify keeps serving
+   `web`; in phase 6, `web` moves to the VPS too.
+2. **ERP work:** merge it to `main` and apply its migrations to the live database before phase 1
+   goes to production. They already applied cleanly to a copy of the live data.
