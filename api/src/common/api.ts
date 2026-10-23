@@ -94,3 +94,23 @@ export class Zod<T extends z.ZodType> implements PipeTransform<
     return this.schema.parse(value);
   }
 }
+
+/** Ids from `?ids=a,b,c` (bulk actions) or `?id=a`, like lib/request-ids.ts. */
+export function idsFrom(query: { id?: unknown; ids?: unknown }): string[] {
+  const raw =
+    typeof query.ids === 'string'
+      ? query.ids
+      : typeof query.id === 'string'
+        ? query.id
+        : '';
+  return raw
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
+export const slugify = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');

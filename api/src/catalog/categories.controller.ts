@@ -15,7 +15,7 @@ import {
   RequiresAll,
 } from '../auth/decorators';
 import type { RequestActor } from '../auth/auth.guard';
-import { ApiError, Zod } from '../common/api';
+import { ApiError, idsFrom, slugify, Zod } from '../common/api';
 import { Database } from '../db/database';
 import { invalidateCatalog } from './revalidate';
 
@@ -42,12 +42,6 @@ const updateSchema = z.object({
   name: z.string().min(1).optional(),
   ...fields,
 });
-
-const slugify = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
 
 @Controller('categories')
 export class CategoriesController {
@@ -135,14 +129,10 @@ export class CategoriesController {
   @Delete()
   @RequiresAll('products', 'delete')
   async remove(
-    @Query('id') id: string | undefined,
-    @Query('ids') ids: string | undefined,
+    @Query() query: { id?: string; ids?: string },
     @CurrentActor() actor: RequestActor,
   ) {
-    const list = (ids ?? id ?? '')
-      .split(',')
-      .map((v) => v.trim())
-      .filter(Boolean);
+    const list = idsFrom(query);
     if (list.length === 0) throw new ApiError('Category ID is required');
     await this.db.withActor(actor, (trx) =>
       trx

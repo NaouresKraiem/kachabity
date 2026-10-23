@@ -13,8 +13,8 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/api/src/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
-    "test:e2e": "node test/e2e/categories.e2e.mjs && node test/e2e/erp.e2e.mjs",
-    "db:types": "kysely-codegen --dialect postgres --include-pattern \"public.*\" --out-file src/db/types.ts"
+    "test:e2e": "node test/e2e/categories.e2e.mjs && node test/e2e/catalog.e2e.mjs && node test/e2e/erp.e2e.mjs",
+    "db:types": "node scripts/db-types.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

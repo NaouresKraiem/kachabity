@@ -42,5 +42,5 @@ export async function user(email, appMeta) {
         return { status: r.status, json, location: r.headers.get('location') };
     };
     await call('/api/admin/me'); // syncs back_office_users
-    return { id: s.user?.id, call };
+    return { id: s.user?.id, call, cookie };
 }

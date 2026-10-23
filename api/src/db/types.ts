@@ -11,7 +11,7 @@ export type Generated<T> =
     : ColumnType<T, T | undefined, T>;
 
 export type Int8 = ColumnType<
-  string,
+  number,
   bigint | number | string,
   bigint | number | string
 >;
@@ -28,12 +28,12 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type Numeric = ColumnType<string, number | string, number | string>;
+export type Numeric = ColumnType<number, number | string, number | string>;
 
 export type StockMovementType =
   'adjustment' | 'restock' | 'return' | 'sale' | 'transfer';
 
-export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+export type Timestamp = ColumnType<string, Date | string, Date | string>;
 
 export interface AbandonedCarts {
   created_at: Timestamp | null;
@@ -81,12 +81,12 @@ export interface AdCampaigns {
   created_by: string | null;
   created_by_email: string | null;
   deleted_at: Timestamp | null;
-  ends_on: Timestamp | null;
+  ends_on: string | null;
   id: Generated<string>;
   name: string;
   notes: string | null;
   platform: Generated<string>;
-  starts_on: Timestamp | null;
+  starts_on: string | null;
   updated_at: Generated<Timestamp>;
 }
 
@@ -100,7 +100,7 @@ export interface AdSpend {
   deleted_at: Timestamp | null;
   id: Generated<string>;
   note: string | null;
-  spend_date: Generated<Timestamp>;
+  spend_date: Generated<string>;
   updated_at: Generated<Timestamp>;
 }
 
@@ -112,7 +112,7 @@ export interface AgentGoals {
   created_by_email: string | null;
   deleted_at: Timestamp | null;
   id: Generated<string>;
-  month: Timestamp;
+  month: string;
   target_confirmed: number | null;
   target_delivered: number | null;
   target_orders: number | null;
@@ -145,7 +145,7 @@ export interface BankStatementLines {
   matched_by: string | null;
   matched_line_id: string | null;
   reference: string | null;
-  statement_date: Timestamp;
+  statement_date: string;
   updated_at: Generated<Timestamp>;
 }
 
@@ -160,7 +160,7 @@ export interface BillPayments {
   id: Generated<string>;
   method: Generated<string>;
   note: string | null;
-  paid_on: Generated<Timestamp>;
+  paid_on: Generated<string>;
   reference: string | null;
   updated_at: Generated<Timestamp>;
 }
@@ -168,7 +168,7 @@ export interface BillPayments {
 export interface Bills {
   account_code: string;
   amount_ht: Numeric;
-  bill_date: Generated<Timestamp>;
+  bill_date: Generated<string>;
   category: Generated<string>;
   cost_type: Generated<string>;
   created_at: Generated<Timestamp>;
@@ -176,7 +176,7 @@ export interface Bills {
   created_by_email: string | null;
   deleted_at: Timestamp | null;
   document_id: string | null;
-  due_date: Timestamp | null;
+  due_date: string | null;
   id: Generated<string>;
   notes: string | null;
   number: Generated<string>;
@@ -200,7 +200,7 @@ export interface BusinessGoals {
   deleted_at: Timestamp | null;
   id: Generated<string>;
   max_return_rate: Numeric | null;
-  month: Timestamp;
+  month: string;
   notes: string | null;
   target_confirmed: number | null;
   target_delivered: number | null;
@@ -215,7 +215,7 @@ export interface CartAnalytics {
   avg_cart_value: Numeric | null;
   avg_items_per_cart: Numeric | null;
   converted_carts: Int8 | null;
-  date: Timestamp | null;
+  date: string | null;
   total_carts: Int8 | null;
 }
 
@@ -271,7 +271,7 @@ export interface CodRemittances {
   net_amount: Generated<Numeric | null>;
   note: string | null;
   provider: Generated<string>;
-  received_on: Generated<Timestamp>;
+  received_on: Generated<string>;
   reference: string | null;
   updated_at: Generated<Timestamp>;
 }
@@ -371,7 +371,7 @@ export interface Customers {
 
 export interface DailyMovementStats {
   adjustments: number | null;
-  day: Timestamp | null;
+  day: string | null;
   restocks: number | null;
   returns: number | null;
   sales: number | null;
@@ -413,8 +413,8 @@ export interface Documents {
   created_by: string | null;
   created_by_email: string | null;
   deleted_at: Timestamp | null;
-  document_date: Timestamp | null;
-  expires_on: Timestamp | null;
+  document_date: string | null;
+  expires_on: string | null;
   file_name: string | null;
   id: Generated<string>;
   kind: Generated<string>;
@@ -474,7 +474,7 @@ export interface JournalEntries {
   created_by: string | null;
   created_by_email: string | null;
   deleted_at: Timestamp | null;
-  entry_date: Timestamp;
+  entry_date: string;
   id: Generated<string>;
   journal: string;
   label: Generated<string>;
@@ -799,12 +799,12 @@ export interface PurchaseOrders {
   created_by: string | null;
   created_by_email: string | null;
   deleted_at: Timestamp | null;
-  expected_date: Timestamp | null;
+  expected_date: string | null;
   id: Generated<string>;
   location_id: string | null;
   notes: string | null;
   number: Generated<string>;
-  order_date: Generated<Timestamp>;
+  order_date: Generated<string>;
   status: Generated<string>;
   subtotal: Generated<Numeric>;
   supplier_id: string;
@@ -833,7 +833,7 @@ export interface PurchaseReceipts {
   notes: string | null;
   number: Generated<string>;
   purchase_order_id: string;
-  received_on: Generated<Timestamp>;
+  received_on: Generated<string>;
   status: Generated<string>;
   updated_at: Generated<Timestamp>;
   validated_at: Timestamp | null;
@@ -909,7 +909,7 @@ export interface SalesInvoices {
   customer_tax_id: string | null;
   deleted_at: Timestamp | null;
   id: Generated<string>;
-  invoice_date: Generated<Timestamp>;
+  invoice_date: Generated<string>;
   kind: Generated<string>;
   lines: Generated<Json>;
   notes: string | null;
@@ -1027,7 +1027,7 @@ export interface TreasuryMovements {
   direction: string;
   id: Generated<string>;
   label: Generated<string>;
-  occurred_on: Generated<Timestamp>;
+  occurred_on: Generated<string>;
   pos_session_id: string | null;
   reference: string | null;
   transfer_id: string | null;

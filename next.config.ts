@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
-// API areas already served by the NestJS app in api/ (comma-separated, e.g. "categories,health").
-// Everything else stays in app/api; removing an area here sends its traffic back to Next.js.
+// API routes already served by the NestJS app in api/ (comma-separated, e.g. "categories,products/top").
+// Each entry is one route path, like the app/api route files, so "products" doesn't include
+// "products/top". Everything else stays in app/api; removing an entry sends it back to Next.js.
 const NEST_ROUTES = (process.env.NEST_ROUTES ?? "").split(",").map((area) => area.trim()).filter(Boolean);
 
 const nextConfig: NextConfig = {
@@ -10,8 +11,8 @@ const nextConfig: NextConfig = {
     // beforeFiles: the rewrite wins over the existing app/api route file.
     return {
       beforeFiles: NEST_ROUTES.map((area) => ({
-        source: `/api/${area}/:path*`,
-        destination: `${process.env.NEST_URL}/api/${area}/:path*`,
+        source: `/api/${area}`,
+        destination: `${process.env.NEST_URL}/api/${area}`,
       })),
     };
   },
