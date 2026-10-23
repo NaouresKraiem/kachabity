@@ -1,0 +1,33 @@
+# Local copy of the whole app: Next.js (web) + NestJS (api), on the local Supabase started by
+# `npx supabase start` (database, auth, storage, realtime, studio). See docs/DOCKER.md.
+name: kachabity
+
+services:
+  # The browser reaches Supabase at localhost:54321; web runs in this container's network so its
+  # own localhost:54321 reaches the same Supabase, and one NEXT_PUBLIC_SUPABASE_URL works on both sides.
+  gateway:
+    image: alpine/socat:1.8.0.3
+    command: tcp-listen:54321,fork,reuseaddr tcp-connect:host.docker.internal:54321
+    ports: ["3000:3000"]
+
+  web:
+    build:
+      context: .
+      network: host # the build prerenders pages from the local Supabase
+      secrets: [env]
+    env_file: .env.docker
+    network_mode: service:gateway
+    depends_on: [gateway, api]
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    env_file: .env.docker
+    environment:
+      NEXT_URL: http://gateway:3000
+    ports: ["4000:4000"]
+
+secrets:
+  env:
+    file: .env.docker

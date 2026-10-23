@@ -7,7 +7,10 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "import:woocommerce": "node scripts/import-woocommerce.mjs"
+    "import:woocommerce": "node scripts/import-woocommerce.mjs",
+    "docker:env": "node scripts/docker/env.mjs",
+    "docker:import": "node scripts/docker/import-live-data.mjs",
+    "docker:up": "docker compose up --build -d"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",

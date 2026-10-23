@@ -38,7 +38,12 @@ ok(listed?.name === `${name} renamed`, 'list shows the new name', listed);
 
 // Delete needs products + delete, and only soft-deletes
 ok((await editor.call(`/api/categories?id=${created?.id}`, 'DELETE')).status === 403, 'staff without delete: 403');
-const [refusal] = await admin(`/rest/v1/activity_log?action=eq.access_denied&actor_email=eq.editor@test.local&order=created_at.desc&limit=1&select=label`);
+// Middleware (when it refuses first) logs after answering, so give the row a moment.
+let refusal;
+for (let i = 0; i < 15 && refusal?.label !== 'DELETE /api/categories'; i++) {
+    if (i) await new Promise((resolve) => setTimeout(resolve, 200));
+    [refusal] = await admin(`/rest/v1/activity_log?action=eq.access_denied&actor_email=eq.editor@test.local&order=created_at.desc&limit=1&select=label`);
+}
 ok(refusal?.label === 'DELETE /api/categories', 'refusal is logged', refusal);
 r = await owner.call(`/api/categories?ids=${created?.id}`, 'DELETE');
 ok(r.status === 200 && r.json.success, 'owner deletes', r.json);

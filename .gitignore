@@ -45,3 +45,8 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# local Docker setup: live data dump (customer data)
+/.docker-data
+/supabase/.branches
+/supabase/.temp

@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run lint`: ESLint (flat config in `eslint.config.mjs`)
 - `npm run build`: production build with Turbopack
 - `npm run import:woocommerce -- --dry-run`: preview a re-import of the WooCommerce export (`kachabiti-products.csv`); drop `--dry-run` to write. It is idempotent: products are upserted by slug, variants are matched by color + size and updated in place (never touching stock), and images and discounts are replaced. English/French text lives in `scripts/import/translations.json` and `descriptions.json`, and color hexes in `colors.json`.
+- Local copy in Docker (docs/DOCKER.md): `npx supabase start` (local Supabase, `supabase/config.toml`), `npm run docker:env`, optionally `npm run docker:import` (copies the live data read-only), then `npm run docker:up` (web on :3000, NestJS on :4000).
 - `supabase db query --linked -f <file>`: run SQL against the linked project (`hwxgibxahqdxkzuvfxvz`)
 - `supabase db advisors --linked`: Supabase security/performance lints
 - `npx tsc --noEmit`: type-check. **Run this yourself**: `next.config.ts` sets `ignoreBuildErrors` and `ignoreDuringBuilds`, so `npm run build` succeeds even when there are type or lint errors.
