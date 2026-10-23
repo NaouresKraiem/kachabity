@@ -4,6 +4,8 @@ Branch: `kachabiti-nest`. Goal: move off Supabase to a NestJS API and a plain Po
 keeping the Next.js storefront and admin, without a big-bang rewrite and without downtime beyond
 one short database cut-over.
 
+Task-by-task steps for phase 0 and the first module: [MIGRATION-NESTJS-TASKS.md](MIGRATION-NESTJS-TASKS.md).
+
 ## Where we start (measured on this branch)
 
 | Piece | Today | Size |
@@ -27,10 +29,10 @@ business rules.
 
 ```
 kachabity/
-  web/              Next.js (storefront + admin UI): today's app minus app/api
+  (root)            Next.js (storefront + admin UI), unchanged; app/api empties as areas move
   api/              NestJS: every /api route, auth, files, notifications, jobs
-  packages/shared/  zod schemas, constants (lib/erp/constants.ts), lib/admin-auth.ts
-  db/migrations/    today's supabase/migrations, made Supabase-free (see "Database changes")
+  lib/              shared by both apps (NestJS imports it through the @shared/* path alias)
+  supabase/migrations/  stays the schema source; made Supabase-free in phase 3–5
 ```
 
 - **Database access in NestJS: Kysely**, a typed query builder with types generated from the live
@@ -79,11 +81,10 @@ Each phase ships on its own and can be rolled back. The site keeps running on Su
 phase 5.
 
 ### Phase 0: Prepare (2–3 days)
-- **Commit the ERP work first.** This branch was cut from `main` with the ERP changes still
-  uncommitted (49 files; their migrations aren't applied to the live database). Commit them on their
-  own branch, merge and deploy, so `kachabiti-nest` starts from a clean, live state.
-- Turn the repo into npm workspaces: move the app to `web/`, create `api/` (NestJS 11, Node 22)
-  and `packages/shared`.
+- **Start from the ERP code.** The ERP work is committed on `feature/erp-modules` (its pull request
+  goes to `main`; its migrations aren't applied to the live database yet). Rebase `kachabiti-nest`
+  on it once merged, so the migration starts from the code that's live.
+- Create `api/` (NestJS 11, Node 22) next to the Next.js app, sharing `lib/` through a path alias.
 - NestJS basics: config module (env validated with zod), Kysely connected to the **current
   Supabase Postgres** through the pooler, Sentry, health check, Dockerfile.
 - Next.js `rewrites()` for `/api/:path*` → NestJS, behind a per-route allow-list so routes switch
