@@ -21,10 +21,8 @@ http://127.0.0.1:54323. E-mails the app sends (sign-up, password reset) land in 
 npm run docker:env
 ```
 
-It writes `.env.docker` (git-ignored) with the local keys. Then edit it:
-- `OWNER_EMAILS`: your e-mail, to get the owner role.
-- `SOURCE_DATABASE_URL`: to copy the live data (next step). Take it from the Supabase dashboard →
-  **Connect** → **Session pooler**, with the database password. Don't paste live keys anywhere else.
+It writes `.env.docker` (git-ignored) with the local keys. Set `OWNER_EMAILS` there to your e-mail
+to get the owner role.
 
 ## 3. Copy the live data (optional)
 
@@ -32,11 +30,20 @@ It writes `.env.docker` (git-ignored) with the local keys. Then edit it:
 npm run docker:import
 ```
 
-It reads the live database and replaces the local data: all products, variants, images, categories,
-orders, settings, stock, landing page, and the sign-in accounts (same e-mails and passwords). Then it
-applies the migrations the live site doesn't have yet (the ERP ones), the same way a production
-rollout would. The dump is kept in `.docker-data/` (git-ignored). It holds customer data, so delete it
-when you're done.
+It reads the live project and replaces the local data: all products, variants, images, categories,
+orders, settings, stock, the landing page, and the sign-in accounts. Then it applies the migrations
+the live site doesn't have yet (the ERP ones), the same way a production rollout would. The copy is
+kept in `.docker-data/` (git-ignored). It holds customer data, so delete it when you're done.
+
+How it reads the live project:
+- **By default:** through the REST API with the live URL and service-role key from your `.env.local`
+  (or `SOURCE_SUPABASE_URL` / `SOURCE_SERVICE_ROLE_KEY` in `.env.docker`). It only sends GET requests.
+  The API never returns password hashes, so **every account signs in locally with the password
+  `Kachabity-local-1`** (change it with `LOCAL_PASSWORD` in `.env.docker`). The live version is
+  guessed from which tables exist; set `SOURCE_MIGRATION_VERSION` if the guess is wrong.
+- **With the database password:** set `SOURCE_DATABASE_URL` to the Postgres connection string
+  (Supabase dashboard → **Connect** → **Session pooler**, no quotes). It then uses `pg_dump`, and
+  accounts keep their live passwords.
 
 Product photos keep their live URLs (live Supabase Storage), so they show as long as the live site is up.
 

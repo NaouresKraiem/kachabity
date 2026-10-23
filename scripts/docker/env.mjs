@@ -35,9 +35,12 @@ ADMIN_EMAILS=
 NEST_ROUTES=categories
 NEST_URL=http://api:4000
 REVALIDATE_SECRET=${crypto.randomUUID()}
-# Live database, read only, for scripts/docker/import-live-data.mjs: Supabase dashboard →
-# Connect → Session pooler (port 5432). Leave empty to start with an empty shop.
+# scripts/docker/import-live-data.mjs reads the live project (read only). By default it uses the REST
+# API with the URL and service-role key from .env.local, and every account gets LOCAL_PASSWORD.
+# With the database password, set SOURCE_DATABASE_URL (Connect → Session pooler, postgresql://...)
+# to use pg_dump instead and keep the live passwords.
 SOURCE_DATABASE_URL=
+LOCAL_PASSWORD=Kachabity-local-1
 `
 );
 console.log(`Wrote ${FILE}.`);
