@@ -18,6 +18,24 @@ import { VariantsController } from './catalog/variants.controller';
 import { ApiExceptionFilter, ApiResponseInterceptor } from './common/api';
 import { DatabaseModule } from './db/database';
 import { HealthController } from './health.controller';
+import {
+  ActivityController,
+  ErpSettingsController,
+  GoalsController,
+  MeController,
+  MyWorkController,
+  NotificationsController,
+  OwnerOverviewController,
+  PerformanceController,
+  StaffController,
+  TrashController,
+} from './admin/admin.controllers';
+import {
+  CartController,
+  ContactController,
+  DocsController,
+  NewsletterController,
+} from './admin/public.controllers';
 import { CampaignsController } from './crm/campaigns.controller';
 import {
   CustomersController,
@@ -103,6 +121,20 @@ import {
     InvoicesController,
     ReportsController,
     TreasuryController,
+    OwnerOverviewController,
+    ActivityController,
+    ErpSettingsController,
+    GoalsController,
+    MeController,
+    MyWorkController,
+    PerformanceController,
+    StaffController,
+    NotificationsController,
+    TrashController,
+    CartController,
+    ContactController,
+    NewsletterController,
+    DocsController,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
