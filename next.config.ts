@@ -10,10 +10,14 @@ const nextConfig: NextConfig = {
   async rewrites() {
     // beforeFiles: the rewrite wins over the existing app/api route file.
     return {
-      beforeFiles: NEST_ROUTES.map((area) => ({
-        source: `/api/${area}`,
-        destination: `${process.env.NEST_URL}/api/${area}`,
-      })),
+      beforeFiles: [
+        ...NEST_ROUTES.map((area) => ({
+          source: `/api/${area}`,
+          destination: `${process.env.NEST_URL}/api/${area}`,
+        })),
+        // The storefront's reads exist only in NestJS (lib/storefront-api.ts).
+        { source: "/api/storefront/:path*", destination: `${process.env.NEST_URL}/api/storefront/:path*` },
+      ],
     };
   },
   // ENV ("local" or "production") as seen by browser, server and edge code; read it via lib/app-env.ts.

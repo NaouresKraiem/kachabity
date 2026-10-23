@@ -19,6 +19,10 @@ import { ApiExceptionFilter, ApiResponseInterceptor } from './common/api';
 import { DatabaseModule } from './db/database';
 import { HealthController } from './health.controller';
 import {
+  HomeListsController,
+  StorefrontController,
+} from './storefront/storefront.controller';
+import {
   ActivityController,
   ErpSettingsController,
   GoalsController,
@@ -135,6 +139,8 @@ import {
     ContactController,
     NewsletterController,
     DocsController,
+    StorefrontController,
+    HomeListsController,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
