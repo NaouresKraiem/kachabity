@@ -3,6 +3,14 @@
 Executable breakdown of phases 0 and 1 of [MIGRATION-NESTJS.md](MIGRATION-NESTJS.md). Each task
 ends with a check you can run. Later modules repeat the pattern of tasks 1.1–1.3.
 
+**Status (2026-10-23):** 0.1–0.8, 0.10, 1.1 and 1.2 done and checked against a local Supabase:
+the categories and ERP e2e suites pass with `NEST_ROUTES=categories` and with it empty, and both
+servers return identical `GET /api/categories` JSON. Open: deploying NestJS (0.9: pick the host,
+check Sentry), then 1.3 in production. Differences from the text below: config is plain zod
+(`api/src/config.ts`, no `@nestjs/config`); `withActor()` is a method of `Database`
+(`api/src/db/database.ts`); the guard and error checks are e2e suites (`api/test/e2e/*.mjs`) rather
+than Jest specs; no `docker-compose.yml` (one service, `docker build -f api/Dockerfile .`).
+
 ## Decisions taken here (smaller than the overview)
 
 - **No repo reshuffle.** The Next.js app stays at the repo root (Netlify keeps building it as

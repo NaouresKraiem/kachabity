@@ -1,26 +1,12 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server';
 import { supportedLanguages, defaultLanguage, detectLanguageFromHeader, isValidLocale } from './lib/language-utils';
-import { ADMIN_HEADERS, getAdminRole, getPermissions, hasFullAccess, type AdminRole, type Permission } from './lib/admin-auth';
+import { ADMIN_HEADERS, allows, getAdminRole, getPermissions, type AdminRole, type Permission, type Requirement } from './lib/admin-auth';
 import { supabaseUrl, supabasePublishableKey } from './lib/supabase-env';
 import { TRASH_TABLES, isTrashTable } from './lib/trash-tables';
 
 const ADMIN_LOGIN_PATH = '/admin/login';
 
-/**
- * What a request needs:
- * - null: public
- * - { any: [] }: any back-office user
- * - { any: [a, b] }: at least one of these permissions
- * - { all: [...] }: every one of these (deletes need the area's permission and `delete`;
- *   permanent deletes need it and `hard_delete`)
- * - { admin: true }: owners and admins only (team management)
- * - { owner: true }: owners only (the money overview)
- * Owners and admins have every permission.
- */
-type Requirement = { any?: Permission[]; all?: Permission[]; admin?: boolean; owner?: boolean };
-
-// Area permission for each back-office API path that is public for GET but gated for writes.
 const MUTATION_PERMISSIONS: Record<string, Permission[]> = {
     '/api/categories': ['products'],
     '/api/colors': ['products'],
@@ -132,14 +118,6 @@ function withoutAdminHeaders(request: NextRequest): Headers {
     const headers = new Headers(request.headers);
     Object.values(ADMIN_HEADERS).forEach((name) => headers.delete(name));
     return headers;
-}
-
-function allows(requirement: Requirement, role: AdminRole, permissions: Permission[]): boolean {
-    if (requirement.owner) return role === 'owner';
-    if (hasFullAccess(role)) return true;
-    if (requirement.admin) return false;
-    const any = requirement.any ?? [];
-    return (any.length === 0 || any.some((p) => permissions.includes(p))) && (requirement.all ?? []).every((p) => permissions.includes(p));
 }
 
 // Public signing keys from SUPABASE_JWKS (the project's /auth/v1/.well-known/jwks.json), so

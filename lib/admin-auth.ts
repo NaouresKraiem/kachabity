@@ -86,6 +86,29 @@ export function isAdminUser(user: AuthUser | null): boolean {
     return hasFullAccess(getAdminRole(user));
 }
 
+/**
+ * What a request needs:
+ * - null: public
+ * - { any: [] }: any back-office user
+ * - { any: [a, b] }: at least one of these permissions
+ * - { all: [...] }: every one of these (deletes need the area's permission and `delete`;
+ *   permanent deletes need it and `hard_delete`)
+ * - { admin: true }: owners and admins only (team management)
+ * - { owner: true }: owners only (the money overview)
+ * Owners and admins have every permission.
+ */
+export type Requirement = { any?: Permission[]; all?: Permission[]; admin?: boolean; owner?: boolean };
+
+// Area permission for each back-office API path that is public for GET but gated for writes.
+/** Whether a back-office user with this role and these permissions meets a requirement. */
+export function allows(requirement: Requirement, role: AdminRole, permissions: Permission[]): boolean {
+    if (requirement.owner) return role === 'owner';
+    if (hasFullAccess(role)) return true;
+    if (requirement.admin) return false;
+    const any = requirement.any ?? [];
+    return (any.length === 0 || any.some((p) => permissions.includes(p))) && (requirement.all ?? []).every((p) => permissions.includes(p));
+}
+
 /** Headers middleware.ts sets on authorized back-office API requests (client values are overwritten). */
 export const ADMIN_HEADERS = {
     role: 'x-admin-role',

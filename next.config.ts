@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
+// API areas already served by the NestJS app in api/ (comma-separated, e.g. "categories,health").
+// Everything else stays in app/api; removing an area here sends its traffic back to Next.js.
+const NEST_ROUTES = (process.env.NEST_ROUTES ?? "").split(",").map((area) => area.trim()).filter(Boolean);
+
 const nextConfig: NextConfig = {
+  async rewrites() {
+    // beforeFiles: the rewrite wins over the existing app/api route file.
+    return {
+      beforeFiles: NEST_ROUTES.map((area) => ({
+        source: `/api/${area}/:path*`,
+        destination: `${process.env.NEST_URL}/api/${area}/:path*`,
+      })),
+    };
+  },
   // ENV ("local" or "production") as seen by browser, server and edge code; read it via lib/app-env.ts.
   env: {
     NEXT_PUBLIC_APP_ENV: process.env.ENV || "local",

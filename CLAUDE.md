@@ -152,6 +152,14 @@ Ant Design is used **only in the admin**; the storefront uses Tailwind plus `rea
 
 `lib/openapi.ts` builds an OpenAPI spec by hand (ERP routes in `lib/openapi-erp.ts`). `/api/docs` serves it and `/api-docs` renders it with swagger-ui. If you change an API route's shape, update this spec too.
 
+### NestJS API (migration in progress)
+
+`api/` is a NestJS 11 app the `/api` routes are moving to, one area at a time (plan in `docs/MIGRATION-NESTJS.md`, conventions in `api/README.md`). Next.js forwards an area to it when the area is listed in `NEST_ROUTES` (`next.config.ts` rewrites, with `NEST_URL`); the old `app/api` route stays as the fallback until the area has run in production for a week. Served by NestJS so far: `categories`.
+- While an area is in `NEST_ROUTES`, change it in `api/`, not in `app/api`. Its access rule is a decorator on the NestJS route (same rules as `requirementFor`, shared through `allows()` in `lib/admin-auth.ts`); keep the `requirementFor` rule too, since middleware still runs first.
+- NestJS catalog writes refresh the storefront cache through `POST /api/internal/revalidate` (`REVALIDATE_SECRET`).
+- `api/` imports root `lib/` files as `@shared/*`; a shared file may only use relative imports (`lib/admin-auth.ts`, `lib/erp/db-messages.ts`, `lib/stock.ts`).
+- Root `npx tsc --noEmit` and lint skip `api/`; check it with `npm run build` and `npm run lint` in `api/`. `api/test/e2e` holds the end-to-end suites (local Supabase only).
+
 ## Configuration notes
 
 - The env var names are listed in `ENV-EXAMPLE.md`. `ADMIN_EMAILS` and `SUPABASE_SERVICE_ROLE_KEY` are server-only.
