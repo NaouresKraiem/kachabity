@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import {
   CanActivate,
   ExecutionContext,
@@ -22,6 +23,7 @@ import {
   type Permission,
   type Requirement,
 } from '@shared/admin-auth';
+import { apiRequirement } from '@shared/api-access';
 import { config } from '../config';
 import { Database } from '../db/database';
 import { PUBLIC, REQUIREMENT } from './decorators';
@@ -72,6 +74,21 @@ export function accessToken(request: Pick<Request, 'headers'>): string | null {
   }
 }
 
+/** An external system reading the inventory with STOCK_API_KEY (x-api-key), as middleware.ts allows. */
+function hasStockApiKey(request: Request, pathname: string): boolean {
+  const key = request.headers['x-api-key'];
+  if (
+    !config.STOCK_API_KEY ||
+    typeof key !== 'string' ||
+    pathname !== '/api/stock/inventory' ||
+    request.method !== 'GET'
+  )
+    return false;
+  const a = Buffer.from(key);
+  const b = Buffer.from(config.STOCK_API_KEY);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 /** Port of the back-office gate in middleware.ts: every route is refused unless a decorator opens it. */
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -94,13 +111,25 @@ export class AuthGuard implements CanActivate {
     const claims = await this.verify(request);
     request.actor = claims ? this.actorFrom(claims) : null;
 
-    if (isPublic) return true;
-    if (!requirement)
+    // The same table middleware.ts uses (lib/api-access.ts), plus the route's own decorator.
+    const url = new URL(request.originalUrl, 'http://api');
+    if (hasStockApiKey(request, url.pathname)) return true;
+    const rules = [
+      apiRequirement(
+        url.pathname,
+        request.method.toUpperCase(),
+        url.searchParams,
+      ),
+      requirement,
+    ].filter((rule): rule is Requirement => !!rule);
+    if (rules.length === 0) {
+      if (isPublic) return true;
       throw new ForbiddenException('This route has no access rule');
+    }
     if (!claims) throw new UnauthorizedException('Sign in again');
     const actor = request.actor;
     if (!actor) throw new ForbiddenException('Forbidden');
-    if (!allows(requirement, actor.role, actor.permissions)) {
+    if (!rules.every((rule) => allows(rule, actor.role, actor.permissions))) {
       await this.logRefusal(request, actor);
       throw new ForbiddenException('Forbidden');
     }

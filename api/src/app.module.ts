@@ -18,6 +18,15 @@ import { VariantsController } from './catalog/variants.controller';
 import { ApiExceptionFilter, ApiResponseInterceptor } from './common/api';
 import { DatabaseModule } from './db/database';
 import { HealthController } from './health.controller';
+import {
+  CollectionsController,
+  LocationsController,
+  StockCostsController,
+  StockMovementsController,
+  StockReportsController,
+  StockTrackingController,
+  SuppliersController,
+} from './stock/stock.controllers';
 
 @Module({
   imports: [DatabaseModule],
@@ -33,6 +42,13 @@ import { HealthController } from './health.controller';
     SaleBannersController,
     ReelsController,
     LandingController,
+    SuppliersController,
+    CollectionsController,
+    LocationsController,
+    StockTrackingController,
+    StockCostsController,
+    StockMovementsController,
+    StockReportsController,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

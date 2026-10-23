@@ -9,6 +9,8 @@ const schema = z.object({
   ADMIN_EMAILS: z.string().optional(),
   NEXT_URL: z.string().url().optional(),
   REVALIDATE_SECRET: z.string().min(16).optional(),
+  // External systems may read GET /api/stock/inventory with this key in x-api-key.
+  STOCK_API_KEY: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   ENV: z.enum(['local', 'production']).default('local'),
   PORT: z.coerce.number().int().default(4000),

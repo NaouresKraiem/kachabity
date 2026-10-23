@@ -20,12 +20,30 @@ import { knownDbError } from '@shared/erp/db-messages';
 // Port of lib/erp/api.ts: same response shapes, so the admin screens don't change.
 // { success: true, data } on success, { success: false, error, code? } on failure.
 
+/** Extra top-level fields beside data, e.g. { success, data, total } for paged lists. */
+export class Envelope {
+  constructor(
+    readonly data: unknown,
+    readonly extra: Record<string, unknown>,
+  ) {}
+}
+
+/** A body sent as is, without the { success, data } wrapper (routes that never had it). */
+export class Raw {
+  constructor(readonly body: unknown) {}
+}
+
 @Injectable()
 export class ApiResponseInterceptor implements NestInterceptor {
   intercept(_: ExecutionContext, next: CallHandler) {
-    return next
-      .handle()
-      .pipe(map((data: unknown) => ({ success: true, data })));
+    return next.handle().pipe(
+      map((value: unknown) => {
+        if (value instanceof Raw) return value.body;
+        if (value instanceof Envelope)
+          return { success: true, data: value.data, ...value.extra };
+        return { success: true, data: value };
+      }),
+    );
   }
 }
 

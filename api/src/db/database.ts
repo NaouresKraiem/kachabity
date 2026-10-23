@@ -58,20 +58,19 @@ export class Database extends Kysely<DB> implements OnModuleDestroy {
 
   /**
    * Calls a public database function with named arguments, like supabase.rpc(name, params):
-   * `select public.name(p_a => $1, ...)`. Objects and arrays are sent as JSON (jsonb parameters).
-   * Pass `trx` (from withActor) for functions that write.
+   * `select public.name(p_a => $1, ...)`. Values are encoded by the parameter's declared type
+   * (json/jsonb as JSON text, arrays as Postgres arrays). Pass `trx` (from withActor) for writes.
    */
   async call<T = unknown>(
     name: string,
     params: Record<string, unknown> = {},
     trx: Kysely<DB> = this,
   ): Promise<T> {
-    const row = await sql<{
-      result: T;
-    }>`select ${callOf(name, params)} as result`
-      .execute(trx)
-      .then((r) => r.rows[0]);
-    return row?.result;
+    const call = await this.callOf(name, params);
+    const result = await sql<{ result: T }>`select ${call} as result`.execute(
+      trx,
+    );
+    return result.rows[0]?.result;
   }
 
   /** Like call() for functions that return a table: `select * from public.name(...)`. */
@@ -80,37 +79,46 @@ export class Database extends Kysely<DB> implements OnModuleDestroy {
     params: Record<string, unknown> = {},
     trx: Kysely<DB> = this,
   ): Promise<T[]> {
-    return (await sql<T>`select * from ${callOf(name, params)}`.execute(trx))
-      .rows;
+    const call = await this.callOf(name, params);
+    return (await sql<T>`select * from ${call}`.execute(trx)).rows;
+  }
+
+  // Parameter name → type (udt_name: jsonb, _uuid, text…) per function, read once.
+  private readonly paramTypes = new Map<string, Promise<Map<string, string>>>();
+
+  private async callOf(name: string, params: Record<string, unknown>) {
+    if (!/^[a-z_][a-z0-9_]*$/.test(name))
+      throw new Error(`Bad function name ${name}`);
+    if (!this.paramTypes.has(name)) {
+      this.paramTypes.set(
+        name,
+        sql<{ parameter_name: string; udt_name: string }>`
+          select p.parameter_name, p.udt_name
+            from information_schema.routines r
+            join information_schema.parameters p on p.specific_name = r.specific_name
+           where r.routine_schema = 'public' and r.routine_name = ${name} and p.parameter_mode in ('IN', 'INOUT')`
+          .execute(this)
+          .then(
+            (r) =>
+              new Map(r.rows.map((row) => [row.parameter_name, row.udt_name])),
+          ),
+      );
+    }
+    const types = await this.paramTypes.get(name)!;
+    const args = Object.entries(params)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => {
+        const type = types.get(key);
+        if (!type) throw new Error(`${name} has no parameter ${key}`);
+        const isJson = (type === 'json' || type === 'jsonb') && value !== null;
+        return sql`${sql.raw(key)} => ${isJson ? JSON.stringify(value) : value}`;
+      });
+    return sql`public.${sql.raw(name)}(${args.length ? sql.join(args) : sql``})`;
   }
 
   async onModuleDestroy() {
     await this.destroy();
   }
-}
-
-function callOf(name: string, params: Record<string, unknown>) {
-  if (!/^[a-z_][a-z0-9_]*$/.test(name))
-    throw new Error(`Bad function name ${name}`);
-  const args = Object.entries(params)
-    .filter(([, value]) => value !== undefined)
-    .map(([key, value]) => {
-      if (!/^[a-z_][a-z0-9_]*$/.test(key))
-        throw new Error(`Bad argument ${key}`);
-      // Arrays of plain values go as Postgres arrays (uuid[], text[]); objects and arrays of
-      // objects as JSON (jsonb). A jsonb parameter that takes an array of plain values needs
-      // JSON.stringify() at the call site.
-      const isPgArray =
-        Array.isArray(value) &&
-        value.every((v) => v === null || typeof v !== 'object');
-      const isJson =
-        value !== null &&
-        typeof value === 'object' &&
-        !(value instanceof Date) &&
-        !isPgArray;
-      return sql`${sql.raw(key)} => ${isJson ? JSON.stringify(value) : value}`;
-    });
-  return sql`public.${sql.raw(name)}(${args.length ? sql.join(args) : sql``})`;
 }
 
 @Global()

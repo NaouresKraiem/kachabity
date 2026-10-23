@@ -39,6 +39,10 @@ End-to-end suites in `test/e2e/`, run against a **local** Supabase (`supabase st
 SUPABASE_ANON_KEY=... SUPABASE_SERVICE_ROLE_KEY=... npm run test:e2e
 ```
 
+The ERP suite checks running totals, so it needs a fresh database (`npx supabase db reset`); the
+others can run on any data. `node test/e2e/compare.mjs <paths>` checks that a ported GET returns the
+same JSON as its Next.js route.
+
 ## Docker
 
 From the repository root (the API compiles files from `lib/`):
