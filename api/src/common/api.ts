@@ -47,12 +47,13 @@ export class ApiResponseInterceptor implements NestInterceptor {
   }
 }
 
-/** A refusal to send back as is, with an optional machine-readable code. */
+/** A refusal to send back as is, with an optional machine-readable code and extra top-level fields. */
 export class ApiError extends HttpException {
   constructor(
     message: string,
     status = 400,
     public readonly code?: string,
+    public readonly extra: Record<string, unknown> = {},
   ) {
     super(message, status);
   }
@@ -65,10 +66,18 @@ export class ApiExceptionFilter implements ExceptionFilter {
   catch(error: unknown, host: ArgumentsHost) {
     const http = host.switchToHttp();
     const response = http.getResponse<Response>();
-    const send = (status: number, message: string, code?: string) =>
-      response
-        .status(status)
-        .json({ success: false, error: message, ...(code ? { code } : {}) });
+    const send = (
+      status: number,
+      message: string,
+      code?: string,
+      extra: Record<string, unknown> = {},
+    ) =>
+      response.status(status).json({
+        success: false,
+        error: message,
+        ...(code ? { code } : {}),
+        ...extra,
+      });
 
     if (error instanceof z.ZodError) {
       const issue = error.issues[0];
@@ -81,7 +90,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
       );
     }
     if (error instanceof ApiError)
-      return send(error.getStatus(), error.message, error.code);
+      return send(error.getStatus(), error.message, error.code, error.extra);
     if (error instanceof HttpException)
       return send(error.getStatus(), error.message);
     const known = knownDbError(error);
@@ -132,3 +141,55 @@ export const slugify = (name: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+
+// Shared zod pieces, as in lib/erp/api.ts.
+export const zMoney = z.number().finite().nonnegative().max(100_000_000);
+export const zId = z.guid();
+export const zDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
+export const zText = (max = 500) => z.string().trim().max(max);
+
+/** Owners and admins can do anything in an area; this tells staff from them. */
+export const isManager = (actor: { role: string } | null | undefined) =>
+  actor?.role === 'owner' || actor?.role === 'admin';
+
+/** Query-string helpers, as params() in lib/erp/api.ts. */
+export function params(query: Record<string, unknown>) {
+  const raw = (name: string) =>
+    typeof query[name] === 'string' ? query[name] : undefined;
+  return {
+    get: (name: string) => raw(name)?.trim() || null,
+    int: (name: string, fallback: number, max = 1000) => {
+      const value = Number(raw(name));
+      return Number.isFinite(value) && value > 0
+        ? Math.min(Math.floor(value), max)
+        : fallback;
+    },
+    list: (name: string) =>
+      (raw(name) ?? '')
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean),
+    bool: (name: string) => raw(name) === 'true' || raw(name) === '1',
+  };
+}
+
+/** Period from ?from=&to= (ISO), defaulting to the last `days` days. */
+export function period(query: Record<string, unknown>, days = 30) {
+  const q = params(query);
+  const to = q.get('to') ? new Date(q.get('to')!) : new Date();
+  const from = q.get('from')
+    ? new Date(q.get('from')!)
+    : new Date(to.getTime() - days * 86_400_000);
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from >= to)
+    throw new ApiError('Invalid period');
+  return { from, to };
+}
+
+/** YYYY-MM-DD of a date in Tunis time (the business's calendar). */
+export const tunisDay = (date: Date = new Date()) =>
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Tunis',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);

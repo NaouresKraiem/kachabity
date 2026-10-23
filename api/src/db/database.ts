@@ -42,16 +42,23 @@ export class Database extends Kysely<DB> implements OnModuleDestroy {
    * PostgREST sets them; `true` keeps them local to the transaction on a pooled connection.
    */
   withActor<T>(
-    actor: Actor,
+    actor: Actor | null,
     work: (trx: Transaction<DB>) => Promise<T>,
   ): Promise<T> {
+    // null: a write with no staff member (checkout, webhooks). Like the old service-role requests,
+    // it carries no actor, so the activity log skips it instead of logging a database edit.
+    const headers = actor
+      ? {
+          'x-actor-id': actor.userId,
+          'x-actor-email': actor.email,
+          'x-actor-role': actor.role,
+        }
+      : {};
     return this.transaction().execute(async (trx) => {
       await sql`select set_config('request.jwt.claims', ${JSON.stringify({ role: 'service_role' })}, true),
-                       set_config('request.headers', ${JSON.stringify({
-                         'x-actor-id': actor.userId,
-                         'x-actor-email': actor.email,
-                         'x-actor-role': actor.role,
-                       })}, true)`.execute(trx);
+                       set_config('request.headers', ${JSON.stringify(headers)}, true)`.execute(
+        trx,
+      );
       return work(trx);
     });
   }
@@ -66,11 +73,13 @@ export class Database extends Kysely<DB> implements OnModuleDestroy {
     params: Record<string, unknown> = {},
     trx: Kysely<DB> = this,
   ): Promise<T> {
-    const call = await this.callOf(name, params);
-    const result = await sql<{ result: T }>`select ${call} as result`.execute(
-      trx,
-    );
-    return result.rows[0]?.result;
+    const { call, returnsRow } = await this.callOf(name, params);
+    // A function returning a table row (e.g. set_order_status → orders) comes back as a JSON
+    // object, as PostgREST returned it, instead of Postgres's row text.
+    const query = returnsRow
+      ? sql<{ result: T }>`select to_jsonb(r) as result from ${call} r`
+      : sql<{ result: T }>`select ${call} as result`;
+    return (await query.execute(trx)).rows[0]?.result;
   }
 
   /** Like call() for functions that return a table: `select * from public.name(...)`. */
@@ -79,41 +88,62 @@ export class Database extends Kysely<DB> implements OnModuleDestroy {
     params: Record<string, unknown> = {},
     trx: Kysely<DB> = this,
   ): Promise<T[]> {
-    const call = await this.callOf(name, params);
+    const { call } = await this.callOf(name, params);
     return (await sql<T>`select * from ${call}`.execute(trx)).rows;
   }
 
-  // Parameter name → type (udt_name: jsonb, _uuid, text…) per function, read once.
-  private readonly paramTypes = new Map<string, Promise<Map<string, string>>>();
+  // Per function, read once: parameter name → type (jsonb, _uuid, text…) and whether it returns a row.
+  private readonly signatures = new Map<
+    string,
+    Promise<{ params: Map<string, string>; returnsRow: boolean }>
+  >();
+
+  private signature(name: string) {
+    if (!this.signatures.has(name)) {
+      const params = sql<{ parameter_name: string; udt_name: string }>`
+        select p.parameter_name, p.udt_name
+          from information_schema.routines r
+          join information_schema.parameters p on p.specific_name = r.specific_name
+         where r.routine_schema = 'public' and r.routine_name = ${name} and p.parameter_mode in ('IN', 'INOUT')`.execute(
+        this,
+      );
+      const returns = sql<{ typtype: string; proretset: boolean }>`
+        select t.typtype, p.proretset
+          from pg_proc p join pg_type t on t.oid = p.prorettype
+         where p.proname = ${name} and p.pronamespace = 'public'::regnamespace`.execute(
+        this,
+      );
+      this.signatures.set(
+        name,
+        Promise.all([params, returns]).then(([p, r]) => ({
+          params: new Map(
+            p.rows.map((row) => [row.parameter_name, row.udt_name]),
+          ),
+          returnsRow: r.rows.some(
+            (row) => row.typtype === 'c' && !row.proretset,
+          ),
+        })),
+      );
+    }
+    return this.signatures.get(name)!;
+  }
 
   private async callOf(name: string, params: Record<string, unknown>) {
     if (!/^[a-z_][a-z0-9_]*$/.test(name))
       throw new Error(`Bad function name ${name}`);
-    if (!this.paramTypes.has(name)) {
-      this.paramTypes.set(
-        name,
-        sql<{ parameter_name: string; udt_name: string }>`
-          select p.parameter_name, p.udt_name
-            from information_schema.routines r
-            join information_schema.parameters p on p.specific_name = r.specific_name
-           where r.routine_schema = 'public' and r.routine_name = ${name} and p.parameter_mode in ('IN', 'INOUT')`
-          .execute(this)
-          .then(
-            (r) =>
-              new Map(r.rows.map((row) => [row.parameter_name, row.udt_name])),
-          ),
-      );
-    }
-    const types = await this.paramTypes.get(name)!;
+    const signature = await this.signature(name);
     const args = Object.entries(params)
       .filter(([, value]) => value !== undefined)
       .map(([key, value]) => {
-        const type = types.get(key);
+        const type = signature.params.get(key);
         if (!type) throw new Error(`${name} has no parameter ${key}`);
         const isJson = (type === 'json' || type === 'jsonb') && value !== null;
         return sql`${sql.raw(key)} => ${isJson ? JSON.stringify(value) : value}`;
       });
-    return sql`public.${sql.raw(name)}(${args.length ? sql.join(args) : sql``})`;
+    return {
+      call: sql`public.${sql.raw(name)}(${args.length ? sql.join(args) : sql``})`,
+      returnsRow: signature.returnsRow,
+    };
   }
 
   async onModuleDestroy() {

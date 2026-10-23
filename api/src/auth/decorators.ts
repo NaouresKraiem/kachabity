@@ -28,3 +28,9 @@ export const CurrentActor = createParamDecorator(
     ctx.switchToHttp().getRequest<{ actor?: RequestActor | null }>().actor ??
     null,
 );
+
+/** The verified user's id (shopper or staff), or null without a valid session. */
+export const CurrentUserId = createParamDecorator(
+  (_: unknown, ctx: ExecutionContext): string | null =>
+    ctx.switchToHttp().getRequest<{ userId?: string | null }>().userId ?? null,
+);

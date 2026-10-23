@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
                 order,
                 orderItems: orderItems ?? [],
                 customerName: `${order.customer_first_name} ${order.customer_last_name}`,
+                onError: (error) => reportError(error, 'order-email', { orderNumber: order.order_number }),
             });
             if (!emailResult.success) {
                 console.error('Order confirmation email failed for', order.order_number);

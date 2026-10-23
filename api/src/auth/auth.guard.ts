@@ -100,7 +100,9 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context
       .switchToHttp()
-      .getRequest<Request & { actor?: RequestActor | null }>();
+      .getRequest<
+        Request & { actor?: RequestActor | null; userId?: string | null }
+      >();
     const targets = [context.getHandler(), context.getClass()];
     const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC, targets);
     const requirement = this.reflector.getAllAndOverride<Requirement>(
@@ -110,6 +112,8 @@ export class AuthGuard implements CanActivate {
 
     const claims = await this.verify(request);
     request.actor = claims ? this.actorFrom(claims) : null;
+    // Any verified user, shoppers included (checkout links the order to them).
+    request.userId = typeof claims?.sub === 'string' ? claims.sub : null;
 
     // The same table middleware.ts uses (lib/api-access.ts), plus the route's own decorator.
     const url = new URL(request.originalUrl, 'http://api');

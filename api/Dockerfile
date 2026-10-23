@@ -5,6 +5,8 @@ WORKDIR /app/api
 COPY api/package.json api/package-lock.json ./
 RUN npm ci
 COPY lib /app/lib
+# Shared lib/ files import packages (nodemailer…) that live in api/node_modules.
+RUN ln -s /app/api/node_modules /app/node_modules
 COPY api ./
 RUN npm run build
 
