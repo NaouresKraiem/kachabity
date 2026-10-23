@@ -22,6 +22,12 @@ if (!source) {
     console.error('Set SOURCE_DATABASE_URL (live database, session pooler URL) in .env.docker.');
     process.exit(1);
 }
+if (!/^postgres(ql)?:\/\/[^@\s]+@[^\s]+$/.test(source)) {
+    console.error('SOURCE_DATABASE_URL must be the Postgres connection string, without quotes, e.g.\n' +
+        '  postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres\n' +
+        '(Supabase dashboard → Connect → Session pooler), not the https:// project URL.');
+    process.exit(1);
+}
 
 const run = (cmd, args, options = {}) => {
     const result = spawnSync(cmd, args, { stdio: ['pipe', 'pipe', 'inherit'], encoding: 'utf8', maxBuffer: 1 << 30, shell: process.platform === 'win32' && cmd === 'npx', ...options });
