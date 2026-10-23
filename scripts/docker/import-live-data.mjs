@@ -59,6 +59,7 @@ run('npx', [...SUPABASE, 'migration', 'up', '--local'], { stdio: 'inherit' });
 
 const counts = localSql(`select 'products', count(*) from products union all select 'orders', count(*) from orders
      union all select 'customers', count(*) from customers union all select 'users', count(*) from auth.users`);
+run('node', ['scripts/docker/create-admin.mjs'], { stdio: 'inherit' });
 console.log(`Done.\n${counts}\nRestart the site so it drops its cached pages: docker compose restart web`);
 
 async function fromDatabase(source) {

@@ -53,7 +53,9 @@ Product photos keep their live URLs (live Supabase Storage), so they show as lon
 npm run docker:up
 ```
 
-- Site and admin: http://localhost:3000 (admin: http://localhost:3000/admin)
+- Site and admin: http://localhost:3000 (admin: http://localhost:3000/admin). Owner account:
+  `admin@kachabity.local` with `LOCAL_PASSWORD`, created by `npm run docker:admin` and again after
+  every import.
 - NestJS API: http://localhost:4000/api/health. The areas in `NEST_ROUTES` go through it.
 
 The first build takes a few minutes. Rebuild after code changes with the same command. After
