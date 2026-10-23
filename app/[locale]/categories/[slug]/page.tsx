@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import supabase from "@/lib/supabaseClient";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProductListCard from "@/components/products/ProductListCard";
-import { EMBEDDED_DISCOUNTS, embeddedDiscountPercent, type ProductDiscount } from "@/lib/product-discounts";
+import { storefront } from "@/lib/storefront-api";
 import { getDescendantCategoryIds } from "@/lib/utils/product-utils";
 import { getCategories } from "@/lib/categories-cache";
 import Link from "next/link";
@@ -165,43 +165,14 @@ export default function CategoryProductsPage() {
         try {
             setProductsLoading(true);
 
-            let query = supabase
-                .from('products')
-                .select(`
-                    *,
-                    product_images (
-                        id,
-                        image_url,
-                        alt_text,
-                        is_main,
-                        position
-                    ),
-                    ${EMBEDDED_DISCOUNTS}
-                `, { count: 'exact' })
-                .in('category_id', categoryIds.length ? categoryIds : [category.id])
-                .is('deleted_at', null)
-                .eq('status', 'active');
-
-            // Apply pagination
-            const from = (currentPage - 1) * ITEMS_PER_PAGE;
-            const to = from + ITEMS_PER_PAGE - 1;
-            query = query.range(from, to);
-
-            // Order by created_at descending
-            query = query.order('created_at', { ascending: false });
-
-            // Execute query
-            const { data, error, count } = await query;
-
-            if (error) throw error;
-            if (data) {
-                // Discounts come embedded in the same query (no second round trip).
-                setProducts(data.map((p: { id: string; product_discounts?: ProductDiscount[] }) => ({
-                    ...p,
-                    discount_percent: embeddedDiscountPercent(p),
-                })));
-                setTotalCount(count || 0);
-            }
+            const params = new URLSearchParams({
+                category_ids: (categoryIds.length ? categoryIds : [category.id]).join(','),
+                page: String(currentPage),
+                page_size: String(ITEMS_PER_PAGE),
+            });
+            const { rows, total } = await storefront<{ rows: Product[]; total: number }>(`products?${params}`);
+            setProducts(rows);
+            setTotalCount(total);
         } catch (error) {
             console.error('Error fetching products:', error);
         } finally {

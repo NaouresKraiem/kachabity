@@ -15,7 +15,13 @@ import { Public } from '../auth/decorators';
 import { Raw } from '../common/api';
 import { Database } from '../db/database';
 import { many, one } from '../db/embed';
-import { activeDiscounts, siteSettings } from '../sales/commerce';
+import {
+  activeDiscounts,
+  calculateShipping,
+  countryCode,
+  countryTaxRate,
+  siteSettings,
+} from '../sales/commerce';
 
 // The storefront's public reads, ported from lib/home-data.ts, lib/landing-products.ts,
 // lib/product-detail.ts and the home page's hero query. They used the publishable key, so every
@@ -358,8 +364,9 @@ export class StorefrontController {
       .execute();
   }
 
+  /** Newest reviews across the shop (?limit=, default 12, at most 50). */
   @Get('latest-reviews')
-  latestReviews() {
+  latestReviews(@Query('limit') limit?: string) {
     return this.db
       .selectFrom('reviews as r')
       .selectAll('r')
@@ -373,8 +380,77 @@ export class StorefrontController {
         ).as('users'),
       )
       .orderBy('r.updated_at', 'desc')
-      .limit(12)
+      .limit(Math.min(Math.max(Number(limit) || 12, 1), 50))
       .execute();
+  }
+
+  /** One product's reviews, newest first. */
+  @Get('reviews')
+  reviews(@Query('product_id') productId = '') {
+    return this.db
+      .selectFrom('reviews as r')
+      .selectAll('r')
+      .select((eb) =>
+        one(
+          eb,
+          'users as u',
+          ['u.name', 'u.avatar_url'],
+          'u.id',
+          'r.user_id',
+        ).as('users'),
+      )
+      .where('r.product_id', '=', productId)
+      .orderBy('r.created_at', 'desc')
+      .execute();
+  }
+
+  /** What "add to cart" from a product card needs: the available variants and whether stock is tracked. */
+  @Get('quick-add')
+  async quickAdd(@Query('product_id') productId = '') {
+    const [variants, product] = await Promise.all([
+      this.db
+        .selectFrom('product_variants as v')
+        .select(['v.id', 'v.price', 'v.stock'])
+        .select((eb) => [
+          one(
+            eb,
+            'colors as c',
+            ['c.name', 'c.display_name'],
+            'c.id',
+            'v.color_id',
+          ).as('colors'),
+          one(eb, 'sizes as s', ['s.name'], 's.id', 'v.size_id').as('sizes'),
+        ])
+        .where('v.product_id', '=', productId)
+        .where('v.deleted_at', 'is', null)
+        .where('v.is_available', 'is not', false)
+        .execute(),
+      this.liveProducts()
+        .select('p.stock_tracked')
+        .where('p.id', '=', productId)
+        .executeTakeFirst(),
+    ]);
+    return { variants, stock_tracked: product?.stock_tracked ?? false };
+  }
+
+  /** Shipping and tax settings (free-shipping threshold on the product page). */
+  @Get('settings')
+  settings() {
+    return siteSettings(this.db);
+  }
+
+  /** Shipping cost and tax rate shown at checkout (?country=&subtotal=); the order is re-priced on submit. */
+  @Get('checkout-quote')
+  async checkoutQuote(
+    @Query('country') country = 'Tunisia',
+    @Query('subtotal') subtotal = '0',
+  ) {
+    const code = countryCode(country);
+    const [shipping, taxRate] = await Promise.all([
+      calculateShipping(this.db, code, Number(subtotal) || 0),
+      countryTaxRate(this.db, code),
+    ]);
+    return { shipping_cost: shipping.cost, tax_rate: taxRate };
   }
 
   /** Hero rows (sort_order 0–1 right cards, 2 left card, 3+ carousel) and small cards. */
@@ -640,6 +716,133 @@ export class StorefrontController {
           slug: c.slug,
         })),
       products,
+    };
+  }
+
+  // ── Product listings (products page, category pages, header search) ──
+
+  /**
+   * Live products with their photos and current discount, filtered in the database:
+   * ?search= (ranked by public.search_products), category_ids=, size_ids=, color_ids= (variants),
+   * promo=1, price_min=, price_max=, sort=new|popular (default newest; a search without a sort is
+   * ranked by relevance), page=, page_size=. Returns { rows, total }.
+   */
+  @Get('products')
+  async products(@Query() query: Record<string, string | undefined>) {
+    const list = (name: string) =>
+      (query[name] ?? '')
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+    const pageSize = Math.min(Math.max(Number(query.page_size) || 12, 1), 100);
+    const page = Math.max(Number(query.page) || 1, 1);
+    const empty = { rows: [], total: 0 };
+
+    let filtered = this.liveProducts();
+    let ranks: Map<string, number> | null = null;
+    const search = query.search?.trim() ?? '';
+    if (search) {
+      const hits = await this.db.call<{ product_id: string; rank: number }[]>(
+        'search_products',
+        { p_query: search, p_limit: 200 },
+      );
+      if (!hits.length) return empty;
+      ranks = new Map(hits.map((h) => [h.product_id, h.rank]));
+      filtered = filtered.where('p.id', 'in', [...ranks.keys()]);
+    }
+    if (query.promo === '1') {
+      filtered = filtered.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('product_discounts as d')
+            .select('d.id')
+            .whereRef('d.product_id', '=', 'p.id')
+            .where('d.active', '=', true)
+            .where('d.deleted_at', 'is', null),
+        ),
+      );
+    }
+    if (Number(query.price_min) > 0)
+      filtered = filtered.where('p.base_price', '>=', Number(query.price_min));
+    if (query.price_max && Number(query.price_max) < 1000)
+      filtered = filtered.where('p.base_price', '<=', Number(query.price_max));
+    const categoryIds = list('category_ids');
+    if (categoryIds.length)
+      filtered = filtered.where('p.category_id', 'in', categoryIds);
+    const sizeIds = list('size_ids');
+    const colorIds = list('color_ids');
+    if (sizeIds.length || colorIds.length) {
+      filtered = filtered.where((eb) => {
+        let variants = eb
+          .selectFrom('product_variants as v')
+          .select('v.id')
+          .whereRef('v.product_id', '=', 'p.id')
+          .where('v.deleted_at', 'is', null);
+        if (sizeIds.length)
+          variants = variants.where('v.size_id', 'in', sizeIds);
+        if (colorIds.length)
+          variants = variants.where('v.color_id', 'in', colorIds);
+        return eb.exists(variants);
+      });
+    }
+    if (query.sort === 'new')
+      filtered = filtered.where(
+        'p.created_at',
+        '>=',
+        new Date(Date.now() - 30 * 86_400_000).toISOString(),
+      );
+
+    // A search without an explicit sort is ranked here; the matches are a few hundred at most.
+    const byRelevance = ranks !== null && !query.sort;
+    let rows = filtered
+      .selectAll('p')
+      .select((eb) =>
+        many(
+          eb,
+          'product_images as i',
+          [
+            'i.id',
+            'i.image_url',
+            'i.alt_text',
+            'i.is_main',
+            'i.position',
+            'i.variant_id',
+          ],
+          'i.product_id',
+          'p.id',
+          (q) => q.where('i.deleted_at', 'is', null),
+        ).as('product_images'),
+      );
+    rows =
+      query.sort === 'popular'
+        ? rows
+            .orderBy('p.sold_count', (ob) => ob.desc().nullsLast())
+            .orderBy('p.created_at', 'desc')
+        : rows.orderBy('p.created_at', 'desc');
+    if (!byRelevance) rows = rows.limit(pageSize).offset((page - 1) * pageSize);
+
+    const [found, count] = await Promise.all([
+      rows.execute(),
+      filtered
+        .select((eb) => eb.fn.countAll<number>().as('n'))
+        .executeTakeFirstOrThrow(),
+    ]);
+    let pageRows = found;
+    if (byRelevance) {
+      pageRows = [...found]
+        .sort((a, b) => (ranks!.get(b.id) ?? 0) - (ranks!.get(a.id) ?? 0))
+        .slice((page - 1) * pageSize, page * pageSize);
+    }
+    const discounts = await activeDiscounts(
+      this.db,
+      pageRows.map((p) => p.id),
+    );
+    return {
+      rows: pageRows.map((p) => ({
+        ...p,
+        discount_percent: Number(discounts.get(p.id)?.discount_percent ?? 0),
+      })),
+      total: count.n,
     };
   }
 

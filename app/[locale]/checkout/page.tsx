@@ -7,8 +7,7 @@ import { cartLineKey, useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
 import { governorateLabel, governorateOptions } from "@/lib/colissimo-data";
 import { createOrder } from "@/lib/orders";
-import { calculateShipping, getCountryCode } from "@/lib/shipping";
-import { getCountryTaxRate } from "@/lib/get-site-settings";
+import { storefront } from "@/lib/storefront-api";
 import { checkoutSchema, type CheckoutFormData } from "@/lib/schemas/checkout-schema";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -447,18 +446,12 @@ export default function CheckoutPage() {
             const country = formCountry || "Tunisia";
             if (subtotal === 0) return;
 
-            const countryCode = getCountryCode(country);
-
-            // Fetch both shipping cost and country-specific tax rate
-            const [shippingResult, countryTaxRate] = await Promise.all([
-                calculateShipping(countryCode, subtotal, 'standard'),
-                getCountryTaxRate(countryCode)
-            ]);
-
-            const { cost } = shippingResult;
-
-            setShippingCost(cost);
-            setTaxRate(countryTaxRate);
+            // The order is re-priced on the server when it's placed.
+            const quote = await storefront<{ shipping_cost: number; tax_rate: number }>(
+                `checkout-quote?country=${encodeURIComponent(country)}&subtotal=${subtotal}`
+            );
+            setShippingCost(quote.shipping_cost);
+            setTaxRate(quote.tax_rate);
         }
 
         fetchShippingAndTax();
