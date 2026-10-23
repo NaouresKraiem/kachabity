@@ -50,7 +50,6 @@ import {
     ControlOutlined,
 } from "@ant-design/icons";
 import { antdTheme } from "@/lib/antd-config";
-import { createAdminBrowserClient } from "@/lib/supabase-browser";
 import { AdminRoleProvider, useAdminRole } from "@/lib/admin-role-context";
 import type { Permission } from "@/lib/admin-auth";
 import { AdminI18nProvider, msg, useAdminT } from "@/lib/admin-i18n";
@@ -415,7 +414,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     };
 
     const handleSignOut = async () => {
-        await createAdminBrowserClient().auth.signOut();
+        await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => undefined);
         router.replace("/admin/login");
         router.refresh();
     };

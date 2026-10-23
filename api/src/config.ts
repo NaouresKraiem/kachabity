@@ -3,8 +3,12 @@ import { z } from 'zod';
 // Validated once at boot: a missing or malformed variable stops the server with its name.
 const schema = z.object({
   DATABASE_URL: z.string().url(),
-  SUPABASE_URL: z.string().url(),
-  SUPABASE_JWKS: z.string().optional(),
+  // Signs the session JWTs (lib/auth-session.ts); middleware.ts needs the same value.
+  AUTH_SECRET: z.string().min(32),
+  // The storefront's address, for links in e-mails (never taken from the request's Host).
+  NEXT_PUBLIC_SITE_URL: z.string().url().default('http://localhost:3000'),
+  GMAIL_USER: z.string().optional(),
+  GMAIL_APP_PASSWORD: z.string().optional(),
   OWNER_EMAILS: z.string().optional(),
   ADMIN_EMAILS: z.string().optional(),
   NEXT_URL: z.string().url().optional(),

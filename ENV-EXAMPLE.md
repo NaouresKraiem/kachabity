@@ -13,16 +13,17 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 # Gmail SMTP Configuration (for sending emails)
 GMAIL_USER=your-email@gmail.com
 GMAIL_APP_PASSWORD=your-16-character-app-password
+
+# Signs the session cookies issued by the NestJS auth API (/api/auth/*). The same value on the
+# Next.js server (middleware reads the sessions) and on NestJS; at least 32 random characters,
+# e.g. node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))".
+# Changing it signs everyone out within 15 minutes (their sessions renew with the new key).
+AUTH_SECRET=
 ```
 
 ## Optional Variables
 
 ```env
-# Public JWT signing keys, copied from https://<project>.supabase.co/auth/v1/.well-known/jwks.json
-# (one line of JSON). Middleware verifies admin sessions with them instead of downloading them
-# on each new server instance. Update it if you rotate the project's signing keys.
-SUPABASE_JWKS={"keys":[...]}
-
 # Back-office roles that don't depend on the account (comma-separated emails, server only).
 # Owners can do everything, are the only ones who manage other owners, and receive owner
 # alerts (deletes and unusual actions by admins and staff). Admins can do everything else.

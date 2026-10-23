@@ -149,6 +149,18 @@ Rules while porting:
 - After this phase, only auth and storage still talk to Supabase from the browser.
 
 ### Phase 3: Auth (1–2 weeks)
+**Done (local, 2026-10-23)**, migration `20261023204053_own_auth_accounts` (not applied live yet):
+accounts in `public.users` (bcrypt hashes copied by `private.copy_auth_users()`; re-run it at the
+switch-over for accounts created in between), `user_sessions`, `auth_tokens`, the seven foreign keys
+and `private.notification_recipients` moved off `auth.users`. NestJS `/api/auth/*` (sign-in, sign-up
+with e-mail confirmation, confirm, forgot, reset, refresh, sign-out, me, password, profile),
+`/api/account/*` (favorites, orders, reviews) and `/api/admin/team`; the guard and middleware read
+the `kb_access` cookie (`AUTH_SECRET`) and middleware renews it from `kb_refresh`; the storefront,
+settings, checkout and admin login use them; Origin check on API writes; `auth.e2e.mjs` (45 checks).
+Decisions: refresh tokens are not rotated (concurrent refreshes from several tabs would sign people
+out); they are revoked at sign-out, on password change/reset and on team changes instead. Until
+phase 4 the admin bell polls every 60 seconds instead of using Supabase Realtime. Rolling back
+after the switch loses accounts created since (they only exist in `public.users`).
 - Database changes 1–2; copy `auth.users` into `public.users` with their bcrypt hashes.
 - NestJS endpoints: sign-in, sign-out, refresh, shopper sign-up, password reset by e-mail
   (nodemailer is already in place), change password; port team management (`/api/admin/team`).

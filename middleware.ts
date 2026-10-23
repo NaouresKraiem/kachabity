@@ -1,9 +1,9 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server';
 import { supportedLanguages, defaultLanguage, detectLanguageFromHeader, isValidLocale } from './lib/language-utils';
 import { ADMIN_HEADERS, allows, getAdminRole, getPermissions, type AdminRole, type Requirement } from './lib/admin-auth';
-import { supabaseUrl, supabasePublishableKey } from './lib/supabase-env';
+import { supabaseUrl } from './lib/supabase-env';
 import { apiRequirement } from './lib/api-access';
+import { ACCESS_COOKIE, REFRESH_COOKIE, verifyAccessToken } from './lib/auth-session';
 
 const ADMIN_LOGIN_PATH = '/admin/login';
 
@@ -55,48 +55,41 @@ function withoutAdminHeaders(request: NextRequest): Headers {
     return headers;
 }
 
-// Public signing keys from SUPABASE_JWKS (the project's /auth/v1/.well-known/jwks.json), so
-// getClaims() can verify sessions without first downloading them. That download is a full
-// round trip on every new server instance and every 10 minutes after; on a slow connection
-// it made the first admin request take seconds. Without the variable, or after a key
-// rotation, getClaims() falls back to fetching the keys itself.
-const STATIC_JWKS = (() => {
-    try {
-        const parsed = JSON.parse(process.env.SUPABASE_JWKS ?? '');
-        return Array.isArray(parsed?.keys) && parsed.keys.length ? { keys: parsed.keys } : undefined;
-    } catch {
-        return undefined;
-    }
-})();
-
-// Resolves the signed-in user from the auth cookies set by the admin login page.
-// Refreshed session cookies are written onto `response` so sessions outlive the
-// access-token lifetime.
-async function getRequestUser(request: NextRequest, response: NextResponse) {
-    if (!supabaseUrl || !supabasePublishableKey) return null;
-
-    const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
-        cookies: {
-            getAll() {
-                return request.cookies.getAll();
-            },
-            setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-                cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-            },
-        },
-    });
-
-    // getClaims() verifies the JWT locally against the project's (cached) signing keys,
-    // so admin pages, prefetches and admin API calls don't each wait on a round trip to
-    // Supabase Auth. It still refreshes expired sessions via the cookie handlers above.
-    const { data } = await supabase.auth.getClaims(undefined, STATIC_JWKS ? { jwks: STATIC_JWKS } : undefined);
-    const claims = data?.claims;
+// The signed-in user from the kb_access cookie set by the NestJS auth API (lib/auth-session.ts),
+// verified locally: no round trip per request.
+async function getRequestUser(request: NextRequest) {
+    const claims = await verifyAccessToken(request.cookies.get(ACCESS_COOKIE)?.value, process.env.AUTH_SECRET);
     if (!claims) return null;
-    return {
-        id: typeof claims.sub === 'string' ? claims.sub : null,
-        email: typeof claims.email === 'string' ? claims.email : null,
-        app_metadata: (claims.app_metadata ?? {}) as Record<string, unknown>,
-    };
+    return { id: claims.sub, email: claims.email, app_metadata: claims.app_metadata ?? {} };
+}
+
+// kb_access lives 15 minutes. Once it has expired while kb_refresh remains, NestJS issues a new
+// one before the request goes on, so pages, API routes and NestJS all see a live session.
+// Returns the Set-Cookie lines to pass on to the browser. Pages (and their RSC requests) send
+// them; responses proxied to NestJS drop them, so a tab making only API calls renews on each
+// call until its next navigation. Harmless: refresh tokens aren't rotated.
+async function refreshSession(request: NextRequest): Promise<string[]> {
+    if (request.cookies.has(ACCESS_COOKIE) || !request.cookies.has(REFRESH_COOKIE)) return [];
+    // Without NEST_URL the call below comes back through here; don't refresh the refresh call.
+    if (request.nextUrl.pathname === '/api/auth/refresh') return [];
+    try {
+        const response = await fetch(`${process.env.NEST_URL ?? request.nextUrl.origin}/api/auth/refresh`, {
+            method: 'POST',
+            headers: { cookie: request.headers.get('cookie') ?? '' },
+        });
+        const setCookies = response.headers.getSetCookie();
+        // The same cookies on this request, for the route or rewrite it goes on to.
+        for (const line of setCookies) {
+            const pair = line.split(';')[0];
+            const name = pair.slice(0, pair.indexOf('='));
+            const value = decodeURIComponent(pair.slice(pair.indexOf('=') + 1));
+            if (value) request.cookies.set(name, value);
+            else request.cookies.delete(name);
+        }
+        return setCookies;
+    } catch {
+        return [];
+    }
 }
 
 // A signed-in staff member was refused: recorded in the activity log, which alerts the owner
@@ -122,7 +115,32 @@ function logRefusal(request: NextRequest, event: NextFetchEvent, user: { id: str
     );
 }
 
+// Against CSRF, on top of the SameSite=Lax session cookies: a write to the API sent by a page
+// on another host (a sibling subdomain included) is refused. Server-to-server calls (webhooks)
+// send no Origin.
+function foreignWrite(request: NextRequest) {
+    if (!request.nextUrl.pathname.startsWith('/api/') || ['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return false;
+    const origin = request.headers.get('origin');
+    if (!origin) return false;
+    try {
+        // The Host the browser used (nextUrl.host is the server's own address in standalone builds).
+        return new URL(origin).host !== request.headers.get('host');
+    } catch {
+        return true;
+    }
+}
+
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
+    if (foreignWrite(request)) {
+        return NextResponse.json({ success: false, error: 'Cross-site request refused' }, { status: 403 });
+    }
+    const refreshed = await refreshSession(request);
+    const response = await handle(request, event);
+    refreshed.forEach((cookie) => response.headers.append('set-cookie', cookie));
+    return response;
+}
+
+async function handle(request: NextRequest, event: NextFetchEvent) {
     const pathname = request.nextUrl.pathname;
     const method = request.method.toUpperCase();
 
@@ -140,18 +158,15 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
     // Already-signed-in back-office users have no reason to see the login form.
     if (pathname === ADMIN_LOGIN_PATH) {
-        const response = NextResponse.next();
-        const user = await getRequestUser(request, response);
-        if (getAdminRole(user)) {
+        if (getAdminRole(await getRequestUser(request))) {
             return NextResponse.redirect(new URL('/admin/dashboard', request.url));
         }
-        return response;
+        return NextResponse.next();
     }
 
     const needed = requirementFor(request);
     if (needed) {
-        const pending = NextResponse.next();
-        const user = await getRequestUser(request, pending);
+        const user = await getRequestUser(request);
         const role = getAdminRole(user);
         if (!role) {
             if (pathname.startsWith('/api/')) {
@@ -176,9 +191,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
         headers.set(ADMIN_HEADERS.userId, user?.id ?? '');
         headers.set(ADMIN_HEADERS.email, user?.email ?? '');
         headers.set(ADMIN_HEADERS.permissions, permissions.join(','));
-        const response = NextResponse.next({ request: { headers } });
-        pending.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
-        return response;
+        return NextResponse.next({ request: { headers } });
     }
 
     if (

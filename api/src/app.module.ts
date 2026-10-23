@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { TeamController } from './admin/team.controller';
+import { AuthController } from './auth/auth.controller';
+import { AccountController } from './storefront/account.controller';
 import { AuthGuard } from './auth/auth.guard';
 import { CategoriesController } from './catalog/categories.controller';
 import {
@@ -85,6 +88,9 @@ import {
   imports: [DatabaseModule],
   controllers: [
     HealthController,
+    AuthController,
+    AccountController,
+    TeamController,
     CategoriesController,
     ProductsController,
     VariantsController,

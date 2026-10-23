@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { App, Badge, Button, Divider, Drawer, Empty, Grid, Popover, Space, Spin, Typography } from "antd";
 import { BellOutlined, NotificationOutlined } from "@ant-design/icons";
-import { createAdminBrowserClient } from "@/lib/supabase-browser";
 import { useAdminRole } from "@/lib/admin-role-context";
 import { useAdminT } from "@/lib/admin-i18n";
 import { message } from "@/components/admin/antd-app";
@@ -82,58 +81,6 @@ export default function NotificationBell() {
         const timer = setInterval(load, 60_000);
         return () => clearInterval(timer);
     }, [load]);
-
-    // Live: new rows pop up with a sound; updated rows (grouped delete alerts) are replaced.
-    useEffect(() => {
-        if (!userId) return;
-        const supabase = createAdminBrowserClient();
-        let channel: ReturnType<typeof supabase.channel> | null = null;
-        let cancelled = false;
-        (async () => {
-            const { data } = await supabase.auth.getSession();
-            if (cancelled) return;
-            if (data.session) supabase.realtime.setAuth(data.session.access_token);
-            channel = supabase
-                .channel(`notifications:${userId}`)
-                .on(
-                    "postgres_changes",
-                    { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${userId}` },
-                    (payload: { new: unknown }) => {
-                        const row = payload.new as AdminNotification;
-                        setItems((current) => [row, ...current.filter((n) => n.id !== row.id)].slice(0, 15));
-                        setUnread((count) => count + 1);
-                        const urgent = row.severity !== "info";
-                        chime(urgent);
-                        const text = notificationText(row, localeRef.current);
-                        notification.open({
-                            title: text.title,
-                            description: text.body,
-                            placement: toastPlacementRef.current,
-                            duration: urgent ? 0 : 8,
-                            type: row.severity === "critical" ? "error" : row.severity === "warning" ? "warning" : row.kind === "order" ? "success" : "info",
-                            onClick: () => {
-                                if (row.url) router.push(row.url);
-                            },
-                            style: { cursor: row.url ? "pointer" : undefined },
-                        });
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    { event: "UPDATE", schema: "public", table: "notifications", filter: `recipient_id=eq.${userId}` },
-                    (payload: { new: unknown }) => {
-                        const row = payload.new as AdminNotification;
-                        setItems((current) => current.map((n) => (n.id === row.id ? row : n)));
-                        if (!row.read_at) load();
-                    }
-                )
-                .subscribe();
-        })();
-        return () => {
-            cancelled = true;
-            if (channel) supabase.removeChannel(channel);
-        };
-    }, [userId, notification, router, load]);
 
     // Desktop notification state; the server keeps the admin language for push texts.
     useEffect(() => {

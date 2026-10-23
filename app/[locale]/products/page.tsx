@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
-import supabase from "@/lib/supabaseClient";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProductListCard from "@/components/products/ProductListCard";
 import { getDescendantCategoryIds } from "@/lib/utils/product-utils";
 import { getCategories } from "@/lib/categories-cache";
 import { useQuickAdd } from "@/lib/quick-add";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
-import { goToLogin } from "@/lib/customer-auth";
+import { getCustomer, goToLogin } from "@/lib/customer-auth";
 import { isRTL } from "@/lib/language-utils";
 import { storefront } from "@/lib/storefront-api";
 
@@ -213,12 +212,12 @@ export default function ProductsPage() {
     // Fetch authenticated user and their favorites
     async function fetchUserAndFavorites() {
         try {
-            const { data } = await supabase.auth.getUser();
-            if (data.user) {
-                setUserId(data.user.id);
+            const user = await getCustomer();
+            if (user) {
+                setUserId(user.id);
 
                 // Fetch user's favorites
-                const { favorites } = await getUserFavorites(data.user.id);
+                const { favorites } = await getUserFavorites(user.id);
                 const favoriteIds = new Set(favorites.map(fav => fav.product_id));
                 setWishlist(favoriteIds);
             }
@@ -354,7 +353,7 @@ export default function ProductsPage() {
 
         // Persist to database
         try {
-            const { isFavorited, error } = await toggleFavorite(userId, productId);
+            const { isFavorited, error } = await toggleFavorite(userId, productId, wishlist.has(productId));
 
             if (error) {
                 console.error("Error toggling favorite:", error);

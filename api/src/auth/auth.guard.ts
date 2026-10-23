@@ -8,13 +8,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import {
-  createLocalJWKSet,
-  createRemoteJWKSet,
-  jwtVerify,
-  type JSONWebKeySet,
-  type JWTPayload,
-} from 'jose';
+import type { JWTPayload } from 'jose';
 import {
   allows,
   getAdminRole,
@@ -24,6 +18,11 @@ import {
   type Requirement,
 } from '@shared/admin-auth';
 import { apiRequirement } from '@shared/api-access';
+import {
+  ACCESS_COOKIE,
+  readCookie,
+  verifyAccessToken,
+} from '@shared/auth-session';
 import { config } from '../config';
 import { Database } from '../db/database';
 import { PUBLIC, REQUIREMENT } from './decorators';
@@ -35,43 +34,13 @@ export interface RequestActor {
   permissions: Permission[];
 }
 
-// SUPABASE_JWKS saves fetching the keys on boot; without it they are fetched and cached by jose.
-const jwks = config.SUPABASE_JWKS
-  ? createLocalJWKSet(JSON.parse(config.SUPABASE_JWKS) as JSONWebKeySet)
-  : createRemoteJWKSet(
-      new URL('/auth/v1/.well-known/jwks.json', config.SUPABASE_URL),
-    );
-
-/** The Supabase access token: `Authorization: Bearer`, or the admin's session cookie (possibly split in .0/.1 chunks). */
+/** The session's access token: the kb_access cookie, or `Authorization: Bearer` (scripts, tests). */
 export function accessToken(request: Pick<Request, 'headers'>): string | null {
-  const bearer = request.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
-  if (bearer) return bearer;
-
-  const chunks = (request.headers.cookie ?? '')
-    .split(';')
-    .map((part) => part.trim().split('='))
-    .map(([name, ...value]) => ({
-      name,
-      value: decodeURIComponent(value.join('=')),
-      match: name?.match(/^sb-.+-auth-token(?:\.(\d+))?$/),
-    }))
-    .filter((c) => c.match)
-    .sort((a, b) => Number(a.match![1] ?? 0) - Number(b.match![1] ?? 0));
-  if (chunks.length === 0) return null;
-
-  let raw = chunks.map((c) => c.value).join('');
-  if (raw.startsWith('base64-'))
-    raw = Buffer.from(raw.slice('base64-'.length), 'base64url').toString(
-      'utf8',
-    );
-  try {
-    const session = JSON.parse(raw) as { access_token?: unknown } | null;
-    return typeof session?.access_token === 'string'
-      ? session.access_token
-      : null;
-  } catch {
-    return null;
-  }
+  return (
+    readCookie(request.headers.cookie, ACCESS_COOKIE) ??
+    request.headers.authorization?.match(/^Bearer (.+)$/)?.[1] ??
+    null
+  );
 }
 
 /** An external system reading the inventory with STOCK_API_KEY (x-api-key), as middleware.ts allows. */
@@ -141,13 +110,7 @@ export class AuthGuard implements CanActivate {
   }
 
   private async verify(request: Request): Promise<JWTPayload | null> {
-    const token = accessToken(request);
-    if (!token) return null;
-    try {
-      return (await jwtVerify(token, jwks)).payload;
-    } catch {
-      return null;
-    }
+    return verifyAccessToken(accessToken(request), config.AUTH_SECRET);
   }
 
   private actorFrom(claims: JWTPayload): RequestActor | null {

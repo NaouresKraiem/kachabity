@@ -7,7 +7,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
-import supabase from "@/lib/supabaseClient";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import AddToCartButton from "@/components/cart/AddToCartButton";
 import { FormTextarea } from "@/components/forms";
@@ -18,7 +17,7 @@ import { storefront } from "@/lib/storefront-api";
 import { getCategories } from "@/lib/categories-cache";
 import toast from "react-hot-toast";
 import { headerConfig, SHOW_RATINGS } from "@/lib/config";
-import { authHref, customerName, useCustomer } from "@/lib/customer-auth";
+import { accountApi, authHref, customerName, useCustomer } from "@/lib/customer-auth";
 import { isRTL } from "@/lib/language-utils";
 import { reemKufi } from "@/lib/fonts";
 
@@ -420,17 +419,8 @@ export default function ProductDetailClient({ initialData, freeShippingThreshold
 
         setSubmittingComment(true);
         try {
-            const { error } = await supabase
-                .from('reviews')
-                .insert({
-                    product_id: product.id,
-                    user_id: customer.id,
-                    user_name: customerName(customer),
-                    rating,
-                    comment: (data.comment || '').trim(),
-                });
-
-            if (error) throw error;
+            // Posted under the account's own name (NestJS takes the user from the session).
+            await accountApi('account/reviews', { body: { product_id: product.id, rating, comment: (data.comment || '').trim() } });
 
             // Refresh reviews
             const reviewsData = await storefront<any[]>(`reviews?product_id=${product.id}`);

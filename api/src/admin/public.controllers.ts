@@ -10,11 +10,11 @@ import {
   Res,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import nodemailer from 'nodemailer';
 import { triggerAbandonedCartCampaign } from '@shared/abandoned-cart-email';
 import { openApiSpec } from '@shared/openapi';
 import { Public } from '../auth/decorators';
 import { Raw } from '../common/api';
+import { gmail } from '../common/mail';
 import { Database } from '../db/database';
 
 // Ports of the small routes: cart analytics, recovery e-mails, contact form, newsletter, API docs.
@@ -27,17 +27,6 @@ const escapeHtml = (value: string | number | null | undefined) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-
-const gmail = () =>
-  process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD
-    ? nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_APP_PASSWORD,
-        },
-      })
-    : null;
 
 /** Cart analytics (dashboard, `analytics`): ?type=abandoned&limit= or the daily series ?days=. */
 @Controller('cart')

@@ -1,6 +1,7 @@
 // Writes .env.docker for the local Docker setup (docs/DOCKER.md) from the running local Supabase.
 // Usage: node scripts/docker/env.mjs   (after `npx supabase start`; keeps an existing file)
 import { execSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { existsSync, writeFileSync } from 'node:fs';
 
 const FILE = '.env.docker';
@@ -14,7 +15,6 @@ const status = JSON.parse(execSync('npx -y supabase@2.121.0 status -o json', { e
 // container reaches the host's Supabase through host.docker.internal.
 const browserUrl = 'http://localhost:54321';
 const containerUrl = 'http://host.docker.internal:54321';
-const jwks = await (await fetch(`${status.API_URL}/auth/v1/.well-known/jwks.json`)).text();
 
 writeFileSync(
     FILE,
@@ -25,7 +25,8 @@ NEXT_PUBLIC_SUPABASE_URL=${browserUrl}
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${status.PUBLISHABLE_KEY}
 SUPABASE_SERVICE_ROLE_KEY=${status.SERVICE_ROLE_KEY}
 SUPABASE_URL=${containerUrl}
-SUPABASE_JWKS=${jwks.trim()}
+# Signs session cookies (NestJS auth API); the web container needs the same value.
+AUTH_SECRET=${randomBytes(32).toString('base64url')}
 DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
 # Comma-separated e-mails that get the owner role (sign in with the same password as on the live site
 # after importing live data).

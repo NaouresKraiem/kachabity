@@ -13,7 +13,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import CartItem from "@/components/cart/CartItem";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import supabase from "@/lib/supabaseClient";
+import { getCustomer } from "@/lib/customer-auth";
 import toast from "react-hot-toast";
 import { isRTL } from "@/lib/language-utils";
 
@@ -302,9 +302,9 @@ export default function CheckoutPage() {
     // Get authenticated user ID
     useEffect(() => {
         async function fetchUserId() {
-            const { data } = await supabase.auth.getUser();
-            if (data.user) {
-                setUserId(data.user.id);
+            const user = await getCustomer();
+            if (user) {
+                setUserId(user.id);
             }
         }
         fetchUserId();

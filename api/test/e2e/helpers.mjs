@@ -1,4 +1,6 @@
-// Shared by the end-to-end suites. They sign in test users on a local Supabase and call the API
+import { hashSync } from 'bcryptjs';
+
+// Shared by the end-to-end suites. They sign in test users through /api/auth and call the API
 // through APP_URL, so they test whichever server answers (Next.js, or NestJS through NEST_ROUTES).
 // Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY (local values from `supabase status`),
 // APP_URL (default http://localhost:3000). Never point them at the live project: they write data.
@@ -25,16 +27,19 @@ export const admin = async (path, init = {}) => {
     try { return JSON.parse(text); } catch { return text; }
 };
 
-export async function user(email, appMeta) {
-    const list = await admin('/auth/v1/admin/users?per_page=200');
-    let u = (list.users ?? []).find((x) => x.email === email);
-    if (!u) u = await admin('/auth/v1/admin/users', { method: 'POST', body: JSON.stringify({ email, password: 'Test-pass-123!', email_confirm: true, app_metadata: appMeta }) });
-    else await admin(`/auth/v1/admin/users/${u.id}`, { method: 'PUT', body: JSON.stringify({ app_metadata: appMeta }) });
-    const s = await (await fetch(`${SUPA}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: 'Test-pass-123!' }) })).json();
-    const ref = new URL(SUPA).hostname.split('.')[0];
-    const value = `base64-${Buffer.from(JSON.stringify(s)).toString('base64url')}`;
-    const chunks = value.match(/.{1,3180}/g);
-    const cookie = chunks.length === 1 ? `sb-${ref}-auth-token=${value}` : chunks.map((c, i) => `sb-${ref}-auth-token.${i}=${c}`).join('; ');
+const PASSWORD = 'Test-pass-123!';
+const PASSWORD_HASH = hashSync(PASSWORD, 10);
+
+/** A confirmed account with these app_metadata (role, permissions), signed in through /api/auth/sign-in. */
+export async function user(email, appMeta = {}) {
+    const account = { app_metadata: appMeta, password_hash: PASSWORD_HASH, email_confirmed_at: new Date().toISOString() };
+    const updated = await admin(`/rest/v1/users?email=eq.${encodeURIComponent(email)}&deleted_at=is.null`, { method: 'PATCH', body: JSON.stringify(account) });
+    if (!Array.isArray(updated) || updated.length === 0)
+        await admin('/rest/v1/users', { method: 'POST', body: JSON.stringify({ ...account, email, name: email.split('@')[0] }) });
+    const signIn = await fetch(`${APP}/api/auth/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: PASSWORD }) });
+    const s = await signIn.json();
+    if (!signIn.ok) throw new Error(`Sign-in failed for ${email}: ${JSON.stringify(s)}`);
+    const cookie = signIn.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
     const call = async (path, method = 'GET', body) => {
         const r = await fetch(`${APP}${path}`, { method, headers: { cookie, ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined, redirect: 'manual' });
         let json = null;
@@ -42,5 +47,5 @@ export async function user(email, appMeta) {
         return { status: r.status, json, location: r.headers.get('location') };
     };
     await call('/api/admin/me'); // syncs back_office_users
-    return { id: s.user?.id, call, cookie };
+    return { id: s.data?.id, call, cookie };
 }

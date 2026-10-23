@@ -122,6 +122,15 @@ export interface AgentGoals {
   user_id: string;
 }
 
+export interface AuthTokens {
+  created_at: Generated<Timestamp>;
+  expires_at: Timestamp;
+  purpose: string;
+  token_hash: string;
+  used_at: Timestamp | null;
+  user_id: string;
+}
+
 export interface BackOfficeUsers {
   created_at: Generated<Timestamp>;
   deleted_at: Timestamp | null;
@@ -1043,12 +1052,29 @@ export interface UserFavorites {
 }
 
 export interface Users {
+  app_metadata: Generated<Json>;
   avatar_url: string | null;
   created_at: Generated<Timestamp>;
   deleted_at: Timestamp | null;
-  id: string;
+  email: string | null;
+  email_confirmed_at: Timestamp | null;
+  id: Generated<string>;
+  last_sign_in_at: Timestamp | null;
   name: string | null;
+  password_hash: string | null;
   updated_at: Generated<Timestamp>;
+  user_metadata: Generated<Json>;
+}
+
+export interface UserSessions {
+  created_at: Generated<Timestamp>;
+  expires_at: Timestamp;
+  id: Generated<string>;
+  last_used_at: Generated<Timestamp>;
+  revoked_at: Timestamp | null;
+  token_hash: string;
+  user_agent: string | null;
+  user_id: string;
 }
 
 export interface DB {
@@ -1058,6 +1084,7 @@ export interface DB {
   ad_campaigns: AdCampaigns;
   ad_spend: AdSpend;
   agent_goals: AgentGoals;
+  auth_tokens: AuthTokens;
   back_office_users: BackOfficeUsers;
   bank_statement_lines: BankStatementLines;
   bill_payments: BillPayments;
@@ -1117,5 +1144,6 @@ export interface DB {
   suppliers: Suppliers;
   treasury_movements: TreasuryMovements;
   user_favorites: UserFavorites;
+  user_sessions: UserSessions;
   users: Users;
 }
