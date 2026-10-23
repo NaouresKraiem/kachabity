@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server';
 import { supportedLanguages, defaultLanguage, detectLanguageFromHeader, isValidLocale } from './lib/language-utils';
-import { ADMIN_HEADERS, allows, getAdminRole, getPermissions, type AdminRole, type Permission, type Requirement } from './lib/admin-auth';
+import { ADMIN_HEADERS, allows, getAdminRole, getPermissions, type AdminRole, type Requirement } from './lib/admin-auth';
 import { supabaseUrl, supabasePublishableKey } from './lib/supabase-env';
 import { apiRequirement } from './lib/api-access';
 
