@@ -18,6 +18,30 @@ import { VariantsController } from './catalog/variants.controller';
 import { ApiExceptionFilter, ApiResponseInterceptor } from './common/api';
 import { DatabaseModule } from './db/database';
 import { HealthController } from './health.controller';
+import { CampaignsController } from './crm/campaigns.controller';
+import {
+  CustomersController,
+  InteractionsController,
+  TasksController,
+} from './crm/crm.controllers';
+import { MetaWebhookController } from './crm/meta-webhook.controller';
+import {
+  AccountingController,
+  AccountsController,
+  BankController,
+  BillsController,
+  InvoicesController,
+  ReportsController,
+  TreasuryController,
+} from './finance/finance.controllers';
+import { PosController } from './pos/pos.controller';
+import {
+  CostingController,
+  MaterialsController,
+  PurchaseOrdersController,
+  PurchasePricesController,
+  ReceiptsController,
+} from './purchasing/purchasing.controllers';
 import { DeliveryController } from './sales/delivery.controller';
 import { OrdersController } from './sales/orders.controller';
 import {
@@ -61,6 +85,24 @@ import {
     PaymentsController,
     RemittancesController,
     DeliveryController,
+    CustomersController,
+    InteractionsController,
+    TasksController,
+    MetaWebhookController,
+    CampaignsController,
+    PosController,
+    PurchaseOrdersController,
+    ReceiptsController,
+    MaterialsController,
+    CostingController,
+    PurchasePricesController,
+    AccountingController,
+    AccountsController,
+    BankController,
+    BillsController,
+    InvoicesController,
+    ReportsController,
+    TreasuryController,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

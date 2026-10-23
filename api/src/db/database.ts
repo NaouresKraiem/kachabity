@@ -73,29 +73,40 @@ export class Database extends Kysely<DB> implements OnModuleDestroy {
     params: Record<string, unknown> = {},
     trx: Kysely<DB> = this,
   ): Promise<T> {
-    const { call, returnsRow } = await this.callOf(name, params);
-    // A function returning a table row (e.g. set_order_status → orders) comes back as a JSON
-    // object, as PostgREST returned it, instead of Postgres's row text.
-    const query = returnsRow
-      ? sql<{ result: T }>`select to_jsonb(r) as result from ${call} r`
-      : sql<{ result: T }>`select ${call} as result`;
+    const { call, returns } = await this.callOf(name, params);
+    // Results take PostgREST's shapes: a table row (set_order_status → orders) as a JSON object
+    // instead of Postgres's row text, and set-returning functions as arrays.
+    if (returns === 'set')
+      return (await sql`select * from ${call}`.execute(trx)).rows as T;
+    if (returns === 'scalar-set') {
+      const rows = (
+        await sql<{ v: unknown }>`select v from ${call} v`.execute(trx)
+      ).rows;
+      return rows.map((r) => r.v) as T;
+    }
+    const query =
+      returns === 'row'
+        ? sql<{ result: T }>`select to_jsonb(r) as result from ${call} r`
+        : sql<{ result: T }>`select ${call} as result`;
     return (await query.execute(trx)).rows[0]?.result;
   }
 
-  /** Like call() for functions that return a table: `select * from public.name(...)`. */
-  async callRows<T = Record<string, unknown>>(
+  /** call() for functions that return a table, typed as rows. */
+  callRows<T = Record<string, unknown>>(
     name: string,
     params: Record<string, unknown> = {},
     trx: Kysely<DB> = this,
   ): Promise<T[]> {
-    const { call } = await this.callOf(name, params);
-    return (await sql<T>`select * from ${call}`.execute(trx)).rows;
+    return this.call<T[]>(name, params, trx);
   }
 
   // Per function, read once: parameter name → type (jsonb, _uuid, text…) and whether it returns a row.
   private readonly signatures = new Map<
     string,
-    Promise<{ params: Map<string, string>; returnsRow: boolean }>
+    Promise<{
+      params: Map<string, string>;
+      returns: 'value' | 'row' | 'set' | 'scalar-set';
+    }>
   >();
 
   private signature(name: string) {
@@ -119,9 +130,18 @@ export class Database extends Kysely<DB> implements OnModuleDestroy {
           params: new Map(
             p.rows.map((row) => [row.parameter_name, row.udt_name]),
           ),
-          returnsRow: r.rows.some(
-            (row) => row.typtype === 'c' && !row.proretset,
-          ),
+          returns: ((row) =>
+            !row
+              ? 'value'
+              : row.proretset
+                ? row.typtype === 'b' ||
+                  row.typtype === 'e' ||
+                  row.typtype === 'd'
+                  ? 'scalar-set'
+                  : 'set'
+                : row.typtype === 'c'
+                  ? 'row'
+                  : 'value')(r.rows[0]),
         })),
       );
     }
@@ -142,7 +162,7 @@ export class Database extends Kysely<DB> implements OnModuleDestroy {
       });
     return {
       call: sql`public.${sql.raw(name)}(${args.length ? sql.join(args) : sql``})`,
-      returnsRow: signature.returnsRow,
+      returns: signature.returns,
     };
   }
 
