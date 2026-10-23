@@ -14,7 +14,8 @@ Task-by-task steps for phase 0 and the first module: [MIGRATION-NESTJS-TASKS.md]
 | Business logic | Postgres functions and triggers in `supabase/migrations/` (orders, stock, payments, accounting, reports) | ~50 functions called by RPC, plus triggers |
 | Data access | `supabase-js` (PostgREST): `supabase.from` 211 calls, `supabase.rpc` 63 calls | `app/api`, `lib/*` |
 | Browser reads | storefront reads the catalog directly with the publishable key, protected by RLS | `lib/*` data modules |
-| Auth | Supabase Auth, email + password only (no Google/Facebook); admin roles in `app_metadata`; `auth.uid()` in 12 RLS policies; 7 foreign keys to `auth.users` | 38 `supabase.auth` calls |
+| Auth | Supabase Auth, email + password only (no Google/Facebook); admin roles in `app_metadata`; `auth.uid()` in 12 RLS policies; 7 foreign keys to `auth.users`; a trigger on `auth.users` (`customer_accounts` migration) fills the existing `public.users` profile table (name, avatar) | 38 `supabase.auth` calls |
+| Other access | `GET /api/stock/inventory` also accepts an `x-api-key` (`STOCK_API_KEY`) for an external system, checked in `middleware.ts`; checkout sends the shopper's Supabase token as `Authorization: Bearer` | |
 | Files | Supabase Storage: `products` (public), `documents` (private, signed links) | 5 call sites |
 | Realtime | notification bell listens to `notifications` | 1 channel |
 | Jobs | `pg_cron` (daily alerts), `pg_net` + Vault + Edge Function `send-push` (desktop push) | |
@@ -52,7 +53,7 @@ kachabity/
 | Auth (users, passwords, sessions) | NestJS `AuthModule`: `users` table, httpOnly cookie sessions (access + refresh JWT), `@nestjs/jwt`, `argon2` for new passwords | Supabase stores **bcrypt** hashes in `auth.users.encrypted_password`: copy them as they are, verify with bcrypt, re-hash with argon2 at the next sign-in. Nobody has to reset a password. |
 | `app_metadata.role / permissions` | `users.role`, `users.permissions` columns | `lib/admin-auth.ts` ports unchanged; it only reads these two fields. |
 | `requirementFor()` in `middleware.ts` | NestJS global guard + `@Requires('orders')`, `@OwnerOnly()` decorators | Same rule table, moved to the API. Next.js middleware keeps only page redirects and locale prefixing. |
-| Storage `products` (public) | R2 bucket behind a CDN domain (e.g. `media.kachabiti.com`) | Copy files, then rewrite stored URLs (`product_images.image_url`, reels, hero sections…) in one SQL update. |
+| Storage `products` (public) | R2 bucket behind a CDN domain (e.g. `media.kachabiti.com`) | Copy files, then rewrite stored URLs (`product_images.image_url`, reels, hero sections…) in one SQL update. Add the domain to `images.remotePatterns` in `next.config.ts` first. |
 | Storage `documents` (private) | private R2 bucket + presigned URLs (5 min) | Same behaviour as today's signed links. |
 | Realtime (notification bell) | Server-Sent Events endpoint in NestJS fed by Postgres `LISTEN/NOTIFY` | One trigger `pg_notify('notifications', recipient_id)`; simpler than WebSockets. |
 | `pg_cron` daily alerts | `@nestjs/schedule` cron calling `select private.daily_alerts()` | Or keep pg_cron if the Postgres host offers it. |
@@ -60,17 +61,25 @@ kachabity/
 | Activity-log actor headers | `set_config('app.actor_id', …, true)` at the start of each transaction | Rewrite `private.trusted_request_headers()` to read these settings. Every NestJS write goes through one `withActor(actor, trx => …)` helper. |
 | `service_role` / `anon` / `authenticated` grants | one application role (`kachabity_app`) + one read-only role for reporting | Grants rewritten in one migration. |
 | Extensions `pg_trgm`, `unaccent`, `pg_cron` | available on standard Postgres 17 | `pg_net` and Vault are dropped. |
+| Auth e-mails (confirm sign-up, reset password) and rate limits | NestJS sends them with nodemailer in en/fr/ar; `@nestjs/throttler` on sign-in, sign-up and reset | Supabase did both for free; check the live "Confirm email" setting and copy its behaviour. |
+| `/api-docs` (OpenAPI built by hand in `lib/openapi*.ts`) | `@nestjs/swagger` generated from the controllers | Until then, keep `lib/openapi*.ts` in step with each ported route. |
 
 ## Database changes (one migration set, written once)
 
-1. Create `public.users` with the **same uuid** as `auth.users.id` (email, password_hash, role,
-   permissions, created_at, deleted_at, last_sign_in_at) and copy the rows from `auth.users`.
+1. **Extend the existing `public.users`** (today a profile table: id = `auth.users.id`, name,
+   avatar_url, deleted_at) with email, password_hash, role, permissions, email_confirmed_at,
+   last_sign_in_at, and fill it from `auth.users`, keeping the **same uuid**. Shoppers with no
+   profile row get one. Drop the trigger on `auth.users` that fills the profile; the NestJS sign-up
+   writes the row instead.
 2. Repoint the 7 foreign keys from `auth.users` to `public.users`; replace `auth.uid()` in the 12
    RLS policies with `current_setting('app.user_id', true)::uuid`.
 3. Replace `private.trusted_request_headers()` (actor from settings, see above).
 4. Drop `private.dispatch_push`, the `pg_net` / Vault dependency and the `supabase_realtime`
    publication; add the `pg_notify` trigger on `notifications`.
-5. Replace the Supabase role grants with the application role.
+5. Replace the Supabase role grants with the application role. Give it `bypassrls` (as the service
+   role has today), or every read silently returns nothing.
+6. Remove the `insert into storage.buckets` statements (two migrations) and the
+   `supabase_realtime` publication line, so the migrations apply to a plain Postgres.
 
 Keeping ids identical means orders, `created_by`, `assigned_to`, the activity log and notifications
 keep pointing at the right people, with no data rewrite.
@@ -89,6 +98,11 @@ phase 5.
   Supabase Postgres** through the pooler, Sentry, health check, Dockerfile.
 - Next.js `rewrites()` for `/api/:path*` → NestJS, behind a per-route allow-list so routes switch
   one at a time.
+- **Still open:** pick and set up the NestJS host (in the same region as the database), an uptime
+  check on `/api/health`, and a CI job (GitHub Actions) that builds and lints `api/`. Prove on a
+  Netlify deploy preview that the external rewrite works there (it does locally and in Docker).
+- **Prerequisite for production:** merge the ERP pull request and apply its three migrations to the
+  live database. They applied cleanly to a copy of the live data (`npm run docker:import`).
 
 ### Phase 1: Move the API, area by area (3–5 weeks)
 Same Supabase database, same Supabase Auth: NestJS verifies Supabase JWTs (JWKS), so sign-in is
@@ -114,6 +128,13 @@ Rules while porting:
 - Keep every `rpc(...)` as `select fn(...)`; don't rewrite database functions in TypeScript.
 - Bring the end-to-end test suite (74 checks: orders, payments, till, purchasing, accounting,
   goals, permissions) into the `api` package first and run it after each area moves.
+- Every catalog write calls `invalidateCatalog()` (the Next.js revalidate endpoint), like categories.
+- Before `OrdersModule`: the guard only builds an actor for back-office users. Checkout needs the
+  **shopper's** id from the bearer token (`POST /api/orders` sets `user_id` from it), so add a
+  shopper identity (`@CurrentUser()`) for public routes.
+- Before `StockModule`: support the `x-api-key` (`STOCK_API_KEY`) rule for `GET /api/stock/inventory`
+  in the guard (e.g. an `@ApiKey()` decorator, compared in constant time).
+- Keep each moved area's rule in `requirementFor` too, because middleware still runs first.
 
 ### Phase 2: Browser and server components stop calling Supabase (1–2 weeks)
 - Replace the `lib/*` data modules that use the publishable key (storefront catalog, reviews,
@@ -128,6 +149,14 @@ Rules while porting:
   (nodemailer is already in place), change password; port team management (`/api/admin/team`).
 - Switch the admin login and the storefront account pages; both use httpOnly cookies (today the
   storefront session sits in localStorage).
+- What Supabase Auth did that NestJS must now do: rate limits on sign-in, sign-up and reset; e-mail
+  confirmation if the live project requires it; reset and confirmation e-mails in en/fr/ar;
+  refresh-token rotation and revocation at sign-out and when a team member is removed; `SameSite`
+  cookies plus an origin check against CSRF.
+- Replace every other `supabase.auth` caller: `middleware.ts` (`getClaims` for the admin page gate
+  and the API rules), `StaticHeader`/`MobileHeader`, the checkout's bearer token (`lib/orders.ts`),
+  the settings page (change password), and `NotificationBell` (session for realtime).
+- The e2e helper creates test users with the Supabase Auth admin API; switch it to the new endpoints.
 - Rollback: leave Supabase Auth untouched until the new sign-in has run for a week.
 
 ### Phase 4: Files, realtime, push, jobs (1 week)
@@ -171,9 +200,12 @@ Check current prices and compare with the last three Supabase invoices before de
 | Password migration fails | Same uuids, bcrypt verification, Supabase Auth kept as a fallback for a week |
 | Data loss at cut-over | Rehearsed restore, read-only window, Supabase kept paused for a month |
 | Losing serverless auto-scaling | One Node server handles this shop's traffic; add a second API container behind the proxy if needed |
+| NestJS is down while areas point to it | No automatic fallback: uptime alert on `/api/health`, and rollback is removing the area from `NEST_ROUTES` (needs a redeploy, since rewrites are fixed at build time) |
+| Extra hop (Netlify → NestJS → database) slows pages | Host NestJS in the database's region; compare response times before and after each area |
 
 ## Decisions needed before phase 0
 
 1. **Database host:** managed Postgres or self-managed on the VPS?
 2. **Hosting:** keep Netlify for the Next.js app, or move everything to one VPS?
 3. **ERP work:** merge it to `main` and apply its migrations to the live database before starting?
+4. **NestJS host for phase 1:** a small VPS, or a container host (Railway, Fly, Render) next to Netlify?
