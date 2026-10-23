@@ -43,6 +43,8 @@ const itemSchema = z.object({
     quantity: z.number().int(),
     // Optional per-item location (counting several locations at once).
     location_id: z.guid().optional(),
+    // Restocks: purchase cost per unit, which moves the variant's weighted average cost.
+    unit_cost: z.number().nonnegative().optional(),
 });
 
 const movementSchema = z.object({

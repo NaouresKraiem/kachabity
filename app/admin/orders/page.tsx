@@ -19,7 +19,10 @@ import {
     Tooltip,
 } from "antd";
 import { message } from "@/components/admin/antd-app";
-import { ORDER_ITEM_IMAGE_FALLBACK, ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS, errorCode, orderStatusLabel, validateOrder } from "@/components/admin/order-status";
+import { ORDER_ITEM_IMAGE_FALLBACK, ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS, errorCode, orderStatusLabel, validateOrder } from "@/components/admin/order-status";
+import { AgentSelect, ChannelTag, useTeam } from "@/components/admin/erp/ui";
+import { api } from "@/components/admin/erp/erp-client";
+import { CHANNELS, CHANNEL_LABELS, OPEN_ORDER_STATUSES } from "@/lib/erp/constants";
 import { useAdminRole } from "@/lib/admin-role-context";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -29,6 +32,10 @@ import {
     UserOutlined,
     SearchOutlined,
     ReloadOutlined,
+    PlusOutlined,
+    CheckOutlined,
+    WarningOutlined,
+    UserAddOutlined,
 } from "@ant-design/icons";
 import { DATE_LOCALES, useAdminT } from "@/lib/admin-i18n";
 import DeliveryStatusTag from "@/components/admin/delivery/DeliveryStatusTag";
@@ -50,22 +57,36 @@ interface OrderRow {
     deliveries?: { status: string; barcode: string | null }[];
     created_by?: string | null;
     created_by_email?: string | null;
+    channel: string;
+    assigned_to: string | null;
+    assigned_to_email: string | null;
+    paid_amount: number;
 }
+
+/** Last 8 digits of a phone, to spot the same customer ordering twice. */
+const phoneKey = (phone: string | null | undefined) => (phone ?? "").replace(/\D/g, "").slice(-8);
 
 export default function AdminOrdersPage() {
     const { t, locale } = useAdminT();
-    const canDelete = useAdminRole().can("delete");
+    const { can, id: myId, isAdmin } = useAdminRole();
+    const canDelete = can("delete");
+    const team = useTeam();
+    const [channelFilter, setChannelFilter] = useState<string>("all");
+    const [assignTo, setAssignTo] = useState<string | null>(null);
     const router = useRouter();
     const [orders, setOrders] = useState<OrderRow[]>([]);
     const [loading, setLoading] = useState(true); // first fetch starts on mount: show the table spinner right away
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
-    // Who added the order: "all", "website" (customers) or an agent's user id (?added_by= from Agent performance).
+    // Who handles the order: "all", "me", "none" (nobody yet), "website" (customers, no agent) or an
+    // agent's user id (?added_by= from Agent performance, ?assigned=none from My day; ?status= too).
     const [addedByFilter, setAddedByFilter] = useState<string>("all");
     useEffect(() => {
-        const addedBy = new URLSearchParams(window.location.search).get("added_by");
-        if (addedBy) setAddedByFilter(addedBy);
+        const params = new URLSearchParams(window.location.search);
+        const handledBy = params.get("added_by") ?? params.get("assigned");
+        if (handledBy) setAddedByFilter(handledBy);
+        if (params.get("status")) setStatusFilter(params.get("status")!);
     }, []);
     const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
     const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -115,25 +136,52 @@ export default function AdminOrdersPage() {
             const matchesPaymentStatus =
                 paymentStatusFilter === "all" ? true : order.payment_status === paymentStatusFilter;
 
+            const handler = order.assigned_to ?? order.created_by ?? null;
             const matchesAddedBy =
                 addedByFilter === "all" ? true
                     : addedByFilter === "website" ? !order.created_by
-                        : order.created_by === addedByFilter;
+                        : addedByFilter === "none" ? !handler
+                            : addedByFilter === "me" ? handler === myId
+                                : handler === addedByFilter;
 
-            return matchesSearch && matchesPaymentStatus && matchesAddedBy;
+            const matchesChannel = channelFilter === "all" || order.channel === channelFilter;
+
+            return matchesSearch && matchesPaymentStatus && matchesAddedBy && matchesChannel;
         });
-    }, [orders, searchTerm, paymentStatusFilter, addedByFilter]);
+    }, [orders, searchTerm, paymentStatusFilter, addedByFilter, channelFilter, myId]);
 
-    // Agents who added at least one of the loaded orders, for the "Added by" filter.
+    // Team members for the "Handled by" filter (plus an agent from the URL who left the team).
     const agentOptions = useMemo(() => {
-        const agents = new Map<string, string>();
-        for (const order of orders) if (order.created_by) agents.set(order.created_by, order.created_by_email ?? order.created_by);
-        if (addedByFilter !== "all" && addedByFilter !== "website" && !agents.has(addedByFilter)) agents.set(addedByFilter, t("Selected agent"));
+        const agents = new Map<string, string>(team.map((m) => [m.user_id, m.email ?? m.user_id]));
+        if (!["all", "website", "none", "me"].includes(addedByFilter) && !agents.has(addedByFilter)) agents.set(addedByFilter, t("Selected agent"));
         return [...agents].map(([value, label]) => ({ value, label }));
-    }, [orders, addedByFilter, t]);
+    }, [team, addedByFilter, t]);
+
+    // Orders in progress that share a phone with another order in progress: possible duplicates.
+    const duplicates = useMemo(() => {
+        const byPhone = new Map<string, OrderRow[]>();
+        for (const order of orders) {
+            const key = phoneKey(order.customer_phone);
+            if (key.length < 8 || !(OPEN_ORDER_STATUSES as readonly string[]).includes(order.status)) continue;
+            byPhone.set(key, [...(byPhone.get(key) ?? []), order]);
+        }
+        return byPhone;
+    }, [orders]);
+    const duplicatesOf = (order: OrderRow) => (duplicates.get(phoneKey(order.customer_phone)) ?? []).filter((o) => o.id !== order.id);
+
+    const runAction = async (body: Record<string, unknown>, done: string) => {
+        try {
+            const result = await api<{ changed?: number; confirmed?: number }>("/api/sales/orders", { method: "PATCH", body });
+            message.success(t(done, { count: result.changed ?? result.confirmed ?? 0 }));
+            setSelectedRowKeys([]);
+            fetchOrders();
+        } catch (e) {
+            message.error(t((e as Error).message));
+        }
+    };
 
     const formatPrice = (price: number) => {
-        return `${price.toFixed(3)} DT`;
+        return `${Number(price).toFixed(3)} DT`;
     };
 
     const formatDate = (dateString: string) => {
@@ -242,10 +290,22 @@ export default function AdminOrdersPage() {
                     <div style={{ fontWeight: 500 }}>
                         {record.customer_first_name} {record.customer_last_name}
                     </div>
-                    <div style={{ fontSize: 12, color: "#999" }}>{record.customer_email}</div>
-                    {record.created_by && (
-                        <Tag icon={<UserOutlined />} style={{ marginTop: 4 }}>{t("Added by {email}", { email: record.created_by_email ?? t("an agent") })}</Tag>
-                    )}
+                    <div style={{ fontSize: 12, color: "#999" }}>{record.customer_phone}{record.customer_email ? ` · ${record.customer_email}` : ""}</div>
+                    <Space size={4} wrap style={{ marginTop: 4 }}>
+                        <ChannelTag channel={record.channel} />
+                        {record.assigned_to_email || record.created_by_email ? (
+                            <Tag icon={<UserOutlined />}>{record.assigned_to_email ?? record.created_by_email}</Tag>
+                        ) : (OPEN_ORDER_STATUSES as readonly string[]).includes(record.status) && (
+                            <Button size="small" type="dashed" icon={<UserAddOutlined />} onClick={() => runAction({ action: "assign", ids: [record.id], user_id: myId }, "Assigned {count} order(s)")}>
+                                {t("Take it")}
+                            </Button>
+                        )}
+                        {duplicatesOf(record).length > 0 && (
+                            <Tooltip title={t("Same phone as {orders}", { orders: duplicatesOf(record).map((o) => o.order_number).join(", ") })}>
+                                <Tag color="red" icon={<WarningOutlined />}>{t("Possible duplicate")}</Tag>
+                            </Tooltip>
+                        )}
+                    </Space>
                 </div>
             ),
         },
@@ -306,19 +366,11 @@ export default function AdminOrdersPage() {
             dataIndex: "payment_status",
             key: "payment_status",
             sorter: (a, b) => a.payment_status.localeCompare(b.payment_status),
-            render: (paymentStatus: string) => {
-                const colorMap: Record<string, string> = {
-                    pending: "orange",
-                    paid: "green",
-                    failed: "red",
-                    refunded: "purple",
-                };
-                return (
-                    <Tag color={colorMap[paymentStatus] || "default"}>
-                        {t(paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1))}
-                    </Tag>
-                );
-            },
+            render: (paymentStatus: string, record: OrderRow) => (
+                <Tooltip title={t("Received {paid} of {total}", { paid: formatPrice(Number(record.paid_amount ?? 0)), total: formatPrice(Number(record.total)) })}>
+                    <Tag color={PAYMENT_STATUS_COLORS[paymentStatus] || "default"}>{t(PAYMENT_STATUS_LABELS[paymentStatus] ?? paymentStatus)}</Tag>
+                </Tooltip>
+            ),
         },
         {
             title: t("Date"),
@@ -332,8 +384,15 @@ export default function AdminOrdersPage() {
             key: "action",
             width: 220,
             render: (_: any, record: OrderRow) => (
-                <Space>
+                <Space wrap>
                     {record.status === "pending" && (
+                        <Tooltip title={t("The customer agreed (by phone or message)")}>
+                            <Button size="small" icon={<CheckOutlined />} onClick={() => runAction({ action: "confirm", ids: [record.id] }, "Confirmed {count} order(s)")}>
+                                {t("Confirm")}
+                            </Button>
+                        </Tooltip>
+                    )}
+                    {(record.status === "pending" || record.status === "confirmed") && (
                         <Popconfirm
                             title={t("Validate order {order_number}?", { order_number: record.order_number })}
                             description={t("This creates its Colissimo parcel, confirms the order and takes its items out of stock.")}
@@ -399,7 +458,26 @@ export default function AdminOrdersPage() {
                             {t("Manage customer orders and fulfillment")}
                         </Text>
                     </div>
-                    <Space>
+                    <Space wrap>
+                        {selectedRowKeys.length > 0 && (
+                            <>
+                                <Button icon={<CheckOutlined />} onClick={() => runAction({ action: "confirm", ids: selectedRowKeys }, "Confirmed {count} order(s)")}>
+                                    {t("Confirm ({count})", { count: selectedRowKeys.length })}
+                                </Button>
+                                {isAdmin ? (
+                                    <Space.Compact>
+                                        <AgentSelect value={assignTo} onChange={setAssignTo} style={{ minWidth: 180 }} />
+                                        <Button onClick={() => runAction({ action: "assign", ids: selectedRowKeys, user_id: assignTo }, "Assigned {count} order(s)")}>
+                                            {t("Assign")}
+                                        </Button>
+                                    </Space.Compact>
+                                ) : (
+                                    <Button icon={<UserAddOutlined />} onClick={() => runAction({ action: "assign", ids: selectedRowKeys, user_id: myId }, "Assigned {count} order(s)")}>
+                                        {t("Take them")}
+                                    </Button>
+                                )}
+                            </>
+                        )}
                         {selectedRowKeys.length > 0 && canDelete && (
                                 <Popconfirm
                                     title={t("Delete selected orders")}
@@ -420,6 +498,9 @@ export default function AdminOrdersPage() {
                         <Button icon={<ReloadOutlined />} onClick={fetchOrders}>
                             {t("Refresh")}
                         </Button>
+                        <Link href="/admin/orders/new">
+                            <Button type="primary" icon={<PlusOutlined />}>{t("New order")}</Button>
+                        </Link>
                     </Space>
                 </div>
             </div>
@@ -447,18 +528,23 @@ export default function AdminOrdersPage() {
                         onChange={(value) => setPaymentStatusFilter(value)}
                         options={[
                             { value: "all", label: t("All payments") },
-                            { value: "pending", label: t("Pending") },
-                            { value: "paid", label: t("Paid") },
-                            { value: "failed", label: t("Failed") },
-                            { value: "refunded", label: t("Refunded") },
+                            ...Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => ({ value, label: t(label) })),
                         ]}
+                        style={{ width: 160 }}
+                    />
+                    <Select
+                        value={channelFilter}
+                        onChange={setChannelFilter}
+                        options={[{ value: "all", label: t("All channels") }, ...CHANNELS.map((c) => ({ value: c, label: t(CHANNEL_LABELS[c]) }))]}
                         style={{ width: 160 }}
                     />
                     <Select
                         value={addedByFilter}
                         onChange={(value) => setAddedByFilter(value)}
                         options={[
-                            { value: "all", label: t("Added by: anyone") },
+                            { value: "all", label: t("Handled by: anyone") },
+                            { value: "me", label: t("Handled by me") },
+                            { value: "none", label: t("Nobody yet") },
                             { value: "website", label: t("Website (customers)") },
                             ...agentOptions,
                         ]}

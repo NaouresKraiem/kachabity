@@ -153,7 +153,7 @@ export default function OrderDeliveryCard({ order, orderStatus, onOrderChanged, 
                             <Button
                                 type="primary"
                                 icon={<CarOutlined />}
-                                disabled={!list.configured.add || orderStatus === "cancelled" || orderStatus === "delivered"}
+                                disabled={!list.configured.add || orderStatus === "cancelled" || orderStatus === "delivered" || orderStatus === "returned"}
                                 onClick={() => setSendOpen(true)}
                                 style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                             >

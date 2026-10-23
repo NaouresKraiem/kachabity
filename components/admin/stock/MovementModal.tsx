@@ -40,6 +40,7 @@ interface Line {
     key: number;
     variant_id?: string;
     quantity: number | null;
+    unit_cost?: number | null;
 }
 
 let nextKey = 1;
@@ -94,7 +95,12 @@ export default function MovementModal({ open, onClose, onSaved, rows, locations,
         const values = await form.validateFields();
         const items = lines
             .filter((l) => l.variant_id && l.quantity)
-            .map((l) => ({ variant_id: l.variant_id!, quantity: Number(l.quantity) }));
+            .map((l) => ({
+                variant_id: l.variant_id!,
+                quantity: Number(l.quantity),
+                // Restocks at a known cost move the variant's weighted average cost.
+                ...(type === "restock" && l.unit_cost != null ? { unit_cost: Number(l.unit_cost) } : {}),
+            }));
         if (items.length === 0) {
             setError("Add at least one item with a quantity.");
             return;
@@ -180,6 +186,17 @@ export default function MovementModal({ open, onClose, onSaved, rows, locations,
                                     value={line.quantity}
                                     onChange={(value) => updateLine(line.key, { quantity: value })}
                                 />
+                                {type === "restock" && (
+                                    <InputNumber
+                                        placeholder={t("Unit cost")}
+                                        style={{ width: 140 }}
+                                        min={0}
+                                        precision={3}
+                                        suffix="TND"
+                                        value={line.unit_cost ?? null}
+                                        onChange={(value) => updateLine(line.key, { unit_cost: value })}
+                                    />
+                                )}
                                 <Text type="secondary" style={{ width: 70, fontSize: 12 }}>{here !== null ? `${here} here` : ""}</Text>
                                 <Button
                                     type="text"

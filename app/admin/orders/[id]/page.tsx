@@ -27,6 +27,8 @@ import {
 } from "@ant-design/icons";
 import { DATE_LOCALES, useAdminT } from "@/lib/admin-i18n";
 import OrderDeliveryCard from "@/components/admin/delivery/OrderDeliveryCard";
+import OrderPipelineCard, { type PipelineOrder } from "@/components/admin/erp/OrderPipelineCard";
+import OrderPaymentsCard from "@/components/admin/erp/OrderPaymentsCard";
 
 const { Title, Text } = Typography;
 
@@ -40,7 +42,7 @@ interface OrderItem {
     product_image?: string;
 }
 
-interface Order {
+interface Order extends PipelineOrder {
     id: string;
     order_number: string;
     customer_first_name: string;
@@ -62,6 +64,8 @@ interface Order {
     created_at: string;
     created_by?: string | null;
     created_by_email?: string | null;
+    discount_amount: number;
+    paid_amount: number;
     items: OrderItem[];
 }
 
@@ -75,7 +79,6 @@ export default function OrderDetailPage() {
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [status, setStatus] = useState<string>("");
-    const [paymentStatus, setPaymentStatus] = useState<string>("");
 
     // `quiet` reloads in place (after the delivery card changed the order) without the page spinner.
     const fetchOrder = useCallback(async (quiet = false) => {
@@ -87,7 +90,6 @@ export default function OrderDetailPage() {
                 if (result.success && result.data) {
                     setOrder(result.data);
                     setStatus(result.data.status);
-                    setPaymentStatus(result.data.payment_status);
                 } else {
                     message.error(t("Order not found"));
                     router.push("/admin/orders");
@@ -148,7 +150,6 @@ export default function OrderDetailPage() {
                 body: JSON.stringify({
                     id: order.id,
                     status,
-                    payment_status: paymentStatus,
                 }),
             });
 
@@ -156,7 +157,7 @@ export default function OrderDetailPage() {
 
             if (result.success) {
                 message.success(t("Order updated successfully!"));
-                setOrder({ ...order, status, payment_status: paymentStatus, stock_deducted: result.data?.stock_deducted });
+                fetchOrder(true);
             } else {
                 message.error(result.error || t("Failed to update order"));
             }
@@ -169,7 +170,7 @@ export default function OrderDetailPage() {
     };
 
     const formatPrice = (price: number) => {
-        return `${price.toFixed(3)} DT`;
+        return `${Number(price).toFixed(3)} DT`;
     };
 
     const formatDate = (dateString: string) => {
@@ -269,11 +270,11 @@ export default function OrderDetailPage() {
 
             <Space orientation="vertical" size="large" style={{ width: "100%" }}>
                 {/* Status Update Card */}
-                {order.status === "pending" && (
+                {(order.status === "pending" || order.status === "confirmed") && (
                     <Alert
                         type="warning"
                         showIcon
-                        title={t("This order is waiting for validation")}
+                        title={order.status === "pending" ? t("This order is waiting for the customer's confirmation") : t("This order is waiting for validation")}
                         description={t("Validating creates the Colissimo parcel, confirms the order and takes its items out of the online location's stock. Check the customer's details first.")}
                         action={
                             <Button type="primary" loading={validating} onClick={handleValidate} style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}>
@@ -282,7 +283,11 @@ export default function OrderDetailPage() {
                         }
                     />
                 )}
-                <Card title={t("Order Status")}>
+                <OrderPipelineCard order={order} onChanged={() => fetchOrder(true)} />
+
+                <OrderPaymentsCard order={order} onChanged={() => fetchOrder(true)} />
+
+                <Card title={t("Change the status by hand")}>
                     <Space orientation="vertical" style={{ width: "100%" }} size="middle">
                         <div>
                             <Text strong style={{ display: "block", marginBottom: 8 }}>{t("Order Status")}</Text>
@@ -293,20 +298,7 @@ export default function OrderDetailPage() {
                                 options={ORDER_STATUS_OPTIONS.map((o) => ({ ...o, label: t(o.label) }))}
                             />
                         </div>
-                        <div>
-                            <Text strong style={{ display: "block", marginBottom: 8 }}>{t("Payment Status")}</Text>
-                            <Select
-                                value={paymentStatus}
-                                onChange={setPaymentStatus}
-                                style={{ width: 200 }}
-                                options={[
-                                    { value: "pending", label: t("Pending") },
-                                    { value: "paid", label: t("Paid") },
-                                    { value: "failed", label: t("Failed") },
-                                    { value: "refunded", label: t("Refunded") },
-                                ]}
-                            />
-                        </div>
+                        <Text type="secondary">{t("Payment status follows the payments recorded above.")}</Text>
                         <Text type="secondary">
                             {order.stock_deducted ? (
                                 <><Tag color="green">{t("Stock deducted")}</Tag>{t("Cancelling, or moving it back to pending, returns the items to stock.")}</>
@@ -319,7 +311,7 @@ export default function OrderDetailPage() {
                             icon={<SaveOutlined />}
                             onClick={handleUpdateStatus}
                             loading={updating}
-                            disabled={status === order.status && paymentStatus === order.payment_status}
+                            disabled={status === order.status}
                             style={{ background: "#7a3b2e", borderColor: "#7a3b2e" }}
                         >
                             {t("Update Status")}
@@ -344,7 +336,7 @@ export default function OrderDetailPage() {
                         <Descriptions.Item label={t("Email")}>{order.customer_email}</Descriptions.Item>
                         <Descriptions.Item label={t("Phone")}>{order.customer_phone || "—"}</Descriptions.Item>
                         <Descriptions.Item label={t("Added by")}>
-                            {order.created_by ? order.created_by_email ?? t("an agent") : t("Website (customers)")}
+                            {order.created_by ? order.created_by_email ?? t("an agent") : order.channel === "website" ? t("Website (customers)") : "—"}
                         </Descriptions.Item>
                     </Descriptions>
                 </Card>
@@ -377,6 +369,12 @@ export default function OrderDetailPage() {
                                 <Text>{t("Subtotal:")} </Text>
                                 <Text strong>{formatPrice(order.subtotal)}</Text>
                             </div>
+                            {Number(order.discount_amount) > 0 && (
+                                <div>
+                                    <Text>{t("Discount:")} </Text>
+                                    <Text strong>− {formatPrice(order.discount_amount)}</Text>
+                                </div>
+                            )}
                             <div>
                                 <Text>{t("Shipping:")} </Text>
                                 <Text strong>{formatPrice(order.shipping_cost)}</Text>

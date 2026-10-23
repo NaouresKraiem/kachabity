@@ -216,7 +216,7 @@ export default function AgentPerformancePage() {
                 <Col xs={12} md={6}><Card><Statistic title={t("Orders added by agents")} value={totals.orders} loading={loading} /></Card></Col>
                 <Col xs={12} md={6}><Card><Statistic title={t("Their sales value")} value={formatTnd(totals.revenue)} loading={loading} /></Card></Col>
                 <Col xs={12} md={6}><Card><Statistic title={t("Delivery rate")} value={totalRate === null ? "—" : `${totalRate}%`} loading={loading} /></Card></Col>
-                <Col xs={12} md={6}><Card><Statistic title={t("Returned")} value={totals.returned} loading={loading} valueStyle={{ color: totals.returned ? "#cf1322" : undefined }} /></Card></Col>
+                <Col xs={12} md={6}><Card><Statistic title={t("Returned")} value={totals.returned} loading={loading} styles={{ content: { color: totals.returned ? "#cf1322" : undefined } }} /></Card></Col>
             </Row>
 
             <Card>

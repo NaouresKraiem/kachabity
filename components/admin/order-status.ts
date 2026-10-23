@@ -3,24 +3,46 @@
 import { deliveryApi, type Delivery } from "@/components/admin/delivery/delivery-api";
 
 /**
- * Admin wording for order statuses. "processing" is shown as "Validated": validating an order
- * creates its Colissimo parcel, confirms it and takes its items out of the online location's
- * stock (tracked products).
+ * Admin wording for order statuses, in pipeline order. "pending" is an order still to confirm
+ * with the customer; "confirmed" means they agreed. "processing" is shown as "Validated":
+ * validating an order creates its Colissimo parcel and takes its items out of stock (tracked
+ * products). Being delivered is not being paid: payments are tracked separately.
  */
 export const ORDER_STATUS_LABELS: Record<string, string> = {
-    pending: "Pending",
+    pending: "To confirm",
+    confirmed: "Confirmed",
     processing: "Validated",
     shipped: "Shipped",
     delivered: "Delivered",
+    returned: "Returned",
     cancelled: "Cancelled",
 };
 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
     pending: "orange",
+    confirmed: "gold",
     processing: "blue",
     shipped: "cyan",
     delivered: "green",
+    returned: "volcano",
     cancelled: "red",
+};
+
+/** Payment status of an order: money received is recorded per payment (Finance → Payments). */
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+    pending: "Not paid",
+    partial: "Partly paid",
+    paid: "Paid",
+    failed: "Failed",
+    refunded: "Refunded",
+};
+
+export const PAYMENT_STATUS_COLORS: Record<string, string> = {
+    pending: "default",
+    partial: "orange",
+    paid: "green",
+    failed: "red",
+    refunded: "purple",
 };
 
 export const ORDER_STATUS_OPTIONS = Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => ({ value, label }));
