@@ -39,7 +39,7 @@ function chime(urgent: boolean) {
 
 /**
  * Header bell: the user's notifications (new orders; owner alerts for owners), live through
- * Supabase Realtime with a sound and a pop-up, plus the switch for mobile/desktop push notifications.
+ * the NestJS stream with a sound and a pop-up, plus the switch for mobile/desktop push notifications.
  */
 export default function NotificationBell() {
     const { t, locale, dir } = useAdminT();
@@ -81,6 +81,39 @@ export default function NotificationBell() {
         const timer = setInterval(load, 60_000);
         return () => clearInterval(timer);
     }, [load]);
+
+    // Live: new rows pop up with a sound; updated rows (grouped delete alerts) are replaced.
+    // The stream (NestJS, SSE) closes every 15 minutes and EventSource reconnects, which
+    // re-checks the session.
+    useEffect(() => {
+        if (!userId) return;
+        const stream = new EventSource("/api/admin/notifications/stream");
+        stream.onmessage = (event) => {
+            const { op, row } = JSON.parse(event.data) as { op: "insert" | "update"; row: AdminNotification };
+            if (op === "update") {
+                setItems((current) => current.map((n) => (n.id === row.id ? row : n)));
+                if (!row.read_at) load();
+                return;
+            }
+            setItems((current) => [row, ...current.filter((n) => n.id !== row.id)].slice(0, 15));
+            setUnread((count) => count + 1);
+            const urgent = row.severity !== "info";
+            chime(urgent);
+            const text = notificationText(row, localeRef.current);
+            notification.open({
+                title: text.title,
+                description: text.body,
+                placement: toastPlacementRef.current,
+                duration: urgent ? 0 : 8,
+                type: row.severity === "critical" ? "error" : row.severity === "warning" ? "warning" : row.kind === "order" ? "success" : "info",
+                onClick: () => {
+                    if (row.url) router.push(row.url);
+                },
+                style: { cursor: row.url ? "pointer" : undefined },
+            });
+        };
+        return () => stream.close();
+    }, [userId, notification, router, load]);
 
     // Desktop notification state; the server keeps the admin language for push texts.
     useEffect(() => {

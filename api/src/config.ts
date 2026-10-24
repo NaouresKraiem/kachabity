@@ -9,6 +9,18 @@ const schema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url().default('http://localhost:3000'),
   GMAIL_USER: z.string().optional(),
   GMAIL_APP_PASSWORD: z.string().optional(),
+  // LISTEN for notifications needs a direct or session-mode connection (not a transaction pooler).
+  LISTEN_DATABASE_URL: z.string().url().optional(),
+  // Web Push: { publicKey, privateKey } as JWK (the Edge Function's format), and the contact.
+  VAPID_KEYS: z.string().optional(),
+  VAPID_SUBJECT: z.string().default('mailto:admin@kachabity.com'),
+  // S3-compatible file storage (Cloudflare R2; MinIO locally). Buckets: products (public), documents.
+  S3_ENDPOINT: z.string().url().optional(),
+  S3_REGION: z.string().default('auto'),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+  // Public address of the products bucket (R2 custom domain), without a trailing slash.
+  FILES_PUBLIC_URL: z.string().url().optional(),
   OWNER_EMAILS: z.string().optional(),
   ADMIN_EMAILS: z.string().optional(),
   NEXT_URL: z.string().url().optional(),

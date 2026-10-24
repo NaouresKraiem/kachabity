@@ -33,9 +33,14 @@ DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
 OWNER_EMAILS=
 ADMIN_EMAILS=
 # API areas served by NestJS (rebuild web after changing: docker compose up --build).
-NEST_ROUTES=categories
-NEST_URL=http://api:4000
+NEST_ROUTES=categories,upload/image,finance/documents
+NEST_URL=http://localhost:4000
 REVALIDATE_SECRET=${crypto.randomUUID()}
+# File storage: the local S3-compatible storage in docker-compose.yml (Cloudflare R2 in production).
+S3_ENDPOINT=http://localhost:9000
+S3_ACCESS_KEY_ID=kachabity-local
+S3_SECRET_ACCESS_KEY=kachabity-local-secret
+FILES_PUBLIC_URL=http://localhost:9000/products
 # scripts/docker/import-live-data.mjs reads the live project (read only). By default it uses the REST
 # API with the URL and service-role key from .env.local, and every account gets LOCAL_PASSWORD.
 # With the database password, set SOURCE_DATABASE_URL (Connect → Session pooler, postgresql://...)

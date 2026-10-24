@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
         // The storefront's reads exist only in NestJS (lib/storefront-api.ts).
         { source: "/api/storefront/:path*", destination: `${process.env.NEST_URL}/api/storefront/:path*` },
         // Accounts and sessions (lib/auth-session.ts) also exist only in NestJS.
-        ...["auth/:path*", "account/:path*", "admin/team"].map((path) => ({
+        ...["auth/:path*", "account/:path*", "admin/team", "admin/notifications/stream"].map((path) => ({
           source: `/api/${path}`,
           destination: `${process.env.NEST_URL}/api/${path}`,
         })),
@@ -57,6 +57,15 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/storage/v1/object/**',
       },
+      // Uploaded files (Cloudflare R2; local storage in Docker): FILES_PUBLIC_URL, read at build.
+      ...(process.env.FILES_PUBLIC_URL
+        ? [(({ protocol, hostname, port, pathname }: URL) => ({
+            protocol: protocol.replace(':', '') as 'http' | 'https',
+            hostname,
+            port,
+            pathname: `${pathname.replace(/\/$/, '')}/**`,
+          }))(new URL(process.env.FILES_PUBLIC_URL))]
+        : []),
       {
         protocol: 'https',
         hostname: 'img.youtube.com',

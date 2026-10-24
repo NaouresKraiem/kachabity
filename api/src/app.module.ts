@@ -20,7 +20,12 @@ import { ProductsController } from './catalog/products.controller';
 import { VariantsController } from './catalog/variants.controller';
 import { ApiExceptionFilter, ApiResponseInterceptor } from './common/api';
 import { DatabaseModule } from './db/database';
+import {
+  DocumentsController,
+  UploadImageController,
+} from './files/files.controllers';
 import { HealthController } from './health.controller';
+import { NotificationEvents } from './notifications/notification-events';
 import {
   HomeListsController,
   StorefrontController,
@@ -91,6 +96,8 @@ import {
     AuthController,
     AccountController,
     TeamController,
+    UploadImageController,
+    DocumentsController,
     CategoriesController,
     ProductsController,
     VariantsController,
@@ -149,6 +156,7 @@ import {
     HomeListsController,
   ],
   providers: [
+    NotificationEvents,
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_INTERCEPTOR, useClass: ApiResponseInterceptor },
     { provide: APP_FILTER, useClass: ApiExceptionFilter },

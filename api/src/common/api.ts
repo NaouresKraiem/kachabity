@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
 import type { Request, Response } from 'express';
+import { SSE_METADATA } from '@nestjs/common/constants';
 import { map } from 'rxjs';
 import { z } from 'zod';
 import { knownDbError } from '@shared/erp/db-messages';
@@ -35,7 +36,10 @@ export class Raw {
 
 @Injectable()
 export class ApiResponseInterceptor implements NestInterceptor {
-  intercept(_: ExecutionContext, next: CallHandler) {
+  intercept(context: ExecutionContext, next: CallHandler) {
+    // Server-sent events (@Sse) are sent as they are, one event at a time.
+    if (Reflect.getMetadata(SSE_METADATA, context.getHandler()))
+      return next.handle();
     return next.handle().pipe(
       map((value: unknown) => {
         if (value instanceof Raw) return value.body;

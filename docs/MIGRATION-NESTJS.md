@@ -177,6 +177,16 @@ after the switch loses accounts created since (they only exist in `public.users`
 - Rollback: leave Supabase Auth untouched until the new sign-in has run for a week.
 
 ### Phase 4: Files, realtime, push, jobs (1 week)
+**Done (local, 2026-10-24)**, migration `20261023214627_notifications_from_nestjs`: files on
+S3-compatible storage (`api/src/common/storage.ts`; R2 in production, SeaweedFS in Docker since
+MinIO no longer publishes images), `upload/image` and `finance/documents` in NestJS,
+`api/scripts/copy-storage.mjs` (copy the buckets, `--rewrite` the URLs; tested on the local copy:
+374 images, 1,563 URLs). `private.announce_notification` (pg_notify) replaces `dispatch_push`;
+NestJS streams notifications (SSE) and sends Web Push (`web-push`, same `VAPID_KEYS`); the daily
+alerts run from NestJS, and the pg_cron job is removed. `files.e2e.mjs` (18 checks).
+At the switch: create the R2 buckets (`documents` private, `products` public behind a custom domain
+= `FILES_PUBLIC_URL`), run the copy with `--rewrite`, set `LISTEN_DATABASE_URL` while the database
+is still behind Supabase's transaction pooler, and retire the `send-push` Edge Function.
 - Copy the `products` and `documents` buckets to R2 (`rclone`), rewrite URLs, switch uploads.
 - SSE notification stream + `pg_notify` trigger; port `NotificationBell`.
 - Push sending in NestJS (`web-push`); daily alerts cron in NestJS.

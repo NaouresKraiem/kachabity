@@ -3,12 +3,17 @@
 name: kachabity
 
 services:
-  # The browser reaches Supabase at localhost:54321; web runs in this container's network so its
-  # own localhost:54321 reaches the same Supabase, and one NEXT_PUBLIC_SUPABASE_URL works on both sides.
+  # The browser reaches Supabase at localhost:54321; web and api run in this container's network so
+  # their own localhost:54321 reaches the same Supabase, and one NEXT_PUBLIC_SUPABASE_URL works on both sides.
+  # It also forwards localhost:9000 to the file storage, so image URLs work for the browser and
+  # for the web container's image optimizer alike.
   gateway:
     image: alpine/socat:1.8.0.3
-    command: tcp-listen:54321,fork,reuseaddr tcp-connect:host.docker.internal:54321
-    ports: ["3000:3000"]
+    entrypoint: ["sh", "-c"]
+    command:
+      - socat tcp-listen:54321,fork,reuseaddr tcp-connect:host.docker.internal:54321 &
+        socat tcp-listen:9000,fork,reuseaddr tcp-connect:storage:9000
+    ports: ["3000:3000", "4000:4000"]
 
   web:
     build:
@@ -24,10 +29,42 @@ services:
       context: .
       dockerfile: api/Dockerfile
     env_file: .env.docker
+    # Same network as web: localhost:3000 (web), :9000 (files) and :54321 mean the same here and
+    # in the browser, so signed file links work as they are.
+    network_mode: service:gateway
+    depends_on: [gateway]
     environment:
-      NEXT_URL: http://gateway:3000
-    ports: ["4000:4000"]
+      NEXT_URL: http://localhost:3000
+
+  # S3-compatible file storage standing in for Cloudflare R2 (buckets products and documents).
+  # Local-only credentials, the same as in .env.docker.
+  storage:
+    image: chrislusf/seaweedfs:3.80
+    command: server -dir=/data -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=64
+    configs: [{ source: s3, target: /etc/seaweedfs/s3.json }]
+    ports: ["9000:9000"]
+    volumes: [storage:/data]
+
+  storage-buckets:
+    image: chrislusf/seaweedfs:3.80
+    depends_on: [storage]
+    entrypoint: ["sh", "-c"]
+    command:
+      - sleep 10; echo 's3.bucket.create -name products' | weed shell -master=storage:9333 -filer=storage:8888; echo 's3.bucket.create -name documents' | weed shell -master=storage:9333 -filer=storage:8888
+    restart: "no"
 
 secrets:
   env:
     file: .env.docker
+
+configs:
+  s3:
+    content: |
+      {"identities": [
+        {"name": "kachabity", "credentials": [{"accessKey": "kachabity-local", "secretKey": "kachabity-local-secret"}],
+         "actions": ["Admin", "Read", "Write", "List", "Tagging"]},
+        {"name": "anonymous", "actions": ["Read:products"]}
+      ]}
+
+volumes:
+  storage:

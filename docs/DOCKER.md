@@ -57,6 +57,8 @@ npm run docker:up
   `admin@kachabity.local` with `LOCAL_PASSWORD`, created by `npm run docker:admin` and again after
   every import.
 - NestJS API: http://localhost:4000/api/health. The areas in `NEST_ROUTES` go through it.
+- File storage (S3-compatible, stands in for Cloudflare R2): http://localhost:9000, buckets `products` (public) and `documents` (private). To show the shop's real images, copy them from the live project (read only) and point the local database at them:
+  `cd api && SOURCE_SUPABASE_URL=… SOURCE_SERVICE_ROLE_KEY=… S3_ENDPOINT=http://127.0.0.1:9000 S3_ACCESS_KEY_ID=kachabity-local S3_SECRET_ACCESS_KEY=kachabity-local-secret DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres FILES_PUBLIC_URL=http://localhost:9000/products node scripts/copy-storage.mjs --rewrite`
 
 The first build takes a few minutes. Rebuild after code changes with the same command. After
 changing only `.env.docker`, run `docker compose build --no-cache web`, then `npm run docker:up`:

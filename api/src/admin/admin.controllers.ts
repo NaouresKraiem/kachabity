@@ -7,6 +7,7 @@ import {
   Put,
   Query,
   Req,
+  Sse,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { z } from 'zod';
@@ -23,6 +24,7 @@ import { ApiError, params, period, Zod, zId } from '../common/api';
 import { invalidateCatalog } from '../catalog/revalidate';
 import { Database } from '../db/database';
 import { one } from '../db/embed';
+import { NotificationEvents } from '../notifications/notification-events';
 import { listTeam, monthProgress, teamProgress } from './goals';
 
 // Ports of app/api/owner/overview and app/api/admin/* except team (Supabase Auth accounts move
@@ -521,7 +523,16 @@ export class StaffController {
 @Controller('admin/notifications')
 @Public()
 export class NotificationsController {
-  constructor(private readonly db: Database) {}
+  constructor(
+    private readonly db: Database,
+    private readonly events: NotificationEvents,
+  ) {}
+
+  /** Live: each new or changed notification of the user, as { op, row } (server-sent events). */
+  @Sse('stream')
+  stream(@CurrentActor() actor: RequestActor) {
+    return this.events.stream(actor.userId);
+  }
 
   /** The user's own notifications: ?limit=&before=<id>&kind=&unread=1 → { rows, unread, hasMore }. */
   @Get()
