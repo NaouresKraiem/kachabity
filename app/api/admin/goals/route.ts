@@ -2,7 +2,7 @@ import { z } from 'zod';
 import supabase from '@/lib/supabase-admin';
 import { HttpError, must, ok, params, readBody, route, zId } from '@/lib/erp/api';
 import { listTeam } from '@/lib/erp/team';
-import { monthProgress, teamProgress } from '@/lib/erp/goals';
+import { analyticsStart, deliveredByDay, monthProgress, teamProgress } from '@/lib/erp/goals';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +15,8 @@ export const dynamic = 'force-dynamic';
 export const GET = route('admin-goals', async (request) => {
     const month = params(request).get('month') ?? new Date().toISOString().slice(0, 7);
     if (!/^\d{4}-\d{2}$/.test(month)) throw new HttpError('Invalid month');
-    const [rows, team] = await Promise.all([monthProgress(month), teamProgress(month)]);
-    return ok({ month, rows, team });
+    const [rows, team, daily, start] = await Promise.all([monthProgress(month), teamProgress(month), deliveredByDay(month), analyticsStart()]);
+    return ok({ month, rows, team, daily, analytics_start: start });
 });
 
 const goalSchema = z.object({
@@ -26,11 +26,13 @@ const goalSchema = z.object({
     target_confirmed: z.number().int().min(0).nullable().optional(),
     target_delivered: z.number().int().min(0).nullable().optional(),
     target_revenue: z.number().min(0).nullable().optional(),
-    commission_type: z.enum(['none', 'percent', 'per_order']).default('none'),
+    commission_type: z.enum(['none', 'percent', 'per_order', 'tiers']).default('none'),
     commission_value: z.number().min(0).max(1_000_000).default(0),
+    // 'tiers': prize (TND) for reaching a number of delivered orders in the month.
+    prize_tiers: z.array(z.object({ orders: z.number().int().min(1).max(100_000), prize: z.number().min(0).max(1_000_000) })).max(10).default([]),
     // Copy to the following months too (same objective for the quarter, for example).
     repeat_months: z.number().int().min(0).max(11).default(0),
-});
+}).refine((g) => g.commission_type !== 'tiers' || g.prize_tiers.length > 0, { message: 'Add at least one prize tier', path: ['prize_tiers'] });
 
 // POST — sets an agent's objective for a month (replacing the previous one).
 export const POST = route('admin-goals', async (request, actor) => {

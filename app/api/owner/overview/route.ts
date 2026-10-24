@@ -1,7 +1,8 @@
 import supabase from '@/lib/supabase-admin';
 import { must, ok, params, period, route } from '@/lib/erp/api';
 import { CHANNELS } from '@/lib/erp/constants';
-import { teamProgress } from '@/lib/erp/goals';
+import { analyticsStart, teamProgress } from '@/lib/erp/goals';
+import { clampToStart } from '@/lib/erp/objectives';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,10 @@ export const dynamic = 'force-dynamic';
  * ?from=&to= (ISO) and optional filters: channel, agent, product, campaign.
  */
 export const GET = route('owner-overview', async (request) => {
-    const { from, to } = period(request, 30);
+    const { from: asked, to } = period(request, 30);
+    const start = await analyticsStart();
+    // Figures count from the analytics start date (Business settings), even for a longer period.
+    const from = clampToStart(asked, start) < to ? clampToStart(asked, start) : to;
     const q = params(request);
     const channel = q.get('channel');
     const month = new Date(to.getTime() - 1).toISOString().slice(0, 7);
@@ -39,5 +43,6 @@ export const GET = route('owner-overview', async (request) => {
         campaign_options: must(campaigns),
         cost_prices: prices,
         month_goal: { month, ...monthGoal },
+        analytics_start: start,
     });
 });

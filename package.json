@@ -7,6 +7,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "test:e2e": "node tests/e2e/categories.e2e.mjs && node tests/e2e/catalog.e2e.mjs && node tests/e2e/stock.e2e.mjs && node tests/e2e/objectives.e2e.mjs && node tests/e2e/erp.e2e.mjs",
     "import:woocommerce": "node scripts/import-woocommerce.mjs"
   },
   "dependencies": {
