@@ -26,7 +26,14 @@ import { invalidateCatalog } from '../catalog/revalidate';
 import { Database } from '../db/database';
 import { one } from '../db/embed';
 import { NotificationEvents } from '../notifications/notification-events';
-import { listTeam, monthProgress, teamProgress } from './goals';
+import { clampToStart } from '@shared/erp/objectives';
+import {
+  analyticsStart,
+  deliveredByDay,
+  listTeam,
+  monthProgress,
+  teamProgress,
+} from './goals';
 
 // Ports of app/api/owner/overview and app/api/admin/* except team (Supabase Auth accounts move
 // with phase 3). Access comes from lib/api-access.ts: owner only, admins only, or any back-office user.
@@ -39,7 +46,11 @@ export class OwnerOverviewController {
 
   @Get()
   async get(@Query() query: Record<string, string>) {
-    const { from, to } = period(query, 30);
+    const { from: asked, to } = period(query, 30);
+    const start = await analyticsStart(this.db);
+    // Figures count from the analytics start date (Business settings), even for a longer period.
+    const from =
+      clampToStart(asked, start) < to ? clampToStart(asked, start) : to;
     const q = params(query);
     const channel = q.get('channel');
     const month = new Date(to.getTime() - 1).toISOString().slice(0, 7);
@@ -78,6 +89,7 @@ export class OwnerOverviewController {
       campaign_options: campaigns,
       cost_prices: costPrices,
       month_goal: { month, ...monthGoal },
+      analytics_start: start,
     };
   }
 }
@@ -132,9 +144,22 @@ const erpSettingsSchema = z.object({
     .object({ max_discount_percent: z.number().min(0).max(100) })
     .partial()
     .optional(),
+  analytics: z
+    .object({
+      start_date: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullable(),
+    })
+    .optional(),
 });
 
-/** Business rules (owners and admins): sales alerts and duplicates, and the till's discount limit. */
+const SETTING_KEYS = ['sales', 'pos', 'analytics'] as const;
+
+/**
+ * Business rules (owners and admins): sales alerts and duplicates, the till's discount limit, and the
+ * analytics start date ("reset": figures count only from that day; nothing is deleted).
+ */
 @Controller('admin/erp-settings')
 @Public()
 export class ErpSettingsController {
@@ -144,7 +169,7 @@ export class ErpSettingsController {
     return this.db
       .selectFrom('erp_settings')
       .select(['key', 'value'])
-      .where('key', 'in', ['sales', 'pos'])
+      .where('key', 'in', [...SETTING_KEYS])
       .execute();
   }
 
@@ -166,9 +191,10 @@ export class ErpSettingsController {
         r.value as Record<string, unknown>,
       ]),
     );
-    const rows = (['sales', 'pos'] as const)
-      .filter((key) => body[key])
-      .map((key) => ({ key, value: { ...(byKey[key] ?? {}), ...body[key] } }));
+    const rows = SETTING_KEYS.filter((key) => body[key]).map((key) => ({
+      key,
+      value: { ...(byKey[key] ?? {}), ...body[key] },
+    }));
     if (rows.length) {
       await this.db.withActor(actor, (trx) =>
         trx
@@ -188,18 +214,35 @@ export class ErpSettingsController {
   }
 }
 
-const goalSchema = z.object({
-  user_id: zId,
-  month: z.string().regex(/^\d{4}-\d{2}$/),
-  target_orders: z.number().int().min(0).nullable().optional(),
-  target_confirmed: z.number().int().min(0).nullable().optional(),
-  target_delivered: z.number().int().min(0).nullable().optional(),
-  target_revenue: z.number().min(0).nullable().optional(),
-  commission_type: z.enum(['none', 'percent', 'per_order']).default('none'),
-  commission_value: z.number().min(0).max(1_000_000).default(0),
-  // Copy to the following months too (same objective for the quarter, for example).
-  repeat_months: z.number().int().min(0).max(11).default(0),
-});
+const goalSchema = z
+  .object({
+    user_id: zId,
+    month: z.string().regex(/^\d{4}-\d{2}$/),
+    target_orders: z.number().int().min(0).nullable().optional(),
+    target_confirmed: z.number().int().min(0).nullable().optional(),
+    target_delivered: z.number().int().min(0).nullable().optional(),
+    target_revenue: z.number().min(0).nullable().optional(),
+    commission_type: z
+      .enum(['none', 'percent', 'per_order', 'tiers'])
+      .default('none'),
+    commission_value: z.number().min(0).max(1_000_000).default(0),
+    // 'tiers': prize (TND) for reaching a number of delivered orders in the month.
+    prize_tiers: z
+      .array(
+        z.object({
+          orders: z.number().int().min(1).max(100_000),
+          prize: z.number().min(0).max(1_000_000),
+        }),
+      )
+      .max(10)
+      .default([]),
+    // Copy to the following months too (same objective for the quarter, for example).
+    repeat_months: z.number().int().min(0).max(11).default(0),
+  })
+  .refine((g) => g.commission_type !== 'tiers' || g.prize_tiers.length > 0, {
+    message: 'Add at least one prize tier',
+    path: ['prize_tiers'],
+  });
 const businessGoalSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/),
   target_revenue: z.number().min(0).nullable().optional(),
@@ -222,11 +265,13 @@ export class GoalsController {
   @Get()
   async get(@Query('month') month = new Date().toISOString().slice(0, 7)) {
     if (!/^\d{4}-\d{2}$/.test(month)) throw new ApiError('Invalid month');
-    const [rows, team] = await Promise.all([
+    const [rows, team, daily, start] = await Promise.all([
       monthProgress(this.db, month),
       teamProgress(this.db, month),
+      deliveredByDay(this.db, month),
+      analyticsStart(this.db),
     ]);
-    return { month, rows, team };
+    return { month, rows, team, daily, analytics_start: start };
   }
 
   /** Sets an agent's objective for a month (replacing the previous one). */
@@ -530,7 +575,10 @@ export class PerformanceController {
 
   @Get()
   async get(@Query() query: Record<string, string>) {
-    const { from, to } = period(query, 30);
+    const { from: asked, to } = period(query, 30);
+    // Counted from the analytics start date (Business settings).
+    const start = clampToStart(asked, await analyticsStart(this.db));
+    const from = start < to ? start : to;
     const rows = await this.db.call('agent_performance', {
       p_from: from.toISOString(),
       p_to: to.toISOString(),

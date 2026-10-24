@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
-import { Alert, Button, Card, Col, DatePicker, Empty, Form, Input, InputNumber, Modal, Popconfirm, Progress, Row, Select, Table, Tag, Typography } from "antd";
-import { AimOutlined, EditOutlined } from "@ant-design/icons";
+import Link from "next/link";
+import { Alert, Button, Card, Col, DatePicker, Empty, Form, Input, InputNumber, Modal, Popconfirm, Progress, Row, Select, Space, Table, Tag, Typography } from "antd";
+import { AimOutlined, EditOutlined, MinusCircleOutlined, PlusOutlined, TrophyOutlined } from "@ant-design/icons";
 import { message } from "@/components/admin/antd-app";
 import { useAdminT } from "@/lib/admin-i18n";
 import { Kpi, PageHeader } from "@/components/admin/erp/ui";
-import { TargetBar } from "@/components/admin/erp/charts";
+import { BarChart, BarList, TargetBar } from "@/components/admin/erp/charts";
 import { api, formatMoney, useApi } from "@/components/admin/erp/erp-client";
 
 const { Text } = Typography;
@@ -18,8 +19,15 @@ interface Goal {
     target_confirmed: number | null;
     target_delivered: number | null;
     target_revenue: number | null;
-    commission_type: "none" | "percent" | "per_order";
+    commission_type: "none" | "percent" | "per_order" | "tiers";
     commission_value: number;
+    prize_tiers: Tier[];
+}
+
+/** Prize (TND) for reaching a number of delivered orders in the month. */
+interface Tier {
+    orders: number;
+    prize: number;
 }
 
 interface Progress {
@@ -32,6 +40,9 @@ interface Progress {
     delivered: number;
     delivered_revenue: number;
     commission: number;
+    tier: Tier | null;
+    next_tier: Tier | null;
+    orders_to_next: number | null;
 }
 
 interface BusinessGoal {
@@ -68,11 +79,12 @@ interface Team {
 export default function GoalsPage() {
     const { t, locale } = useAdminT();
     const [month, setMonth] = useState<Dayjs>(dayjs().startOf("month"));
-    const { data, loading, reload } = useApi<{ month: string; rows: Progress[]; team: Team }>(`/api/admin/goals?month=${month.format("YYYY-MM")}`);
+    const { data, loading, reload } = useApi<{ month: string; rows: Progress[]; team: Team; daily: { date: string; delivered: number; revenue: number }[]; analytics_start: string | null }>(`/api/admin/goals?month=${month.format("YYYY-MM")}`);
     const [editing, setEditing] = useState<Progress | null>(null);
     const [teamOpen, setTeamOpen] = useState(false);
     const [form] = Form.useForm();
     const [teamForm] = Form.useForm();
+    const commissionType = Form.useWatch("commission_type", form);
     const money = (n: number) => formatMoney(n, locale, 0);
     const rows = data?.rows ?? [];
     const team = data?.team;
@@ -86,14 +98,15 @@ export default function GoalsPage() {
 
     const open = (row: Progress) => {
         form.resetFields();
-        form.setFieldsValue({ commission_type: "none", commission_value: 0, repeat_months: 0, ...(row.goal ?? {}) });
+        form.setFieldsValue({ commission_type: "none", commission_value: 0, repeat_months: 0, ...(row.goal ?? {}), prize_tiers: row.goal?.prize_tiers?.length ? row.goal.prize_tiers : [{ orders: undefined, prize: undefined }] });
         setEditing(row);
     };
 
     const save = async () => {
         const values = await form.validateFields();
         try {
-            await api("/api/admin/goals", { method: "POST", body: { ...values, user_id: editing!.user_id, month: month.format("YYYY-MM") } });
+            const prize_tiers = values.commission_type === "tiers" ? (values.prize_tiers ?? []).filter((t: Tier) => t?.orders && t.prize !== undefined && t.prize !== null) : [];
+            await api("/api/admin/goals", { method: "POST", body: { ...values, prize_tiers, user_id: editing!.user_id, month: month.format("YYYY-MM") } });
             message.success(t("Objective saved"));
             setEditing(null);
             reload();
@@ -163,6 +176,16 @@ export default function GoalsPage() {
                 extra={<DatePicker picker="month" value={month} onChange={(m) => m && setMonth(m.startOf("month"))} allowClear={false} />}
             />
 
+            {data?.analytics_start && (
+                <Alert
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                    title={t("Figures count from {date} (analytics reset).", { date: dayjs(data.analytics_start).format("DD/MM/YYYY") })}
+                    action={<Link href="/admin/settings">{t("Change")}</Link>}
+                />
+            )}
+
             <Card
                 title={<span><AimOutlined /> {t("Goal of the month · {month}", { month: month.format("MM/YYYY") })}</span>}
                 loading={loading}
@@ -202,6 +225,52 @@ export default function GoalsPage() {
                 <Col xs={12} md={6}><Kpi title={t("Commissions due")} value={money(totalCommission)} loading={loading} hint={t("Computed on delivered orders only.")} /></Col>
             </Row>
 
+            <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+                <Col xs={24} lg={14}>
+                    <Card title={t("Orders delivered per day")} loading={loading} style={{ height: "100%" }}>
+                        <BarChart
+                            data={(data?.daily ?? []).map((d) => ({
+                                label: d.date.slice(8),
+                                value: d.delivered,
+                                tooltip: t("{date}: {count} delivered · {amount}", { date: dayjs(d.date).format("DD/MM"), count: d.delivered, amount: money(d.revenue) }),
+                            }))}
+                            emptyText={t("No delivered orders this month yet.")}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} lg={10}>
+                    <Card title={<span><TrophyOutlined /> {t("Prizes and commissions to pay")}</span>} loading={loading} style={{ height: "100%" }}>
+                        {rows.some((r) => r.commission > 0) ? (
+                            <BarList
+                                format={money}
+                                rows={rows.filter((r) => r.commission > 0).sort((a, b) => b.commission - a.commission).map((r) => ({
+                                    key: r.user_id,
+                                    label: r.email ?? r.user_id,
+                                    value: r.commission,
+                                    sub: r.tier ? t("Tier {orders} orders reached", { orders: r.tier.orders }) : undefined,
+                                }))}
+                            />
+                        ) : (
+                            <Empty description={t("Nothing earned yet this month.")} />
+                        )}
+                        {rows.some((r) => r.next_tier) && (
+                            <div style={{ marginTop: 16 }}>
+                                <Text strong>{t("Next prizes")}</Text>
+                                {rows.filter((r) => r.next_tier).map((r) => (
+                                    <div key={r.user_id} style={{ marginTop: 8 }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                                            <Text>{r.email ?? r.user_id}</Text>
+                                            <Text type="secondary">{t("{count} more for {amount}", { count: r.orders_to_next ?? 0, amount: money(r.next_tier!.prize) })}</Text>
+                                        </div>
+                                        <Progress percent={Math.min(100, Math.round((r.delivered / r.next_tier!.orders) * 100))} size="small" format={() => `${r.delivered}/${r.next_tier!.orders}`} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+                </Col>
+            </Row>
+
             <Card title={t("Team members")}>
                 {goal && (sumAgents("target_revenue") > 0 || sumAgents("target_orders") > 0) && (
                     <Alert
@@ -234,7 +303,12 @@ export default function GoalsPage() {
                         },
                         {
                             title: t("Commission"), key: "cm", align: "right", render: (_, r) => !r.goal || r.goal.commission_type === "none" ? <Text type="secondary">—</Text> : (
-                                <span><b>{formatMoney(r.commission, locale)}</b><div style={{ fontSize: 12, color: "#8c8c8c" }}>{r.goal.commission_type === "percent" ? t("{value}% of delivered sales", { value: Number(r.goal.commission_value) }) : t("{value} TND per delivered order", { value: Number(r.goal.commission_value) })}</div></span>
+                                <span><b>{formatMoney(r.commission, locale)}</b><div style={{ fontSize: 12, color: "#8c8c8c" }}>{
+                                    r.goal.commission_type === "percent" ? t("{value}% of delivered sales", { value: Number(r.goal.commission_value) })
+                                    : r.goal.commission_type === "per_order" ? t("{value} TND per delivered order", { value: Number(r.goal.commission_value) })
+                                    : r.next_tier ? t("{count} more delivered for {amount}", { count: r.orders_to_next ?? 0, amount: money(r.next_tier.prize) })
+                                    : r.tier ? t("Top tier reached") : t("Prizes by delivered orders")
+                                }</div></span>
                             ),
                         },
                         { title: "", key: "e", render: (_, r) => <Button size="small" icon={<EditOutlined />} onClick={() => open(r)}>{r.goal ? t("Edit") : t("Set objective")}</Button> },
@@ -267,10 +341,47 @@ export default function GoalsPage() {
                         <Col span={12}><Form.Item name="target_revenue" label={t("Delivered sales (TND)")}><InputNumber min={0} style={{ width: "100%" }} /></Form.Item></Col>
                         <Col span={12}>
                             <Form.Item name="commission_type" label={t("Commission")}>
-                                <Select options={[{ value: "none", label: t("None") }, { value: "percent", label: t("% of delivered sales") }, { value: "per_order", label: t("Amount per delivered order") }]} />
+                                <Select options={[{ value: "none", label: t("None") }, { value: "percent", label: t("% of delivered sales") }, { value: "per_order", label: t("Amount per delivered order") }, { value: "tiers", label: t("Prizes by number of delivered orders") }]} />
                             </Form.Item>
                         </Col>
-                        <Col span={12}><Form.Item name="commission_value" label={t("Value")}><InputNumber min={0} precision={3} style={{ width: "100%" }} /></Form.Item></Col>
+                        {commissionType === "percent" || commissionType === "per_order" ? (
+                            <Col span={12}><Form.Item name="commission_value" label={commissionType === "percent" ? t("Percent of delivered sales") : t("TND per delivered order")}><InputNumber min={0} precision={3} style={{ width: "100%" }} /></Form.Item></Col>
+                        ) : <Col span={12} />}
+                        {commissionType === "tiers" && (
+                            <Col span={24}>
+                                <Text type="secondary">{t("The agent earns the prize of the highest tier reached with orders delivered in the month.")}</Text>
+                                <Form.List name="prize_tiers">
+                                    {(fields, { add, remove }) => (
+                                        <div style={{ marginTop: 8 }}>
+                                            {fields.map((field) => (
+                                                <Space key={field.key} align="baseline" wrap style={{ display: "flex" }}>
+                                                    {/* InputNumber in Space.Compact needs a noStyle Form.Item; errors show on the outer one. */}
+                                                    <Form.Item>
+                                                        <Space.Compact>
+                                                            <Form.Item noStyle name={[field.name, "orders"]} rules={[{ required: true, message: t("Required") }]}>
+                                                                <InputNumber min={1} precision={0} placeholder="50" aria-label={t("orders")} />
+                                                            </Form.Item>
+                                                            <Button disabled>{t("orders")}</Button>
+                                                        </Space.Compact>
+                                                    </Form.Item>
+                                                    <Text>→</Text>
+                                                    <Form.Item>
+                                                        <Space.Compact>
+                                                            <Form.Item noStyle name={[field.name, "prize"]} rules={[{ required: true, message: t("Required") }]}>
+                                                                <InputNumber min={0} precision={3} placeholder="100" aria-label="TND" />
+                                                            </Form.Item>
+                                                            <Button disabled>TND</Button>
+                                                        </Space.Compact>
+                                                    </Form.Item>
+                                                    {fields.length > 1 && <MinusCircleOutlined onClick={() => remove(field.name)} aria-label={t("Remove")} />}
+                                                </Space>
+                                            ))}
+                                            {fields.length < 10 && <Button type="dashed" icon={<PlusOutlined />} onClick={() => add()}>{t("Add a tier")}</Button>}
+                                        </div>
+                                    )}
+                                </Form.List>
+                            </Col>
+                        )}
                         <Col span={24}><Form.Item name="repeat_months" label={t("Also for the next months")}><InputNumber min={0} max={11} style={{ width: "100%" }} /></Form.Item></Col>
                     </Row>
                 </Form>

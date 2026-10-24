@@ -15,6 +15,7 @@ import MonthGoalCard, { type MonthGoal } from "@/components/admin/erp/MonthGoalC
 const { Text } = Typography;
 
 interface Overview {
+    analytics_start?: string | null;
     orders: { created: number; created_value: number; confirmed: number; delivered: number; returned: number; cancelled: number; pending_now: number; in_delivery_now: number; finished: number };
     money: {
         delivered_revenue: number; delivered_revenue_ht: number; cogs: number; missing_cost_lines: number; gross_margin: number; ad_spend: number;
@@ -77,6 +78,16 @@ export default function OwnerOverviewPage() {
                 subtitle={t("What the business really earned, where the money is, and what to watch.")}
                 extra={<Button icon={<ReloadOutlined />} onClick={reload} loading={loading}>{t("Refresh")}</Button>}
             />
+
+            {data?.analytics_start && (
+                <Alert
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                    title={t("Figures count from {date} (analytics reset).", { date: dayjs(data.analytics_start).format("DD/MM/YYYY") })}
+                    action={<Link href="/admin/settings">{t("Change")}</Link>}
+                />
+            )}
 
             <Card style={{ marginBottom: 16 }} styles={{ body: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" } }}>
                 <PeriodFilter value={periodValue} onChange={setPeriod} />

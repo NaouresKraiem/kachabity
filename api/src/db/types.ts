@@ -113,6 +113,7 @@ export interface AgentGoals {
   deleted_at: Timestamp | null;
   id: Generated<string>;
   month: string;
+  prize_tiers: Generated<Json>;
   target_confirmed: number | null;
   target_delivered: number | null;
   target_orders: number | null;

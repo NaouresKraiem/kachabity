@@ -1,3 +1,4 @@
+import { clampToStart, commissionFor } from '@shared/erp/objectives';
 import type { Database } from '../db/database';
 
 // Port of lib/erp/goals.ts and lib/erp/team.ts: monthly goals and progress, measured with the
@@ -21,9 +22,65 @@ export function monthRange(month: string) {
   return { start, end };
 }
 
+/** The analytics start date (Business settings), YYYY-MM-DD or null: figures count only from it. */
+export async function analyticsStart(db: Database): Promise<string | null> {
+  const row = await db
+    .selectFrom('erp_settings')
+    .select('value')
+    .where('key', '=', 'analytics')
+    .executeTakeFirst();
+  return (
+    (row?.value as { start_date?: string | null } | undefined)?.start_date ??
+    null
+  );
+}
+
+/** The month's range, starting no earlier than the analytics start date (empty if it is later). */
+async function countedRange(db: Database, month: string) {
+  const { start, end } = monthRange(month);
+  const from = clampToStart(start, await analyticsStart(db));
+  return { start: from < end ? from : end, end };
+}
+
+/** Orders delivered each day of the month (all channels) and their sales, for the charts. */
+export async function deliveredByDay(db: Database, month: string) {
+  const { start, end } = await countedRange(db, month);
+  const rows = await db
+    .selectFrom('orders')
+    .select(['delivered_at', 'total'])
+    .where('deleted_at', 'is', null)
+    .where('status', '=', 'delivered')
+    .where('delivered_at', '>=', start.toISOString())
+    .where('delivered_at', '<', end.toISOString())
+    .execute();
+  const tunisDay = (d: Date) =>
+    new Date(d.getTime() + 3_600_000).toISOString().slice(0, 10);
+  const days = new Map<string, { delivered: number; revenue: number }>();
+  for (
+    let d = new Date(monthRange(month).start);
+    d < end;
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
+    days.set(tunisDay(d), { delivered: 0, revenue: 0 });
+  }
+  for (const row of rows) {
+    const day = days.get(tunisDay(new Date(row.delivered_at!)));
+    if (day) {
+      day.delivered += 1;
+      day.revenue += Number(row.total);
+    }
+  }
+  return [...days].map(([date, v]) => ({
+    date,
+    delivered: v.delivered,
+    revenue: Math.round(v.revenue * 1000) / 1000,
+  }));
+}
+
 /** The whole business against its goal for a month (website, agents, till). */
 export async function teamProgress(db: Database, month: string) {
-  const { start, end } = monthRange(month);
+  const { start, end } = await countedRange(db, month);
+  const monthStart = monthRange(month).start;
   const [goal, data] = await Promise.all([
     db
       .selectFrom('business_goals')
@@ -45,7 +102,7 @@ export async function teamProgress(db: Database, month: string) {
   ]);
   const delivered = Number(data.orders.delivered);
   const returned = Number(data.orders.returned);
-  const total = Math.round((end.getTime() - start.getTime()) / 86_400_000);
+  const total = Math.round((end.getTime() - monthStart.getTime()) / 86_400_000);
   return {
     goal: goal ?? null,
     created: Number(data.orders.created),
@@ -62,21 +119,25 @@ export async function teamProgress(db: Database, month: string) {
     days_in_month: total,
     days_elapsed: Math.max(
       0,
-      Math.min(total, Math.ceil((Date.now() - start.getTime()) / 86_400_000)),
+      Math.min(
+        total,
+        Math.ceil((Date.now() - monthStart.getTime()) / 86_400_000),
+      ),
     ),
   };
 }
 
 /**
  * Each team member's objective and results for a month: the orders they handle (assigned, else
- * entered) created, confirmed and delivered in the month, and their commission.
+ * entered) created, confirmed and delivered in the month, and their commission
+ * (@shared/erp/objectives: percent, per order or prize tiers). Counts start at the analytics start date.
  */
 export async function monthProgress(
   db: Database,
   month: string,
   onlyUser?: string,
 ) {
-  const { start, end } = monthRange(month);
+  const { start, end } = await countedRange(db, month);
   const since = start.toISOString();
   let orders = db
     .selectFrom('orders')
@@ -131,13 +192,7 @@ export async function monthProgress(
       );
       const revenue = delivered.reduce((s, o) => s + Number(o.total), 0);
       const goal = goals.find((g) => g.user_id === member.user_id) ?? null;
-      const commission = !goal
-        ? 0
-        : goal.commission_type === 'percent'
-          ? Math.round(revenue * Number(goal.commission_value) * 10) / 1000
-          : goal.commission_type === 'per_order'
-            ? delivered.length * Number(goal.commission_value)
-            : 0;
+      const earned = commissionFor(goal, delivered.length, revenue);
       return {
         user_id: member.user_id,
         email: member.email,
@@ -147,7 +202,7 @@ export async function monthProgress(
         confirmed: mine.filter((o) => inMonth(o.confirmed_at)).length,
         delivered: delivered.length,
         delivered_revenue: revenue,
-        commission,
+        ...earned,
       };
     });
 }

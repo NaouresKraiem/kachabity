@@ -35,7 +35,10 @@ interface MyWork {
     unread_customers: number;
     month: {
         created: number; confirmed: number; delivered: number; delivered_revenue: number; commission: number;
-        goal: { target_orders: number | null; target_confirmed: number | null; target_delivered: number | null; target_revenue: number | null; commission_type: string } | null;
+        tier: { orders: number; prize: number } | null;
+        next_tier: { orders: number; prize: number } | null;
+        orders_to_next: number | null;
+        goal: { target_orders: number | null; target_confirmed: number | null; target_delivered: number | null; target_revenue: number | null; commission_type: string; prize_tiers?: { orders: number; prize: number }[] } | null;
     } | null;
     team: MonthGoal | null;
 }
@@ -92,6 +95,18 @@ export default function MyWorkPage() {
                 <Col xs={12} md={6}><Kpi loading={loading} title={t("Delivered this month")} value={data?.month?.delivered ?? 0} sub={goal?.target_delivered ? <TargetBar value={data?.month?.delivered ?? 0} target={goal.target_delivered} /> : money(data?.month?.delivered_revenue ?? 0)} /></Col>
                 <Col xs={12} md={6}><Kpi loading={loading} title={goal && goal.commission_type !== "none" ? t("Commission so far") : t("Delivered sales")} value={goal && goal.commission_type !== "none" ? money(data?.month?.commission ?? 0) : money(data?.month?.delivered_revenue ?? 0)} sub={goal?.target_revenue ? <TargetBar value={data?.month?.delivered_revenue ?? 0} target={goal.target_revenue} format={money} /> : undefined} /></Col>
             </Row>
+
+            {goal?.commission_type === "tiers" && data?.month && (
+                <Alert
+                    type={data.month.next_tier ? "info" : "success"}
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                    title={data.month.next_tier
+                        ? t("{count} more delivered orders this month for a prize of {amount}.", { count: data.month.orders_to_next ?? 0, amount: money(data.month.next_tier.prize) })
+                        : t("You reached the top prize of the month!")}
+                    description={(goal.prize_tiers ?? []).map((tier) => `${tier.orders} → ${money(tier.prize)}`).join(" · ")}
+                />
+            )}
 
             {data?.team && <MonthGoalCard goal={data.team} money={money} />}
 
