@@ -1,5 +1,5 @@
 // Creates (or resets) the local owner account for the Docker setup (docs/DOCKER.md):
-// admin@kachabity.local with LOCAL_PASSWORD from .env.docker. Local database only.
+// admin@kachabity.local with LOCAL_PASSWORD from .env.docker, in the compose db service.
 // Usage: node scripts/docker/create-admin.mjs   (import-live-data.mjs runs it after each import)
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -15,7 +15,7 @@ const sql = `insert into public.users (email, name, password_hash, app_metadata,
 values (${quote(email)}, 'Admin', extensions.crypt(${quote(password)}, extensions.gen_salt('bf', 10)), '{"role":"owner"}', now())
 on conflict (lower(email)) where deleted_at is null do update
    set password_hash = excluded.password_hash, app_metadata = excluded.app_metadata, email_confirmed_at = now();`;
-const result = spawnSync('docker', ['exec', '-i', 'supabase_db_kachabity', 'psql', '-q', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'], {
+const result = spawnSync('docker', ['compose', 'exec', '-T', 'db', 'psql', '-q', '-U', 'kachabity', '-d', 'kachabity', '-v', 'ON_ERROR_STOP=1'], {
     input: sql,
     stdio: ['pipe', 'inherit', 'inherit'],
 });

@@ -610,7 +610,7 @@ export const openApiSpec = {
         '/api/upload/image': {
             post: {
                 tags: ['Operations'],
-                summary: 'Upload image to Supabase storage',
+                summary: 'Upload an image to the products bucket (R2)',
                 requestBody: {
                     required: true,
                     content: {

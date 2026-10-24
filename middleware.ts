@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server';
 import { supportedLanguages, defaultLanguage, detectLanguageFromHeader, isValidLocale } from './lib/language-utils';
-import { ADMIN_HEADERS, allows, getAdminRole, getPermissions, type AdminRole, type Requirement } from './lib/admin-auth';
-import { supabaseUrl } from './lib/supabase-env';
-import { apiRequirement } from './lib/api-access';
+import { allows, getAdminRole, getPermissions, type Requirement } from './lib/admin-auth';
 import { ACCESS_COOKIE, REFRESH_COOKIE, verifyAccessToken } from './lib/auth-session';
 
 const ADMIN_LOGIN_PATH = '/admin/login';
@@ -34,25 +32,12 @@ const PAGE_PERMISSIONS: [string, Requirement][] = [
     ['/admin/cart-analytics', { any: ['analytics'] }],
 ];
 
+// What an admin page needs. API requests are checked by the NestJS guard (lib/api-access.ts).
 function requirementFor(request: NextRequest): Requirement | null {
-    const { pathname, searchParams } = request.nextUrl;
-    const method = request.method.toUpperCase();
+    const { pathname } = request.nextUrl;
     const under = (prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
-
-    if (under('/admin')) {
-        if (pathname === ADMIN_LOGIN_PATH) return null;
-        return PAGE_PERMISSIONS.find(([prefix]) => under(prefix))?.[1] ?? { any: [] };
-    }
-
-    return apiRequirement(pathname, method, searchParams);
-}
-
-// Only gated requests carry a verified identity (and the activity log trusts it), so any
-// identity headers a client sent itself are dropped everywhere else.
-function withoutAdminHeaders(request: NextRequest): Headers {
-    const headers = new Headers(request.headers);
-    Object.values(ADMIN_HEADERS).forEach((name) => headers.delete(name));
-    return headers;
+    if (!under('/admin') || pathname === ADMIN_LOGIN_PATH) return null;
+    return PAGE_PERMISSIONS.find(([prefix]) => under(prefix))?.[1] ?? { any: [] };
 }
 
 // The signed-in user from the kb_access cookie set by the NestJS auth API (lib/auth-session.ts),
@@ -94,23 +79,15 @@ async function refreshSession(request: NextRequest): Promise<string[]> {
 
 // A signed-in staff member was refused: recorded in the activity log, which alerts the owner
 // (private.owner_alerts). Prefetches are skipped: they aren't something the person did.
-function logRefusal(request: NextRequest, event: NextFetchEvent, user: { id: string | null; email: string | null }, role: AdminRole) {
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+function logRefusal(request: NextRequest, event: NextFetchEvent) {
     const prefetch = request.headers.get('next-router-prefetch') || request.headers.get('purpose') === 'prefetch';
-    if (!serviceKey || !supabaseUrl || !user.id || prefetch) return;
+    if (prefetch) return;
+    // NestJS records it under the signed-in user (from the same session cookie).
     event.waitUntil(
-        fetch(`${supabaseUrl}/rest/v1/activity_log`, {
+        fetch(`${process.env.NEST_URL ?? request.nextUrl.origin}/api/admin/access-denied`, {
             method: 'POST',
-            headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-            body: JSON.stringify({
-                actor_id: user.id,
-                actor_email: user.email,
-                actor_role: role,
-                action: 'access_denied',
-                entity: 'access',
-                label: `${request.method} ${request.nextUrl.pathname}`,
-                changes: { query: request.nextUrl.search || null },
-            }),
+            headers: { cookie: request.headers.get('cookie') ?? '', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: request.nextUrl.pathname, query: request.nextUrl.search || null }),
         }).catch(() => undefined)
     );
 }
@@ -142,19 +119,6 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
 async function handle(request: NextRequest, event: NextFetchEvent) {
     const pathname = request.nextUrl.pathname;
-    const method = request.method.toUpperCase();
-
-    // Allow trusted external systems to read inventory without an admin session.
-    // The key is server-side only and must be sent as `x-api-key`.
-    if (
-        pathname === '/api/stock/inventory' &&
-        method === 'GET' &&
-        process.env.STOCK_API_KEY &&
-        request.headers.get('x-api-key') === process.env.STOCK_API_KEY
-    ) {
-        return NextResponse.next();
-    }
-
 
     // Already-signed-in back-office users have no reason to see the login form.
     if (pathname === ADMIN_LOGIN_PATH) {
@@ -169,29 +133,15 @@ async function handle(request: NextRequest, event: NextFetchEvent) {
         const user = await getRequestUser(request);
         const role = getAdminRole(user);
         if (!role) {
-            if (pathname.startsWith('/api/')) {
-                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-            }
             const loginUrl = new URL(ADMIN_LOGIN_PATH, request.url);
             loginUrl.searchParams.set('next', pathname);
             return NextResponse.redirect(loginUrl);
         }
-        const permissions = getPermissions(user);
-        if (!allows(needed, role, permissions)) {
-            if (user) logRefusal(request, event, user, role);
-            if (pathname.startsWith('/api/')) {
-                return NextResponse.json({ success: false, error: "You don't have permission to do this." }, { status: 403 });
-            }
+        if (!allows(needed, role, getPermissions(user))) {
+            logRefusal(request, event);
             return NextResponse.redirect(new URL('/admin/dashboard', request.url));
         }
-
-        // Verified identity for route handlers (overwrites anything the client sent).
-        const headers = new Headers(request.headers);
-        headers.set(ADMIN_HEADERS.role, role);
-        headers.set(ADMIN_HEADERS.userId, user?.id ?? '');
-        headers.set(ADMIN_HEADERS.email, user?.email ?? '');
-        headers.set(ADMIN_HEADERS.permissions, permissions.join(','));
-        return NextResponse.next({ request: { headers } });
+        return NextResponse.next({ request: { headers: request.headers } });
     }
 
     if (
@@ -199,15 +149,15 @@ async function handle(request: NextRequest, event: NextFetchEvent) {
         pathname.startsWith('/favicon.ico') ||
         pathname.includes('.')
     ) {
-        return NextResponse.next({ request: { headers: withoutAdminHeaders(request) } });
+        return NextResponse.next({ request: { headers: request.headers } });
     }
 
     if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-        return NextResponse.next({ request: { headers: withoutAdminHeaders(request) } });
+        return NextResponse.next({ request: { headers: request.headers } });
     }
 
     if (pathname === '/api-docs' || pathname.startsWith('/api-docs/') || pathname.startsWith('/api/')) {
-        return NextResponse.next({ request: { headers: withoutAdminHeaders(request) } });
+        return NextResponse.next({ request: { headers: request.headers } });
     }
 
     const segments = pathname.split('/');
@@ -234,7 +184,7 @@ async function handle(request: NextRequest, event: NextFetchEvent) {
     }
 
     // Lets the root layout set <html lang> for the requested locale.
-    const requestHeaders = withoutAdminHeaders(request);
+    const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-locale', locale);
     return NextResponse.next({ request: { headers: requestHeaders } });
 }

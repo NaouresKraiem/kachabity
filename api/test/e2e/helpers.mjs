@@ -1,15 +1,17 @@
 import { hashSync } from 'bcryptjs';
+import pg from 'pg';
 
-// Shared by the end-to-end suites. They sign in test users through /api/auth and call the API
-// through APP_URL, so they test whichever server answers (Next.js, or NestJS through NEST_ROUTES).
-// Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY (local values from `supabase status`),
-// APP_URL (default http://localhost:3000). Never point them at the live project: they write data.
-export const SUPA = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
-export const ANON = process.env.SUPABASE_ANON_KEY;
-export const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Shared by the end-to-end suites. They sign in test users through /api/auth and call the site
+// through APP_URL; sql() reads and prepares rows directly in the database.
+// Env: DATABASE_URL (default: the local Docker Postgres), APP_URL (default http://localhost:3000).
+// Never point them at the live database: they write data.
 export const APP = process.env.APP_URL ?? 'http://localhost:3000';
-if (!ANON || !SERVICE) throw new Error('Set SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY');
-if (!/127\.0\.0\.1|localhost/.test(SUPA)) throw new Error('The e2e suites only run against a local Supabase');
+const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://kachabity:kachabity-local@127.0.0.1:5433/kachabity';
+if (!/@(127\.0\.0\.1|localhost)[:/]/.test(DATABASE_URL)) throw new Error('The e2e suites only run against a local database');
+const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 2 });
+
+/** Rows of a query, e.g. sql('select id from products where slug = $1', [slug]). */
+export const sql = async (text, params = []) => (await pool.query(text, params)).rows;
 
 let failures = 0;
 export const ok = (cond, label, extra) => {
@@ -18,13 +20,7 @@ export const ok = (cond, label, extra) => {
 };
 export const done = () => {
     console.log(failures ? `\n${failures} FAILED` : '\nALL PASSED');
-    process.exit(failures ? 1 : 0);
-};
-
-export const admin = async (path, init = {}) => {
-    const r = await fetch(`${SUPA}${path}`, { ...init, headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json', Prefer: 'return=representation', ...(init.headers ?? {}) } });
-    const text = await r.text();
-    try { return JSON.parse(text); } catch { return text; }
+    pool.end().finally(() => process.exit(failures ? 1 : 0));
 };
 
 const PASSWORD = 'Test-pass-123!';
@@ -32,10 +28,12 @@ const PASSWORD_HASH = hashSync(PASSWORD, 10);
 
 /** A confirmed account with these app_metadata (role, permissions), signed in through /api/auth/sign-in. */
 export async function user(email, appMeta = {}) {
-    const account = { app_metadata: appMeta, password_hash: PASSWORD_HASH, email_confirmed_at: new Date().toISOString() };
-    const updated = await admin(`/rest/v1/users?email=eq.${encodeURIComponent(email)}&deleted_at=is.null`, { method: 'PATCH', body: JSON.stringify(account) });
-    if (!Array.isArray(updated) || updated.length === 0)
-        await admin('/rest/v1/users', { method: 'POST', body: JSON.stringify({ ...account, email, name: email.split('@')[0] }) });
+    const updated = await sql(
+        'update users set app_metadata = $2, password_hash = $3, email_confirmed_at = now() where lower(email) = $1 and deleted_at is null returning id',
+        [email, appMeta, PASSWORD_HASH],
+    );
+    if (updated.length === 0)
+        await sql('insert into users (email, name, app_metadata, password_hash, email_confirmed_at) values ($1, $2, $3, $4, now())', [email, email.split('@')[0], appMeta, PASSWORD_HASH]);
     const signIn = await fetch(`${APP}/api/auth/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: PASSWORD }) });
     const s = await signIn.json();
     if (!signIn.ok) throw new Error(`Sign-in failed for ${email}: ${JSON.stringify(s)}`);

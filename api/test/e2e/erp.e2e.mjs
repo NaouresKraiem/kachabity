@@ -1,5 +1,5 @@
 // ERP flows: orders, payments, till, purchasing, accounting, goals and permissions.
-import { admin, APP, done, ok, user } from './helpers.mjs';
+import { APP, done, ok, sql, user } from './helpers.mjs';
 
 const owner = await user('owner@test.local', { role: 'owner' });
 const agent = await user('agent@test.local', { role: 'staff', permissions: ['orders', 'customers'] });
@@ -7,13 +7,13 @@ const cashier = await user('cashier@test.local', { role: 'staff', permissions: [
 ok(owner.id && agent.id && cashier.id, 'test users signed in');
 
 // Catalog seed: online + shop locations, one tracked product with a variant.
-let locs = await admin('/rest/v1/locations?select=*');
-let online = locs.find((l) => l.sells_online) ?? (await admin('/rest/v1/locations', { method: 'POST', body: JSON.stringify({ name: 'Online', sells_online: true }) }))[0];
-let shop = locs.find((l) => l.name === 'Shop') ?? (await admin('/rest/v1/locations', { method: 'POST', body: JSON.stringify({ name: 'Shop', sells_online: false }) }))[0];
-let product = (await admin('/rest/v1/products?slug=eq.e2e-kachabia&select=*'))[0]
-    ?? (await admin('/rest/v1/products', { method: 'POST', body: JSON.stringify({ name: 'E2E Kachabia', slug: 'e2e-kachabia', base_price: 120, stock_tracked: true }) }))[0];
-let variant = (await admin(`/rest/v1/product_variants?product_id=eq.${product.id}&select=*`))[0]
-    ?? (await admin('/rest/v1/product_variants', { method: 'POST', body: JSON.stringify({ product_id: product.id, price: 120 }) }))[0];
+let locs = await sql('select * from locations');
+let online = locs.find((l) => l.sells_online) ?? (await sql("insert into locations (name, sells_online) values ('Online', true) returning *"))[0];
+let shop = locs.find((l) => l.name === 'Shop') ?? (await sql("insert into locations (name, sells_online) values ('Shop', false) returning *"))[0];
+let product = (await sql("select * from products where slug = 'e2e-kachabia'"))[0]
+    ?? (await sql("insert into products (name, slug, base_price, stock_tracked) values ('E2E Kachabia', 'e2e-kachabia', 120, true) returning *"))[0];
+let variant = (await sql('select * from product_variants where product_id = $1', [product.id]))[0]
+    ?? (await sql('insert into product_variants (product_id, price) values ($1, 120) returning *', [product.id]))[0];
 ok(online?.id && shop?.id && variant?.id, 'catalog seeded', { online, shop, variant });
 
 // Access control
@@ -160,8 +160,8 @@ ok(mine && mine.delivered === 1 && Math.abs(mine.commission - 4.96) < 0.001, 'ag
 
 // Product cost is the reference: a product sold without a cost, then given one
 const slug2 = `e2e-jebba-${Date.now()}`;
-const p2 = (await admin('/rest/v1/products', { method: 'POST', body: JSON.stringify({ name: 'E2E Jebba', slug: slug2, base_price: 200 }) }))[0];
-const v2 = (await admin('/rest/v1/product_variants', { method: 'POST', body: JSON.stringify({ product_id: p2.id, price: 200 }) }))[0];
+const [p2] = await sql("insert into products (name, slug, base_price) values ('E2E Jebba', $1, 200) returning *", [slug2]);
+const [v2] = await sql('insert into product_variants (product_id, price) values ($1, 200) returning *', [p2.id]);
 r = await agent.call('/api/sales/orders', 'POST', { customer: { phone: '55667788', first_name: 'Sami', governorate: 'Sfax', city: 'Sfax', address: 'x' }, items: [{ product_id: p2.id, variant_id: v2.id, quantity: 1 }], channel: 'phone', shipping_cost: 0 });
 const o2 = r.json?.data?.id;
 await owner.call('/api/orders', 'PUT', { id: o2, status: 'delivered' });
@@ -172,12 +172,12 @@ r = await owner.call('/api/stock/costs', 'PUT', { product_id: p2.id, cost: 90 })
 ok(r.json?.success, 'set product cost', r.json);
 r = await owner.call(`/api/owner/overview?${win}&product=${p2.id}`);
 ok(Number(r.json?.data?.money?.cogs) === 90 && r.json.data.money.missing_cost_lines === 0, 'past order line takes the product cost', r.json?.data?.money);
-const line = await admin(`/rest/v1/order_items?order_id=eq.${o2}&select=unit_cost`);
+const line = await sql('select unit_cost from order_items where order_id = $1', [o2]);
 ok(Number(line[0]?.unit_cost) === 90, 'order line stored the cost', line);
 r = await owner.call('/api/stock/costs', 'PUT', { product_id: p2.id, cost: 100 });
 r = await agent.call('/api/sales/orders', 'POST', { customer: { phone: '55667788', first_name: 'Sami', governorate: 'Sfax', city: 'Sfax', address: 'x' }, items: [{ product_id: p2.id, variant_id: v2.id, quantity: 1 }], channel: 'phone', shipping_cost: 0 });
-const line2 = await admin(`/rest/v1/order_items?order_id=eq.${r.json?.data?.id}&select=unit_cost`);
-ok(Number(line2[0]?.unit_cost) === 100 && Number((await admin(`/rest/v1/order_items?order_id=eq.${o2}&select=unit_cost`))[0]?.unit_cost) === 90, 'new orders take the new cost, old ones keep theirs');
+const line2 = await sql('select unit_cost from order_items where order_id = $1', [r.json?.data?.id]);
+ok(Number(line2[0]?.unit_cost) === 100 && Number((await sql('select unit_cost from order_items where order_id = $1', [o2]))[0]?.unit_cost) === 90, 'new orders take the new cost, old ones keep theirs');
 
 // Monthly business goal
 const thisMonth = new Date().toISOString().slice(0, 7);

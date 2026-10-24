@@ -8,6 +8,7 @@ import {
   Query,
   Req,
   Sse,
+  HttpCode,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { z } from 'zod';
@@ -354,6 +355,38 @@ export class MeController {
       email: actor.email,
       permissions: actor.permissions,
     };
+  }
+}
+
+/** An admin page middleware.ts refused this user: recorded like the guard's refusals (owner alert). */
+@Controller('admin/access-denied')
+@Public()
+export class AccessDeniedController {
+  constructor(private readonly db: Database) {}
+
+  @Post()
+  @HttpCode(204)
+  async record(
+    @CurrentActor() actor: RequestActor,
+    @Body() body: { path?: unknown; query?: unknown },
+  ) {
+    const path = typeof body?.path === 'string' ? body.path.slice(0, 300) : '';
+    if (!path.startsWith('/admin')) throw new ApiError('path is required');
+    await this.db
+      .insertInto('activity_log')
+      .values({
+        actor_id: actor.userId,
+        actor_email: actor.email,
+        actor_role: actor.role,
+        action: 'access_denied',
+        entity: 'access',
+        label: `GET ${path}`,
+        changes: JSON.stringify({
+          query:
+            typeof body.query === 'string' ? body.query.slice(0, 300) : null,
+        }),
+      })
+      .execute();
   }
 }
 

@@ -68,7 +68,7 @@ function ringProducts(data: LandingData): LandingProduct[] {
   return cards;
 }
 
-// Hero rows change rarely (edited in the Supabase dashboard): serve them from the Next.js data cache.
+// Hero rows change rarely: serve them from the Next.js data cache.
 const getHeroContent = cachedCatalogQuery("hero-content", () => storefront<{ heroData: any[]; smallCardsData: any[] }>("hero"));
 
 async function HeroContent({ locale }: { locale: string }) {

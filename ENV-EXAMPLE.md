@@ -1,14 +1,17 @@
 # Environment Variables Example
 
-Copy this to `.env.local` for local development or add to Vercel/Netlify for production.
+Copy this to `.env.local` for local development, or set it on the server. The Next.js app (web) and the NestJS API (api) read the same file in Docker; `api/.env.example` lists what the API needs.
 
 ## Required Variables
 
 ```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# Postgres 17, as the role that owns the tables (api only).
+DATABASE_URL=postgresql://kachabity:password@db:5432/kachabity
+# Where the web app reaches the API (server side and the /api rewrite).
+NEST_URL=http://localhost:4000
+# Shared by web and api: the api refreshes the storefront cache (POST /api/internal/revalidate).
+REVALIDATE_SECRET=
+NEXT_URL=http://localhost:3000
 
 # Gmail SMTP Configuration (for sending emails)
 GMAIL_USER=your-email@gmail.com
@@ -32,8 +35,8 @@ FILES_PUBLIC_URL=https://files.yourdomain.com
 # Desktop notifications (NestJS sends Web Push): the same values the send-push Edge Function had.
 VAPID_KEYS={"publicKey":{...},"privateKey":{...}}
 VAPID_SUBJECT=mailto:you@yourdomain.com
-# NestJS LISTENs for new notifications; give it a direct or session-mode database URL when
-# DATABASE_URL is a transaction pooler (Supabase port 6543).
+# NestJS LISTENs for new notifications; set this only when DATABASE_URL goes through a
+# transaction pooler (PgBouncer), with a direct URL.
 LISTEN_DATABASE_URL=
 ```
 

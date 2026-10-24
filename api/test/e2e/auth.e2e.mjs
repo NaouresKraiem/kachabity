@@ -1,7 +1,7 @@
 // Accounts and sessions (/api/auth), the shopper's own data (/api/account) and Admin → Team,
 // through APP_URL. Local only: it creates accounts. Run like the other suites (api/README.md).
 import { createHash, randomBytes } from 'node:crypto';
-import { admin, APP, done, ok, user } from './helpers.mjs';
+import { APP, done, ok, sql, user } from './helpers.mjs';
 
 const cookiesOf = (response) => response.headers.getSetCookie().map((c) => c.split(';')[0]);
 const jar = (lines) => lines.filter((c) => !c.endsWith('=')).join('; ');
@@ -56,7 +56,7 @@ ok((await call('/api/auth/me', { cookie: 'kb_access=eyJhbGciOiJIUzI1NiJ9.eyJzdWI
 // Profile, favorites, reviews, orders.
 const profile = await call('/api/auth/profile', { method: 'PUT', cookie: session, body: { full_name: 'Renamed Shopper', phone: '22123456', city: 'Tunis' } });
 ok(profile.status === 200 && profile.json.data.user_metadata.city === 'Tunis', 'profile saved', profile.json);
-const product = (await admin('/rest/v1/products?select=id&status=eq.active&deleted_at=is.null&limit=1'))[0];
+const [product] = await sql("select id from products where status = 'active' and deleted_at is null limit 1");
 ok((await call('/api/account/favorites', { cookie: session, body: { product_id: product.id } })).status === 200, 'favorite added');
 let favorites = (await call('/api/account/favorites', { cookie: session })).json.data;
 ok(favorites.length === 1 && favorites[0].product_id === product.id && favorites[0].products?.id === product.id, 'favorites list it', favorites);
@@ -81,10 +81,10 @@ ok((await call('/api/auth/sign-in', { body: { email, password: 'Another-pass-2' 
 
 // Reset link: single use, signs in, closes the old sessions.
 const token = randomBytes(32).toString('base64url');
-await admin('/rest/v1/auth_tokens', {
-    method: 'POST',
-    body: JSON.stringify({ token_hash: createHash('sha256').update(token).digest('hex'), user_id: shopperId, purpose: 'reset', expires_at: new Date(Date.now() + 3600e3).toISOString() }),
-});
+await sql("insert into auth_tokens (token_hash, user_id, purpose, expires_at) values ($1, $2, 'reset', now() + interval '1 hour')", [
+    createHash('sha256').update(token).digest('hex'),
+    shopperId,
+]);
 const reset = await call('/api/auth/reset', { body: { token, password: 'Third-pass-33' } });
 ok(reset.status === 200 && reset.cookies.some((c) => c.startsWith('kb_access=')), 'reset signs in', reset.json);
 ok((await call('/api/auth/reset', { body: { token, password: 'Fourth-pass-4' } })).json?.code === 'link_expired', 'reset link works once');
@@ -100,7 +100,7 @@ ok((await call('/api/auth/refresh', { method: 'POST', cookie: session })).status
 
 // A shopper has no back office.
 const shopper = jar((await call('/api/auth/sign-in', { body: { email, password: 'Third-pass-33' } })).cookies);
-ok((await call('/api/admin/me', { cookie: shopper })).status === 401, 'shopper refused by the back office');
+ok((await call('/api/admin/me', { cookie: shopper })).status === 403, 'shopper refused by the back office');
 
 // Admin → Team: create, change, remove access (signs them out), delete.
 const owner = await user('owner@test.local', { role: 'owner' });
@@ -118,10 +118,10 @@ ok((await owner.call('/api/admin/team', 'PUT', { id: owner.id, role: 'staff' }))
 const removed = await owner.call('/api/admin/team', 'PUT', { id: staffId, role: null });
 ok(removed.status === 200 && removed.json.data.role === null, 'access removed', removed.json);
 ok((await call('/api/auth/refresh', { method: 'POST', cookie: staffSession })).status === 401, 'removed member signed out');
-const log = await admin(`/rest/v1/activity_log?entity=eq.team_member&entity_id=eq.${staffId}&select=action`);
+const log = await sql("select action from activity_log where entity = 'team_member' and entity_id = $1", [staffId]);
 ok(log.map((r) => r.action).sort().join() === 'create,remove_access', 'team changes logged', log);
 ok((await owner.call(`/api/admin/team?id=${staffId}`, 'DELETE')).status === 200, 'member deleted');
-const row = (await admin(`/rest/v1/users?id=eq.${staffId}&select=deleted_at`))[0];
+const [row] = await sql('select deleted_at from users where id = $1', [staffId]);
 ok(!!row?.deleted_at, 'deleted softly');
 ok((await call('/api/auth/sign-in', { body: { email: staffEmail, password: 'Staff-pass-11' } })).status === 400, 'deleted member cannot sign in');
 

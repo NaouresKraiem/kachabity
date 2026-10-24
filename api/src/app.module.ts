@@ -31,6 +31,7 @@ import {
   StorefrontController,
 } from './storefront/storefront.controller';
 import {
+  AccessDeniedController,
   ActivityController,
   ErpSettingsController,
   GoalsController,
@@ -143,6 +144,7 @@ import {
     ErpSettingsController,
     GoalsController,
     MeController,
+    AccessDeniedController,
     MyWorkController,
     PerformanceController,
     StaffController,

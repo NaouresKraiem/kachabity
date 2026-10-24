@@ -108,29 +108,3 @@ export function allows(requirement: Requirement, role: AdminRole, permissions: P
     const any = requirement.any ?? [];
     return (any.length === 0 || any.some((p) => permissions.includes(p))) && (requirement.all ?? []).every((p) => permissions.includes(p));
 }
-
-/** Headers middleware.ts sets on authorized back-office API requests (client values are overwritten). */
-export const ADMIN_HEADERS = {
-    role: 'x-admin-role',
-    userId: 'x-admin-user-id',
-    email: 'x-admin-email',
-    permissions: 'x-admin-permissions',
-} as const;
-
-export interface AdminActor {
-    role: AdminRole | null;
-    userId: string | null;
-    email: string | null;
-    permissions: Permission[];
-}
-
-/** Who is calling a back-office API route, as verified by middleware. */
-export function getAdminActor(headers: Headers): AdminActor {
-    const role = headers.get(ADMIN_HEADERS.role);
-    return {
-        role: role === 'owner' || role === 'admin' || role === 'staff' ? role : null,
-        userId: headers.get(ADMIN_HEADERS.userId) || null,
-        email: headers.get(ADMIN_HEADERS.email) || null,
-        permissions: (headers.get(ADMIN_HEADERS.permissions) ?? '').split(',').filter(isPermission),
-    };
-}

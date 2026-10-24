@@ -192,6 +192,31 @@ is still behind Supabase's transaction pooler, and retire the `send-push` Edge F
 - Push sending in NestJS (`web-push`); daily alerts cron in NestJS.
 
 ### Phase 5: Move the database (2–3 days, plus a one-night cut-over)
+**Done (local, 2026-10-24)**, migration `20261024134433_plain_postgres_ready` (drops the RLS policies
+that named Supabase roles and the `auth.users` helpers). `scripts/db/move-database.mjs` dumps
+`public`, `private` and the migration history with `pg_dump` 17 (from Docker), restores them as the
+API's role on plain Postgres 17 and compares every table's row count; rehearsed from the local copy
+of the live data (66 tables, identical counts), and all six e2e suites pass on the result.
+`api/scripts/migrate.mjs` applies later migrations (no Supabase CLI).
+
+**Switch-over runbook** (one evening; every staff member and shopper signs in again afterwards,
+because sessions are new cookies):
+1. Before: the server runs `web`, `api` and `db` (docker compose as in docs/DOCKER.md, minus
+   `storage`), with the production `.env` (`DATABASE_URL`, `AUTH_SECRET`, `NEST_URL`, `S3_*`,
+   `FILES_PUBLIC_URL`, `VAPID_*`, `GMAIL_*`, Colissimo, Meta, Sentry). R2 has a private `documents`
+   bucket and a public `products` bucket on a custom domain (`FILES_PUBLIC_URL`).
+2. `cd api && node scripts/copy-storage.mjs` (copies the files; safe to run the day before too).
+3. Stop orders on the old site (maintenance page on Netlify).
+4. Apply the migrations the live database doesn't have yet, in order, with
+   `supabase db query --linked -f <file>` (the ERP ones first if still pending, then
+   `20261023204053_own_auth_accounts`, `20261023214627_notifications_from_nestjs`,
+   `20261024134433_plain_postgres_ready`).
+5. `SOURCE_DATABASE_URL=<Supabase session pooler> TARGET_DATABASE_URL=<server> node scripts/db/move-database.mjs`.
+6. `cd api && DATABASE_URL=<server> … node scripts/copy-storage.mjs --rewrite` (points the image URLs at R2).
+7. Start `api` and `web`, check: sign in as owner, open the dashboard, a product page, place and
+   cancel a test order, upload an image, download a document, receive the test notification.
+8. Point the domain at the server (Cloudflare), reopen. Keep the Supabase project paused, not
+   deleted, for a month.
 - Provision Postgres 17 (managed, or on the VPS with WAL backups to R2); run the Supabase-free
   migrations on an empty database to prove they apply from zero.
 - Rehearse: `pg_dump` the live data (schemas `public` and `private`, with the users copy), restore,
@@ -201,6 +226,13 @@ is still behind Supabase's transaction pooler, and retire the `send-push` Edge F
 - Keep the Supabase project paused, not deleted, for a month as a fallback.
 
 ### Phase 6: Clean up (2–3 days)
+**Done (local, 2026-10-24):** every `app/api` route is gone except `internal/revalidate` (NestJS serves
+all of `/api`, so `NEST_ROUTES` is gone too); middleware gates admin pages only and logs refusals
+through NestJS; `@supabase/*`, `lib/supabase*.ts`, `lib/resilient-fetch.ts`, the libs only those
+routes used, `supabase/config.toml`, `supabase/functions` and the Supabase env vars are removed;
+the WooCommerce importer writes with `pg` and S3; the local Docker setup runs on plain Postgres
+(`db`) with `scripts/docker/import-database.mjs`; the e2e suites use SQL instead of Supabase's REST
+API. Still to do, with the hosting: move the Next.js app off Netlify to the server.
 - Remove `@supabase/*`, `lib/supabase*.ts`, `supabase/functions` and the Supabase-only env vars.
 - Move the Next.js app from Netlify to the VPS (same `docker compose` as the local setup in
   docs/DOCKER.md, minus Supabase); update `CLAUDE.md`.

@@ -1,5 +1,5 @@
 // Categories (the NestJS pilot) and the access rules every ported route must keep.
-import { admin, APP, done, ok, user } from './helpers.mjs';
+import { APP, done, ok, sql, user } from './helpers.mjs';
 
 const owner = await user('owner@test.local', { role: 'owner' });
 const editor = await user('editor@test.local', { role: 'staff', permissions: ['products'] });
@@ -21,7 +21,7 @@ ok((await cashier.call('/api/categories', 'POST', { name })).status === 403, 'st
 r = await owner.call('/api/categories', 'POST', { name });
 const created = r.json?.data;
 ok(r.status === 201 && r.json.success && created?.slug === name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), 'owner creates (201, slug)', r);
-const [log] = await admin(`/rest/v1/activity_log?entity=eq.categories&entity_id=eq.${created?.id}&action=eq.create&select=actor_email,source`);
+const [log] = await sql("select actor_email, source from activity_log where entity = 'categories' and entity_id = $1 and action = 'create'", [created?.id]);
 ok(log?.actor_email === 'owner@test.local' && log?.source === 'admin', 'activity log names the owner', log);
 
 // Validation keeps the { success: false, error } shape
@@ -42,12 +42,12 @@ ok((await editor.call(`/api/categories?id=${created?.id}`, 'DELETE')).status ===
 let refusal;
 for (let i = 0; i < 15 && refusal?.label !== 'DELETE /api/categories'; i++) {
     if (i) await new Promise((resolve) => setTimeout(resolve, 200));
-    [refusal] = await admin(`/rest/v1/activity_log?action=eq.access_denied&actor_email=eq.editor@test.local&order=created_at.desc&limit=1&select=label`);
+    [refusal] = await sql("select label from activity_log where action = 'access_denied' and actor_email = 'editor@test.local' order by created_at desc limit 1");
 }
 ok(refusal?.label === 'DELETE /api/categories', 'refusal is logged', refusal);
 r = await owner.call(`/api/categories?ids=${created?.id}`, 'DELETE');
 ok(r.status === 200 && r.json.success, 'owner deletes', r.json);
-const [row] = await admin(`/rest/v1/categories?id=eq.${created?.id}&select=deleted_at`);
+const [row] = await sql('select deleted_at from categories where id = $1', [created?.id]);
 ok(row?.deleted_at, 'row kept with deleted_at', row);
 ok(!(await (await anonymous('/api/categories')).json()).data.some((c) => c.id === created?.id), 'deleted category left the list');
 

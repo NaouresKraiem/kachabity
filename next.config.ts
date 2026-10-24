@@ -1,28 +1,14 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
-// API routes already served by the NestJS app in api/ (comma-separated, e.g. "categories,products/top").
-// Each entry is one route path, like the app/api route files, so "products" doesn't include
-// "products/top". Everything else stays in app/api; removing an entry sends it back to Next.js.
-const NEST_ROUTES = (process.env.NEST_ROUTES ?? "").split(",").map((area) => area.trim()).filter(Boolean);
-
 const nextConfig: NextConfig = {
   async rewrites() {
-    // beforeFiles: the rewrite wins over the existing app/api route file.
+    // The API is the NestJS app in api/ (NEST_URL). afterFiles: app/api/internal/revalidate, the
+    // one route left in Next.js, is matched first.
     return {
-      beforeFiles: [
-        ...NEST_ROUTES.map((area) => ({
-          source: `/api/${area}`,
-          destination: `${process.env.NEST_URL}/api/${area}`,
-        })),
-        // The storefront's reads exist only in NestJS (lib/storefront-api.ts).
-        { source: "/api/storefront/:path*", destination: `${process.env.NEST_URL}/api/storefront/:path*` },
-        // Accounts and sessions (lib/auth-session.ts) also exist only in NestJS.
-        ...["auth/:path*", "account/:path*", "admin/team", "admin/notifications/stream"].map((path) => ({
-          source: `/api/${path}`,
-          destination: `${process.env.NEST_URL}/api/${path}`,
-        })),
-      ],
+      beforeFiles: [],
+      afterFiles: [{ source: "/api/:path*", destination: `${process.env.NEST_URL}/api/:path*` }],
+      fallback: [],
     };
   },
   // ENV ("local" or "production") as seen by browser, server and edge code; read it via lib/app-env.ts.
@@ -50,12 +36,6 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
         port: '',
         pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'hwxgibxahqdxkzuvfxvz.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/**',
       },
       // Uploaded files (Cloudflare R2; local storage in Docker): FILES_PUBLIC_URL, read at build.
       ...(process.env.FILES_PUBLIC_URL

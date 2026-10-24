@@ -6,7 +6,7 @@ import { useQuickAdd } from "@/lib/quick-add";
 import ProductListCard, { ProductListItem } from "./ProductListCard";
 import { toggleFavorite, getUserFavorites } from "@/lib/favorites";
 import { getCustomer, goToLogin } from "@/lib/customer-auth";
-import type { ProductImage as SupabaseProductImage } from "@/lib/product-images";
+import type { ProductImage as StoredProductImage } from "@/lib/product-images";
 
 const translations = {
     en: {
@@ -33,7 +33,7 @@ interface ProductReview {
     rating?: number | null;
 }
 
-type ProductImage = SupabaseProductImage;
+type ProductImage = StoredProductImage;
 
 interface ProductRow {
     id: string;

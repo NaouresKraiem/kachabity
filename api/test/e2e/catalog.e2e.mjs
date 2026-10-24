@@ -1,6 +1,6 @@
 // Catalog writes (products, variants, photos, colors, sizes, discounts, banners, reels, landing)
 // through APP_URL, plus the activity log and access rules.
-import { admin, done, ok, user } from './helpers.mjs';
+import { done, ok, sql, user } from './helpers.mjs';
 
 const owner = await user('owner@test.local', { role: 'owner' });
 const editor = await user('editor@test.local', { role: 'staff', permissions: ['products'] });
@@ -28,7 +28,7 @@ r = await editor.call('/api/products', 'POST', {
 const product = r.json?.data;
 const variant = product?.product_variants?.[0];
 ok(r.status === 201 && product?.base_price === 99.5 && variant?.colors?.id === color?.id && variant?.stock === 4, 'product created with variant and stock', r.json);
-const [log] = await admin(`/rest/v1/activity_log?entity=eq.products&entity_id=eq.${product?.id}&action=eq.create&select=actor_email`);
+const [log] = await sql("select actor_email from activity_log where entity = 'products' and entity_id = $1 and action = 'create'", [product?.id]);
 ok(log?.actor_email === 'editor@test.local', 'product creation logged with the staff member', log);
 r = await editor.call('/api/products', 'PUT', { id: product?.id, name: `E2E product ${stamp} renamed`, base_price: 120 });
 ok(r.status === 200 && r.json.data.base_price === 120 && r.json.data.product_variants.length === 1, 'product updated, variant kept', r.json);
@@ -49,7 +49,7 @@ ok(r.status === 200 && r.json.data.alt_text === 'side', 'photo updated', r.json)
 ok((await editor.call(`/api/product-images?id=${image?.id}`, 'DELETE')).status === 403, 'deleting a photo needs the delete permission');
 ok((await owner.call(`/api/product-images?id=${image?.id}`, 'DELETE')).status === 200, 'owner deletes the photo');
 ok((await owner.call(`/api/variants?id=${variant2?.id}`, 'DELETE')).status === 200, 'owner deletes the variant');
-const [deletedVariant] = await admin(`/rest/v1/product_variants?id=eq.${variant2?.id}&select=deleted_at`);
+const [deletedVariant] = await sql('select deleted_at from product_variants where id = $1', [variant2?.id]);
 ok(deletedVariant?.deleted_at, 'variant soft-deleted', deletedVariant);
 
 // Discounts, banners, reels
@@ -81,7 +81,7 @@ ok((await editor.call('/api/landing')).status === 403, 'landing needs marketing'
 
 // Clean up: soft-delete what was created
 ok((await owner.call(`/api/products?ids=${product?.id}`, 'DELETE')).status === 200, 'product deleted');
-const [deleted] = await admin(`/rest/v1/products?id=eq.${product?.id}&select=status,deleted_at`);
+const [deleted] = await sql('select status, deleted_at from products where id = $1', [product?.id]);
 ok(deleted?.status === 'archived' && deleted?.deleted_at, 'product archived and soft-deleted', deleted);
 await owner.call(`/api/colors?id=${color?.id}`, 'DELETE');
 await owner.call(`/api/sizes?id=${size?.id}`, 'DELETE');

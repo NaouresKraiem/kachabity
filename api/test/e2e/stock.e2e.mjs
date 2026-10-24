@@ -1,5 +1,5 @@
 // Stock: locations, suppliers, movements (restock, transfer, count, shortage), tracking and costs.
-import { admin, done, ok, user } from './helpers.mjs';
+import { done, ok, sql, user } from './helpers.mjs';
 
 const owner = await user('owner@test.local', { role: 'owner' });
 const clerk = await user('clerk@test.local', { role: 'staff', permissions: ['stock'] });
@@ -26,7 +26,7 @@ ok(r.status === 200 && r.json.data.payment_terms_days === 30, 'supplier updated'
 // Movements
 r = await clerk.call('/api/stock/movements', 'POST', { type: 'restock', location_id: depotA?.id, items: [{ variant_id: variantId, quantity: 10, unit_cost: 20 }], reference: 'E2E' });
 ok(r.status === 200 && r.json?.data?.recorded === 1, 'restock recorded', r.json);
-const [movement] = await admin(`/rest/v1/stock_movements?variant_id=eq.${variantId}&select=created_by_email&limit=1`);
+const [movement] = await sql('select created_by_email from stock_movements where variant_id = $1 limit 1', [variantId]);
 ok(movement?.created_by_email === 'clerk@test.local', 'movement carries the clerk', movement);
 r = await clerk.call('/api/stock/movements', 'POST', { type: 'transfer', location_id: depotA?.id, to_location_id: depotB?.id, items: [{ variant_id: variantId, quantity: 4 }] });
 ok(r.status === 200, 'transfer recorded', r.json);
@@ -34,7 +34,7 @@ r = await clerk.call('/api/stock/movements', 'POST', { type: 'sale', location_id
 ok(r.status === 409 && /stock/i.test(r.json?.error), 'shortage refused with a stock message', r.json);
 r = await clerk.call('/api/stock/movements', 'POST', { type: 'count', location_id: depotA?.id, items: [{ variant_id: variantId, quantity: 5 }] });
 ok(r.status === 200, 'count recorded', r.json);
-const [levelA] = await admin(`/rest/v1/inventory_levels?variant_id=eq.${variantId}&location_id=eq.${depotA?.id}&select=available`);
+const [levelA] = await sql('select available from inventory_levels where variant_id = $1 and location_id = $2', [variantId, depotA?.id]);
 ok(levelA?.available === 5, 'count set depot A to 5', levelA);
 ok((await clerk.call('/api/stock/movements', 'POST', { type: 'transfer', location_id: depotA?.id, items: [{ variant_id: variantId, quantity: 1 }] })).status === 400, 'transfer without destination refused');
 r = await clerk.call(`/api/stock/movements?variant_id=${variantId}`);
@@ -45,7 +45,7 @@ r = await clerk.call('/api/stock/inventory');
 const row = r.json?.data?.rows?.find((x) => x.variant_id === variantId);
 ok(row?.total === 9 && row.levels[depotA?.id] === 5 && row.levels[depotB?.id] === 4, 'inventory totals per location', row);
 r = await clerk.call('/api/stock/tracking', 'PUT', { product_ids: [product?.id], tracked: false });
-const [tracked] = await admin(`/rest/v1/products?id=eq.${product?.id}&select=stock_tracked`);
+const [tracked] = await sql('select stock_tracked from products where id = $1', [product?.id]);
 ok(r.status === 200 && tracked?.stock_tracked === false, 'tracking switched off', tracked);
 r = await owner.call(`/api/stock/locations?id=${depotA?.id}`, 'DELETE');
 ok(r.status === 409 && /still holds stock/.test(r.json?.error), 'stocked location cannot be deleted', r.json);

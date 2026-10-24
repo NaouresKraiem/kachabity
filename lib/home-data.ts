@@ -20,6 +20,6 @@ export const getPromoProducts = cachedCatalogQuery('promo-products', loadPromoPr
 export const getFeaturedCategories = cachedCatalogQuery('featured-categories', loadFeaturedCategories);
 export const getSaleBanners = cachedCatalogQuery('sale-banners', loadSaleBanners);
 export const getReels = cachedCatalogQuery('reels', loadReels);
-// Reviews are posted by shoppers straight to Supabase, so this one isn't tag-invalidated;
+// Reviews posted by shoppers (/api/account/reviews) don't invalidate the catalog tag;
 // the cache's 5-minute revalidate keeps it fresh enough for the home page.
 export const getLatestReviews = cachedCatalogQuery('latest-reviews', loadLatestReviews);
