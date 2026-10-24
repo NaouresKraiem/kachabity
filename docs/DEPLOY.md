@@ -76,6 +76,8 @@ each deploy):
   (template: `deploy/.env.example`; `POSTGRES_PASSWORD` letters and digits only; `CLOUDFLARE_TUNNEL_TOKEN`
   from Terraform; `S3_ENDPOINT` from `terraform output s3_endpoint`).
 - Variable: `API_URL` = `https://api.<domain>` (the deploy checks it answers).
+- Last, Settings → Secrets and variables → Actions → **Variables**: `DEPLOY_ENABLED` = `true`. Until then
+  pushes run CI only, so nothing tries to reach a server that doesn't exist yet.
 
 ### 6. Vercel
 Project → Settings → Environment Variables (Production): `NEST_URL=https://api.<domain>`, the same

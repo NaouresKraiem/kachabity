@@ -25,6 +25,8 @@ jobs:
   deploy:
     name: Deploy the API
     needs: ci
+    # Off until the server and secrets exist: set the repository variable DEPLOY_ENABLED=true (docs/DEPLOY.md).
+    if: vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     environment: production
