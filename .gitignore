@@ -45,3 +45,12 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Local Docker data (database copies with customer data) and Supabase CLI cache
+/.docker-data
+/supabase/.branches
+/supabase/.temp
+
+# NestJS API build output and packages
+/api/node_modules
+/api/dist
