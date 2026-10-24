@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The repo has no test runner. To verify a change, run lint and a type-check, then exercise the affected localized, admin, and API routes in the dev server.
 
-**End-to-end tests** (`tests/e2e/`, plain Node scripts): `npx supabase start`, then `node tests/e2e/dev-server.mjs` (the site on http://localhost:3001 against the **local** Supabase; it ignores `.env.local` so tests can never reach live services, and prints the two keys), then `npm run test:e2e` with `SUPABASE_URL=http://localhost:54321`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` set. Suites: categories, catalog, stock, erp, objectives. The helpers refuse to run unless the site reads the same local database. The ERP suite checks running totals, so run it after `npx supabase db reset --local`.
+**End-to-end tests** (`tests/e2e/`, plain Node scripts): `npx supabase start`, then `node tests/e2e/dev-server.mjs` (the site on http://localhost:3001 against the **local** Supabase; it ignores `.env.local` so tests can never reach live services, and prints the two keys), then `npm run test:e2e` with `SUPABASE_URL=http://localhost:54321`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` set. Suites: categories, catalog, stock, erp, objectives. The helpers refuse to run unless the site reads the same local database. The ERP suite checks running totals, so run it after `npx supabase db reset --local`, before the suites that deliver orders (`npm run test:e2e` runs it before objectives).
 
 ## Architecture
 
