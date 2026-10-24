@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run import:woocommerce -- --dry-run`: preview a re-import of the WooCommerce export (`kachabiti-products.csv`); drop `--dry-run` to write. It is idempotent: products are upserted by slug, variants are matched by color + size and updated in place (never touching stock), and images and discounts are replaced. English/French text lives in `scripts/import/translations.json` and `descriptions.json`, and color hexes in `colors.json`.
 - Local copy in Docker (docs/DOCKER.md): `npm run docker:env`, `docker compose up -d db storage`, optionally `npm run docker:import` (copies a database read-only, e.g. the server's), then `npm run docker:up` (web on :3000, NestJS on :4000, Postgres on :5433, files on :9000).
 - `cd api && DATABASE_URL=… node scripts/migrate.mjs [--dry-run]`: apply the migrations in `supabase/migrations` the database doesn't have yet (recorded in `supabase_migrations.schema_migrations`).
+- Production (docs/DEPLOY.md): Terraform in `infra/terraform/` (Oracle Always Free VM, Cloudflare Tunnel, DNS, R2), server files in `deploy/` (`docker-compose.prod.yml`, `deploy.sh`, `backup.sh`), GitHub Actions in `.github/workflows/` (`ci.yml` on every PR and push, `deploy.yml` on push to `kachabiti-nest`). An empty database is built from `db/baseline.sql` by `api/scripts/migrate.mjs`.
 - `node scripts/db/move-database.mjs`: copy a whole database to another Postgres (`SOURCE_DATABASE_URL` → `TARGET_DATABASE_URL`) and compare row counts; used for the move off Supabase and for backups/restores.
 - `npx tsc --noEmit`: type-check. **Run this yourself**: `next.config.ts` sets `ignoreBuildErrors` and `ignoreDuringBuilds`, so `npm run build` succeeds even when there are type or lint errors.
 
@@ -19,7 +20,7 @@ The repo has no test runner. To verify a change, run lint and a type-check, then
 
 ## Architecture
 
-Kachabity is a Next.js 15 App Router storefront for handcrafted Tunisian products. It uses React 19, Tailwind v4 and Ant Design 6 (with `@ant-design/v5-patch-for-react-19`). Every `/api` request is served by the NestJS app in `api/` (see **NestJS API**), on plain Postgres 17, with files in S3-compatible storage (Cloudflare R2). Supabase is no longer used. The Next.js app still has Netlify config (`netlify.toml`); the planned home is one VPS running the same containers as docs/DOCKER.md.
+Kachabity is a Next.js 15 App Router storefront for handcrafted Tunisian products. It uses React 19, Tailwind v4 and Ant Design 6 (with `@ant-design/v5-patch-for-react-19`). Every `/api` request is served by the NestJS app in `api/` (see **NestJS API**), on plain Postgres 17, with files in S3-compatible storage (Cloudflare R2). Supabase is no longer used. The storefront deploys on Vercel and the API on one server, as described in docs/DEPLOY.md.
 
 ### Routing and middleware
 

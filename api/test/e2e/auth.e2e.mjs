@@ -56,7 +56,9 @@ ok((await call('/api/auth/me', { cookie: 'kb_access=eyJhbGciOiJIUzI1NiJ9.eyJzdWI
 // Profile, favorites, reviews, orders.
 const profile = await call('/api/auth/profile', { method: 'PUT', cookie: session, body: { full_name: 'Renamed Shopper', phone: '22123456', city: 'Tunis' } });
 ok(profile.status === 200 && profile.json.data.user_metadata.city === 'Tunis', 'profile saved', profile.json);
-const [product] = await sql("select id from products where status = 'active' and deleted_at is null limit 1");
+// Its own product, so the suite also runs on an empty database (CI).
+const product = (await sql("select id from products where slug = 'e2e-auth'"))[0]
+    ?? (await sql("insert into products (name, slug, base_price, status) values ('E2E Auth', 'e2e-auth', 90, 'active') returning id"))[0];
 ok((await call('/api/account/favorites', { cookie: session, body: { product_id: product.id } })).status === 200, 'favorite added');
 let favorites = (await call('/api/account/favorites', { cookie: session })).json.data;
 ok(favorites.length === 1 && favorites[0].product_id === product.id && favorites[0].products?.id === product.id, 'favorites list it', favorites);

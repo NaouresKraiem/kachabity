@@ -1,0 +1,34 @@
+#cloud-config
+# First boot of the server (infra/terraform/oracle.tf): Docker from Ubuntu's packages, automatic
+# security updates, a 'deploy' user for CI (key-only), /opt/kachabity and the nightly backup.
+package_update: true
+package_upgrade: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - unattended-upgrades
+  - fail2ban
+
+ssh_pwauth: false
+
+users:
+  - default
+  - name: deploy
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ${deploy_ssh_public_key}
+
+write_files:
+  # Nightly database backup to R2 at 02:30 server time (deploy/backup.sh).
+  - path: /etc/cron.d/kachabity-backup
+    permissions: "0644"
+    content: |
+      30 2 * * * deploy /opt/kachabity/backup.sh >> /var/log/kachabity-backup.log 2>&1
+
+runcmd:
+  - systemctl enable --now docker
+  - usermod -aG docker deploy
+  - install -d -o deploy -g deploy -m 0750 /opt/kachabity
+  - install -o deploy -g deploy -m 0640 /dev/null /var/log/kachabity-backup.log
+  - systemctl enable --now fail2ban unattended-upgrades

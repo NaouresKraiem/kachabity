@@ -1,0 +1,13 @@
+# Copy to backend.hcl (git-ignored), fill in, then: terraform init -backend-config=backend.hcl
+# The state lives in an R2 bucket you create once by hand (docs/DEPLOY.md). The access keys come
+# from the environment: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY = an R2 API token's S3 keys.
+bucket                      = "kachabity-terraform-state"
+key                         = "production/terraform.tfstate"
+region                      = "auto"
+endpoints                   = { s3 = "https://<cloudflare-account-id>.r2.cloudflarestorage.com" }
+use_path_style              = true
+skip_credentials_validation = true
+skip_region_validation      = true
+skip_requesting_account_id  = true
+skip_metadata_api_check     = true
+skip_s3_checksum            = true

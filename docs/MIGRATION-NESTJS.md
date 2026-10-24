@@ -241,6 +241,8 @@ API. Still to do, with the hosting: move the Next.js app off Netlify to the serv
 
 ## Hosting and cost
 
+Set up as code: see docs/DEPLOY.md (Terraform for Oracle Cloud and Cloudflare, GitHub Actions CI/CD).
+
 **Recommended: one small VPS + Cloudflare's free plan.** The VPS runs `web`, `api` and Postgres
 with Docker Compose (the setup already proven locally, docs/DOCKER.md). Cloudflare sits in front for
 DNS, HTTPS, the CDN and caching, and R2 holds the product photos and documents.

@@ -16,6 +16,10 @@ WORKDIR /app/api
 COPY api/package.json api/package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/api/dist ./dist
+# Migrations run from this image at deploy time: node scripts/migrate.mjs (baseline for an empty database).
+COPY api/scripts ./scripts
+COPY supabase/migrations /app/supabase/migrations
+COPY db/baseline.sql /app/db/baseline.sql
 USER node
 EXPOSE 4000
 CMD ["node", "dist/api/src/main.js"]

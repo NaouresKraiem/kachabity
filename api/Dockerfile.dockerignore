@@ -2,6 +2,8 @@
 *
 !lib/**
 !api/**
+!supabase/migrations/**
+!db/baseline.sql
 api/node_modules
 api/dist
 api/.env
