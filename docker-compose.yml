@@ -55,8 +55,18 @@ services:
     image: chrislusf/seaweedfs:3.80
     depends_on: [storage]
     entrypoint: ["sh", "-c"]
+    # The filer starts a while after the master: retry until both buckets are listed (2 minutes max).
     command:
-      - sleep 10; echo 's3.bucket.create -name products' | weed shell -master=storage:9333 -filer=storage:8888; echo 's3.bucket.create -name documents' | weed shell -master=storage:9333 -filer=storage:8888
+      - |
+        shell() { echo "$$1" | weed shell -master=storage:9333 -filer=storage:8888 2>&1; }
+        for i in $$(seq 40); do
+          shell 's3.bucket.create -name products' >/dev/null
+          shell 's3.bucket.create -name documents' >/dev/null
+          list=$$(shell 's3.bucket.list')
+          if echo "$$list" | grep -q products && echo "$$list" | grep -q documents; then echo 'Buckets ready: products, documents'; exit 0; fi
+          sleep 3
+        done
+        echo 'The file storage did not start'; exit 1
     restart: "no"
 
 secrets:
