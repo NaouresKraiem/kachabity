@@ -8,6 +8,7 @@ import { ColissimoError, colissimoConfigured, createParcel, trackParcel, type Pa
 import { COLISSIMO_GOVERNORATES, FINAL_STATUSES, parcelFromOrder } from '@/lib/colissimo-data';
 import { buildManualOrderLines, ManualLineError, type ManualLineInput } from '@/lib/manual-order-lines';
 import { generateOrderNumber } from '@/lib/order-number';
+import { MANUAL_CHANNELS, type Channel } from '@/lib/erp/constants';
 
 // Parcels sent to Colissimo (Admin → Delivery, and the order page).
 // GET lists them; POST sends an order, adds an existing parcel by barcode or refreshes statuses;
@@ -42,6 +43,9 @@ const bodySchema = z.discriminatedUnion('action', [
         order_id: z.guid().optional(),
         parcel: parcelSchema,
         items: z.array(z.object({ product_id: z.guid(), variant_id: z.guid().nullish(), quantity: z.number().int().min(1).max(999) })).max(50).optional(),
+        // Where the order came from (new orders only).
+        channel: z.enum(MANUAL_CHANNELS as [Channel, ...Channel[]]).optional(),
+        campaign_id: z.guid().nullish(),
     }),
     // Validating an order: its parcel is built from the order and sent, then the order is validated.
     z.object({ action: z.literal('validate'), order_id: z.guid() }),
@@ -87,7 +91,9 @@ export async function POST(request: NextRequest) {
     const actor = getAdminActor(request.headers);
     try {
         if (body.action === 'create') {
-            if (!body.order_id && body.items?.length) return await sendNewOrder(body.parcel as ParcelRequest, body.items, actor);
+            if (!body.order_id && body.items?.length) {
+                return await sendNewOrder(body.parcel as ParcelRequest, body.items, actor, body.channel ?? 'phone', body.campaign_id ?? null);
+            }
             return await sendParcel(body.order_id ?? null, body.parcel as ParcelRequest, actor);
         }
         if (body.action === 'validate') return await validateOrder(body.order_id, actor);
@@ -161,7 +167,7 @@ async function sendParcel(orderId: string | null, parcel: ParcelRequest, actor: 
 // then save the order, its lines and the parcel and validate the order (stock) in one transaction
 // (create_order_with_delivery). If Colissimo refuses, nothing is created. A new order can't be
 // sent twice, so no reservation is needed (the form blocks double submits).
-async function sendNewOrder(parcel: ParcelRequest, items: ManualLineInput[], actor: Actor) {
+async function sendNewOrder(parcel: ParcelRequest, items: ManualLineInput[], actor: Actor, channel: Channel, campaignId: string | null) {
     if (!colissimoConfigured().add) {
         return NextResponse.json({ success: false, error: 'Colissimo is not set up: add COLISSIMO_ADD_TOKEN to the server environment', code: 'NOT_CONFIGURED' }, { status: 503 });
     }
@@ -185,6 +191,10 @@ async function sendNewOrder(parcel: ParcelRequest, items: ManualLineInput[], act
             shipping_cost: Math.max(0, parcel.prix - subtotal),
             total: parcel.prix,
             order_notes: parcel.msg || null,
+            channel,
+            campaign_id: campaignId,
+            assigned_to: actor.userId,
+            assigned_to_email: actor.email,
         },
         p_items: lines,
         p_delivery: { barcode: created.barcode, label_url: created.labelUrl, label_zebra_url: created.labelZebraUrl, request: parcel },
@@ -217,7 +227,7 @@ async function validateOrder(orderId: string, actor: Actor) {
         .maybeSingle();
     if (error) throw error;
     if (!order) return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
-    if (order.status !== 'pending') {
+    if (order.status !== 'pending' && order.status !== 'confirmed') {
         return NextResponse.json({ success: false, error: 'This order is already validated', code: 'ALREADY_VALIDATED' }, { status: 409 });
     }
 

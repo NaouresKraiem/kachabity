@@ -17,6 +17,10 @@ export const PERMISSIONS = {
     marketing: { label: 'Marketing', description: 'Sale banners, video reels and abandoned-cart emails' },
     analytics: { label: 'Analytics', description: 'Cart analytics on the dashboard' },
     costs: { label: 'Costs', description: 'See and edit purchase costs and stock value' },
+    customers: { label: 'Customers (CRM)', description: 'Customer records, conversations, follow-ups and the sales pipeline' },
+    pos: { label: 'Point of sale', description: 'Sell at the till, open and close the cash register, cash in and out' },
+    purchasing: { label: 'Purchasing', description: 'Suppliers, price requests, purchase orders, goods receipts, raw materials and cost prices' },
+    finance: { label: 'Finance', description: 'Payments received, carrier payouts, bills and expenses, cash and bank, invoices, accounting and documents' },
     delete: { label: 'Delete', description: 'Delete records in the areas they can edit' },
     hard_delete: { label: 'Permanent delete', description: 'Erase deleted records for good in the areas they can edit (Deleted items)' },
 } as const;
@@ -34,6 +38,10 @@ export const PERMISSION_PRESETS: { label: string; permissions: Permission[] }[] 
     { label: 'Stock clerk', permissions: ['stock'] },
     { label: 'Order manager', permissions: ['orders', 'stock'] },
     { label: 'Content editor', permissions: ['products', 'marketing', 'discounts'] },
+    { label: 'Sales agent', permissions: ['orders', 'customers'] },
+    { label: 'Cashier', permissions: ['pos', 'customers'] },
+    { label: 'Purchasing clerk', permissions: ['purchasing', 'stock'] },
+    { label: 'Accountant', permissions: ['finance', 'costs'] },
 ];
 
 const isPermission = (value: unknown): value is Permission =>

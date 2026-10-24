@@ -3,6 +3,8 @@
  * (t("English text") / msg("English text")). Placeholders like {count} must be kept as is.
  * A missing entry falls back to English.
  */
+import { erpEntries } from "./admin-translations-erp";
+
 type Entry = [en: string, fr: string, ar: string];
 
 const entries: Entry[] = [
@@ -924,7 +926,8 @@ const entries: Entry[] = [
     ["To check", "À vérifier", "للتحقق"],
 ];
 
-const build = (index: 1 | 2) => Object.fromEntries(entries.map((entry) => [entry[0], entry[index]]));
+// ERP rows first: where both define a string, the original table wins.
+const build = (index: 1 | 2) => Object.fromEntries([...erpEntries, ...entries].map((entry) => [entry[0], entry[index]]));
 
 export const adminTranslations: Record<"fr" | "ar", Record<string, string>> = {
     fr: build(1),

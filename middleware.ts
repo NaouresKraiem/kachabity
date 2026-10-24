@@ -15,9 +15,10 @@ const ADMIN_LOGIN_PATH = '/admin/login';
  * - { all: [...] }: every one of these (deletes need the area's permission and `delete`;
  *   permanent deletes need it and `hard_delete`)
  * - { admin: true }: owners and admins only (team management)
+ * - { owner: true }: owners only (the money overview)
  * Owners and admins have every permission.
  */
-type Requirement = { any?: Permission[]; all?: Permission[]; admin?: boolean };
+type Requirement = { any?: Permission[]; all?: Permission[]; admin?: boolean; owner?: boolean };
 
 // Area permission for each back-office API path that is public for GET but gated for writes.
 const MUTATION_PERMISSIONS: Record<string, Permission[]> = {
@@ -36,9 +37,17 @@ const MUTATION_PERMISSIONS: Record<string, Permission[]> = {
 
 // Admin pages by path prefix (longest match wins). Pages not listed need any back-office user.
 const PAGE_PERMISSIONS: [string, Requirement][] = [
+    ['/admin/overview', { owner: true }],
     ['/admin/team', { admin: true }],
     ['/admin/activity', { admin: true }],
     ['/admin/performance', { admin: true }],
+    ['/admin/goals', { admin: true }],
+    ['/admin/settings', { admin: true }],
+    ['/admin/customers', { any: ['customers'] }],
+    ['/admin/pos', { any: ['pos'] }],
+    ['/admin/purchasing', { any: ['purchasing'] }],
+    ['/admin/finance', { any: ['finance'] }],
+    ['/admin/marketing', { any: ['marketing'] }],
     ['/admin/trash', { all: ['hard_delete'] }],
     ['/admin/products', { any: ['products'] }],
     ['/admin/categories', { any: ['products'] }],
@@ -66,7 +75,12 @@ function requirementFor(request: NextRequest): Requirement | null {
         return PAGE_PERMISSIONS.find(([prefix]) => under(prefix))?.[1] ?? { any: [] };
     }
 
+    // The owner's money overview.
+    if (under('/api/owner')) return { owner: true };
     if (under('/api/admin/team') || under('/api/admin/activity') || under('/api/admin/performance')) return { admin: true };
+    // Objectives and business settings are managed by owners and admins; anyone signed in reads
+    // their own objectives through /api/admin/my-work.
+    if (under('/api/admin/goals') || under('/api/admin/erp-settings')) return { admin: true };
     // Permanent deletes: `hard_delete` plus the permission of the area the table belongs to.
     if (under('/api/admin/trash')) {
         const table = searchParams.get('table');
@@ -74,17 +88,35 @@ function requirementFor(request: NextRequest): Requirement | null {
     }
     if (under('/api/admin')) return { any: [] };
     if (under('/api/stock/costs')) return { any: ['costs'] };
-    // Product forms read suppliers, collections and locations too.
+    // Product forms, purchase orders, the till and bills read suppliers, collections and locations too.
     if (['/api/stock/suppliers', '/api/stock/collections', '/api/stock/locations'].some(under) && method === 'GET') {
-        return { any: ['stock', 'products'] };
+        return { any: ['stock', 'products', 'purchasing', 'pos', 'finance'] };
     }
+    // Purchase orders and the till pick variants from the inventory list.
+    if (pathname === '/api/stock/inventory' && method === 'GET') return { any: ['stock', 'purchasing', 'pos'] };
+    // Purchasing manages its suppliers (terms, tax id, bank details).
+    if (under('/api/stock/suppliers')) return withDelete(method, ['stock', 'purchasing']);
+    // Manual orders, assignment, confirmation and duplicate checks.
+    if (under('/api/sales/orders')) return withDelete(method, ['orders']);
+    // Money received and carrier payouts. Agents can see an order's payments.
+    if (under('/api/sales/payments') && method === 'GET') return { any: ['finance', 'orders'] };
+    if (under('/api/sales')) return withDelete(method, ['finance']);
+    // Order pages look up a customer by phone to warn about duplicates.
+    if (under('/api/customers') && method === 'GET') return { any: ['customers', 'orders', 'pos'] };
+    if (under('/api/customers') || under('/api/crm')) return withDelete(method, ['customers']);
+    if (under('/api/pos')) return withDelete(method, ['pos']);
+    if (under('/api/purchasing')) return withDelete(method, ['purchasing']);
+    if (under('/api/finance')) return withDelete(method, ['finance']);
+    // Campaigns: the order forms list them; marketing manages them and their spend.
+    if (under('/api/marketing/campaigns') && method === 'GET') return { any: ['marketing', 'orders', 'finance'] };
+    if (under('/api/marketing')) return withDelete(method, ['marketing']);
     if (under('/api/stock')) return withDelete(method, ['stock']);
     if (pathname === '/api/cart/analytics') return { any: ['analytics'] };
     // Home page curation: reads and writes are back-office only.
     if (under('/api/landing')) return { any: ['marketing'] };
-    // Admin product lists also feed the discount, banner and stock screens.
+    // Admin product lists also feed the discount, banner, stock, order, purchasing and costing screens.
     if (pathname === '/api/products' && searchParams.get('admin') === 'true' && method === 'GET') {
-        return { any: ['products', 'discounts', 'marketing', 'stock'] };
+        return { any: ['products', 'discounts', 'marketing', 'stock', 'orders', 'purchasing', 'finance'] };
     }
     if (pathname === '/api/orders' && method !== 'POST') return withDelete(method, ['orders']);
     // Colissimo parcels: sending orders, tracking and removing them from the list.
@@ -103,6 +135,7 @@ function withoutAdminHeaders(request: NextRequest): Headers {
 }
 
 function allows(requirement: Requirement, role: AdminRole, permissions: Permission[]): boolean {
+    if (requirement.owner) return role === 'owner';
     if (hasFullAccess(role)) return true;
     if (requirement.admin) return false;
     const any = requirement.any ?? [];

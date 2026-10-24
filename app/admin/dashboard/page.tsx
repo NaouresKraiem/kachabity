@@ -11,6 +11,7 @@
  */
 
 import StockOverview from "@/components/admin/stock/StockOverview";
+import QuickLinks from "@/components/admin/erp/QuickLinks";
 import { useAdminRole } from "@/lib/admin-role-context";
 import { useEffect, useState } from 'react';
 import { Card, Statistic, Row, Col, Table, Spin, DatePicker, Button } from 'antd';
@@ -243,6 +244,8 @@ export default function CartAnalyticsPage() {
                         </Button>
                     </div>}
                 </div>
+
+                <QuickLinks />
 
                 {can('stock') && (
                     <>

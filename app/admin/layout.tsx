@@ -32,6 +32,22 @@ import {
     DeleteOutlined,
     CarOutlined,
     TrophyOutlined,
+    CheckSquareOutlined,
+    ContactsOutlined,
+    MessageOutlined,
+    FundOutlined,
+    DollarOutlined,
+    FileTextOutlined,
+    BankOutlined,
+    FileDoneOutlined,
+    BookOutlined,
+    FolderOpenOutlined,
+    ExperimentOutlined,
+    BarChartOutlined,
+    NotificationOutlined,
+    LineChartOutlined,
+    AimOutlined,
+    ControlOutlined,
 } from "@ant-design/icons";
 import { antdTheme } from "@/lib/antd-config";
 import { createAdminBrowserClient } from "@/lib/supabase-browser";
@@ -49,158 +65,121 @@ const { Title } = Typography;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
+/**
+ * The sidebar, in groups: the agents' daily work first (orders, customers, till), then each
+ * management area. Entries a person can't open are hidden, and a group with nothing left goes too.
+ */
 const menuItems: MenuItem[] = [
     {
-        key: "/admin/dashboard",
-        icon: <DashboardOutlined />,
-        label: msg("Dashboard"),
-    },
-    {
-        key: "products",
-        icon: <ShoppingOutlined />,
-        label: msg("Products"),
+        type: "group",
+        key: "g-work",
+        label: msg("My work"),
         children: [
-            {
-                key: "/admin/products",
-                icon: <UnorderedListOutlined />,
-                label: msg("List"),
-            },
-            {
-                key: "/admin/products/new",
-                icon: <PlusOutlined />,
-                label: msg("Create"),
-            },
+            { key: "/admin/dashboard", icon: <DashboardOutlined />, label: msg("Dashboard") },
+            { key: "/admin/my-work", icon: <CheckSquareOutlined />, label: msg("My day") },
+            { key: "/admin/orders", icon: <ShoppingCartOutlined />, label: msg("Orders") },
+            { key: "/admin/orders/new", icon: <PlusOutlined />, label: msg("New order") },
+            { key: "/admin/delivery", icon: <CarOutlined />, label: msg("Delivery") },
+            { key: "/admin/customers", icon: <ContactsOutlined />, label: msg("Customers") },
+            { key: "/admin/customers/inbox", icon: <MessageOutlined />, label: msg("Inbox") },
+            { key: "/admin/pos", icon: <ShopOutlined />, label: msg("Point of sale") },
         ],
     },
     {
-        key: "categories",
-        icon: <AppstoreOutlined />,
-        label: msg("Categories"),
+        type: "group",
+        key: "g-owner",
+        label: msg("Owner"),
+        children: [{ key: "/admin/overview", icon: <FundOutlined />, label: msg("Business overview") }],
+    },
+    {
+        type: "group",
+        key: "g-money",
+        label: msg("Money"),
         children: [
-            {
-                key: "/admin/categories",
-                icon: <UnorderedListOutlined />,
-                label: msg("List"),
-            },
-            {
-                key: "/admin/categories/new",
-                icon: <PlusOutlined />,
-                label: msg("Create"),
-            },
+            { key: "/admin/finance/payments", icon: <DollarOutlined />, label: msg("Payments received") },
+            { key: "/admin/finance/bills", icon: <FileTextOutlined />, label: msg("Bills & expenses") },
+            { key: "/admin/finance/treasury", icon: <BankOutlined />, label: msg("Cash & bank") },
+            { key: "/admin/finance/invoices", icon: <FileDoneOutlined />, label: msg("Invoices") },
+            { key: "/admin/finance/accounting", icon: <BookOutlined />, label: msg("Accounting") },
+            { key: "/admin/finance/documents", icon: <FolderOpenOutlined />, label: msg("Documents") },
+            { key: "/admin/pos/sessions", icon: <HistoryOutlined />, label: msg("Till sessions") },
         ],
     },
     {
-        key: "/admin/orders",
-        icon: <ShoppingCartOutlined />,
-        label: msg("Orders"),
-    },
-    {
-        key: "/admin/delivery",
-        icon: <CarOutlined />,
-        label: msg("Delivery"),
-    },
-    {
-        key: "stock",
-        icon: <DatabaseOutlined />,
-        label: msg("Stock"),
+        type: "group",
+        key: "g-catalog",
+        label: msg("Catalog"),
         children: [
             {
-                key: "/admin/stock",
-                icon: <InboxOutlined />,
-                label: msg("Inventory"),
+                key: "products",
+                icon: <ShoppingOutlined />,
+                label: msg("Products"),
+                children: [
+                    { key: "/admin/products", icon: <UnorderedListOutlined />, label: msg("List") },
+                    { key: "/admin/products/new", icon: <PlusOutlined />, label: msg("Create") },
+                ],
             },
             {
-                key: "/admin/stock/movements",
-                icon: <HistoryOutlined />,
-                label: msg("Movements"),
+                key: "categories",
+                icon: <AppstoreOutlined />,
+                label: msg("Categories"),
+                children: [
+                    { key: "/admin/categories", icon: <UnorderedListOutlined />, label: msg("List") },
+                    { key: "/admin/categories/new", icon: <PlusOutlined />, label: msg("Create") },
+                ],
             },
-            {
-                key: "/admin/stock/restock",
-                icon: <ReloadOutlined />,
-                label: msg("Restock"),
-            },
-            {
-                key: "/admin/stock/settings",
-                icon: <SettingOutlined />,
-                label: msg("Settings"),
-            },
+            { key: "/admin/variants", icon: <AppstoreOutlined />, label: msg("Variants") },
+            { key: "/admin/promotions", icon: <PercentageOutlined />, label: msg("Product Discounts") },
         ],
     },
     {
-        key: "/admin/landing",
-        icon: <HomeOutlined />,
-        label: msg("Landing page"),
+        type: "group",
+        key: "g-stock",
+        label: msg("Stock & purchasing"),
+        children: [
+            {
+                key: "stock",
+                icon: <DatabaseOutlined />,
+                label: msg("Stock"),
+                children: [
+                    { key: "/admin/stock", icon: <InboxOutlined />, label: msg("Inventory") },
+                    { key: "/admin/stock/movements", icon: <HistoryOutlined />, label: msg("Movements") },
+                    { key: "/admin/stock/restock", icon: <ReloadOutlined />, label: msg("Restock") },
+                    { key: "/admin/stock/settings", icon: <SettingOutlined />, label: msg("Settings") },
+                ],
+            },
+            { key: "/admin/purchasing", icon: <ShoppingOutlined />, label: msg("Purchase orders") },
+            { key: "/admin/purchasing/suppliers", icon: <TeamOutlined />, label: msg("Suppliers") },
+            { key: "/admin/purchasing/materials", icon: <ExperimentOutlined />, label: msg("Raw materials & costs") },
+            { key: "/admin/purchasing/prices", icon: <BarChartOutlined />, label: msg("Price comparison") },
+        ],
     },
     {
-        key: "/admin/promotions",
-        icon: <PercentageOutlined />,
-        label: msg("Product Discounts"),
+        type: "group",
+        key: "g-marketing",
+        label: msg("Marketing"),
+        children: [
+            { key: "/admin/marketing/campaigns", icon: <NotificationOutlined />, label: msg("Campaigns & ad spend") },
+            { key: "/admin/landing", icon: <HomeOutlined />, label: msg("Landing page") },
+            { key: "/admin/sale-banners", icon: <PercentageOutlined />, label: msg("Sale Banners") },
+            { key: "/admin/reels", icon: <PlayCircleOutlined />, label: msg("Video Reels") },
+            { key: "/admin/cart-analytics", icon: <LineChartOutlined />, label: msg("Cart analytics") },
+        ],
     },
     {
-        key: "/admin/sale-banners",
-        icon: <PercentageOutlined />,
-        label: msg("Sale Banners"),
+        type: "group",
+        key: "g-admin",
+        label: msg("Administration"),
+        children: [
+            { key: "/admin/team", icon: <TeamOutlined />, label: msg("Team") },
+            { key: "/admin/goals", icon: <AimOutlined />, label: msg("Objectives & commissions") },
+            { key: "/admin/performance", icon: <TrophyOutlined />, label: msg("Agent performance") },
+            { key: "/admin/settings", icon: <ControlOutlined />, label: msg("Business settings") },
+            { key: "/admin/notifications", icon: <BellOutlined />, label: msg("Notifications") },
+            { key: "/admin/activity", icon: <HistoryOutlined />, label: msg("Activity") },
+            { key: "/admin/trash", icon: <DeleteOutlined />, label: msg("Deleted items") },
+        ],
     },
-    {
-        key: "/admin/reels",
-        icon: <PlayCircleOutlined />,
-        label: msg("Video Reels"),
-    },
-    {
-        key: "/admin/variants",
-        icon: <AppstoreOutlined />,
-        label: msg("Variants"),
-    },
-    {
-        key: "/admin/notifications",
-        icon: <BellOutlined />,
-        label: msg("Notifications"),
-    },
-    {
-        key: "/admin/team",
-        icon: <TeamOutlined />,
-        label: msg("Team"),
-    },
-    {
-        key: "/admin/performance",
-        icon: <TrophyOutlined />,
-        label: msg("Agent performance"),
-    },
-    {
-        key: "/admin/activity",
-        icon: <HistoryOutlined />,
-        label: msg("Activity"),
-    },
-    {
-        key: "/admin/trash",
-        icon: <DeleteOutlined />,
-        label: msg("Deleted items"),
-    },
-    // {
-    //     key: "/admin/sales",
-    //     icon: <TagOutlined />,
-    //     label: msg("Sales"),
-    // },
-    // {
-    //     key: "/admin/customers",
-    //     icon: <UserOutlined />,
-    //     label: msg("Customers"),
-    // },
-    // {
-    //     key: "/admin/analytics",
-    //     icon: <BarChartOutlined />,
-    //     label: msg("Analytics"),
-    // },
-    // {
-    //     key: "/admin/notifications",
-    //     icon: <BellOutlined />,
-    //     label: msg("Notifications"),
-    // },
-    // {
-    //     key: "/admin/settings",
-    //     icon: <SettingOutlined />,
-    //     label: msg("Settings"),
-    // },
 ];
 
 // Page entries become real links: Next.js prefetches them, so clicking switches pages instantly.
@@ -222,31 +201,74 @@ function withLinks(items: MenuItem[], t: (text: string) => string): MenuItem[] {
 // Installed at module load, before any admin page effect fetches its lookup lists.
 installAdminFetchCache();
 
-// Permission each menu entry needs (middleware applies the same rules to the pages themselves).
-const MENU_PERMISSIONS: Record<string, Permission | "admin"> = {
+// What each menu entry needs (middleware applies the same rules to the pages themselves):
+// a permission, "admin" (owners and admins) or "owner".
+const MENU_PERMISSIONS: Record<string, Permission | "admin" | "owner"> = {
+    "/admin/overview": "owner",
     products: "products",
     categories: "products",
     "/admin/variants": "products",
     "/admin/orders": "orders",
+    "/admin/orders/new": "orders",
     "/admin/delivery": "orders",
+    "/admin/customers": "customers",
+    "/admin/customers/inbox": "customers",
+    "/admin/pos": "pos",
+    "/admin/pos/sessions": "pos",
     stock: "stock",
+    "/admin/purchasing": "purchasing",
+    "/admin/purchasing/suppliers": "purchasing",
+    "/admin/purchasing/materials": "purchasing",
+    "/admin/purchasing/prices": "purchasing",
+    "/admin/finance/payments": "finance",
+    "/admin/finance/bills": "finance",
+    "/admin/finance/treasury": "finance",
+    "/admin/finance/invoices": "finance",
+    "/admin/finance/accounting": "finance",
+    "/admin/finance/documents": "finance",
     "/admin/promotions": "discounts",
+    "/admin/marketing/campaigns": "marketing",
     "/admin/sale-banners": "marketing",
     "/admin/reels": "marketing",
     "/admin/landing": "marketing",
+    "/admin/cart-analytics": "analytics",
     "/admin/team": "admin",
+    "/admin/goals": "admin",
+    "/admin/settings": "admin",
     "/admin/activity": "admin",
     "/admin/performance": "admin",
     "/admin/trash": "hard_delete",
 };
 
-function menuFor(isAdmin: boolean, permissions: Permission[], t: (text: string) => string): MenuItem[] {
-    const linkedMenuItems = withLinks(menuItems, t);
-    if (isAdmin) return linkedMenuItems;
-    return linkedMenuItems.filter((item) => {
-        const needed = item && "key" in item ? MENU_PERMISSIONS[String(item.key)] : undefined;
-        return !needed || (needed !== "admin" && permissions.includes(needed));
+// Every page entry of the menu, to highlight the right one on detail pages.
+const MENU_KEYS: string[] = (function collect(items: MenuItem[]): string[] {
+    return items.flatMap((item) => {
+        if (!item || !("key" in item)) return [];
+        const key = String(item.key);
+        const children = "children" in item && item.children ? collect(item.children as MenuItem[]) : [];
+        return key.startsWith("/") ? [key, ...children] : children;
     });
+})(menuItems);
+
+function menuFor(role: string | null, permissions: Permission[], t: (text: string) => string): MenuItem[] {
+    const allowed = (key: string) => {
+        const needed = MENU_PERMISSIONS[key];
+        if (!needed) return true;
+        if (needed === "owner") return role === "owner";
+        if (role === "owner" || role === "admin") return true;
+        return needed !== "admin" && permissions.includes(needed);
+    };
+    const keep = (items: MenuItem[]): MenuItem[] =>
+        items.flatMap((item) => {
+            if (!item || !("key" in item)) return [item];
+            if (!allowed(String(item.key))) return [];
+            if ("children" in item && item.children) {
+                const children = keep(item.children as MenuItem[]);
+                return children.length ? [{ ...item, children } as MenuItem] : [];
+            }
+            return [item];
+        });
+    return withLinks(keep(menuItems), t);
 }
 
 const ANTD_LOCALES = { en: enUS, fr: frFR, ar: arEG };
@@ -342,8 +364,8 @@ function AdminConfig({ children }: { children: React.ReactNode }) {
 function AdminShell({ children }: { children: React.ReactNode }) {
     const { t } = useAdminT();
     const pathname = usePathname();
-    const { role, email, isAdmin, permissions } = useAdminRole();
-    const items = useMemo(() => menuFor(isAdmin, permissions, t), [isAdmin, permissions, t]);
+    const { role, email, permissions } = useAdminRole();
+    const items = useMemo(() => menuFor(role, permissions, t), [role, permissions, t]);
     const router = useRouter();
     const [collapsed, setCollapsed] = useState(false);
     const { dir } = useAdminT();
@@ -358,7 +380,12 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     const [pendingKey, setPendingKey] = useState<string | null>(null);
     useEffect(() => setPendingKey(null), [pathname]);
 
-    const selectedKeys = useMemo(() => [pendingKey ?? pathname], [pendingKey, pathname]);
+    // Detail pages (an order, a customer...) highlight the closest menu entry above them.
+    const selectedKeys = useMemo(() => {
+        if (pendingKey) return [pendingKey];
+        const best = MENU_KEYS.filter((key) => pathname === key || pathname?.startsWith(`${key}/`)).sort((a, b) => b.length - a.length)[0];
+        return [best ?? pathname];
+    }, [pendingKey, pathname]);
 
     const openKeys = useMemo(() => {
         if (pathname?.startsWith("/admin/products")) {
@@ -468,6 +495,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
                         style={{
                             borderRight: 0,
                             height: mobile ? "auto" : "calc(100vh - 64px)",
+                            overflowY: mobile ? undefined : "auto",
                             background: "#050f1f",
                         }}
                     />

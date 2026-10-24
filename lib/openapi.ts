@@ -1,4 +1,5 @@
 import { ALL_PERMISSIONS } from '@/lib/admin-auth';
+import { erpPaths, erpTags } from '@/lib/openapi-erp';
 
 const serverUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -92,6 +93,7 @@ export const openApiSpec = {
         { name: 'Operations', description: 'Orders, uploads, and automations' },
         { name: 'Stock', description: 'Inventory per location, stock movements and stock settings (stock permission; costs need the costs permission)' },
         { name: 'Team', description: 'Back-office accounts and roles (admin only)' },
+        ...erpTags,
     ],
     paths: {
         '/api/products': {
@@ -883,6 +885,7 @@ export const openApiSpec = {
                 },
             },
         },
+        ...erpPaths,
     },
     components: {
         schemas: {
