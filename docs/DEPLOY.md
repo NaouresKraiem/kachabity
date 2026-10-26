@@ -1,14 +1,12 @@
-# Production: everything on one AWS server
+# Production: the site on Vercel, the API on one AWS server
 
 ```
-Shoppers / admin ──▶ https://<site_domain> (A record → the server's Elastic IP)
+Shoppers / admin ──▶ Vercel (Next.js site + admin, e.g. test.kachabiti.com; /api rewritten to NEST_URL)
                          │
-                         ▼
+                         ▼ https://<site_domain> (e.g. api-test.kachabiti.com; A record → the Elastic IP)
               EC2 t4g.small (ARM, Ubuntu 24.04, 2 GB + 2 GB swap)
-               ├─ caddy  (ports 80/443, HTTPS from Let's Encrypt)
-               │    /api/* ──▶ api   (NestJS, ghcr.io/<owner>/kachabity-api)
-               │    the rest ──▶ web (Next.js, ghcr.io/<owner>/kachabity-web; /api/internal too)
-               └─ db (Postgres 17, nightly backups to S3)
+               ├─ caddy (ports 80/443, HTTPS from Let's Encrypt) ──▶ api (NestJS, ghcr.io/<owner>/kachabity-api)
+               └─ db (Postgres 17, nightly backups to S3, daily disk snapshots)
 Product photos ──▶ S3 bucket kachabity-products-<id> (public read); documents and backups: private buckets
 ```
 
@@ -19,7 +17,8 @@ Product photos ──▶ S3 bucket kachabity-products-<id> (public read); docume
   health checks → rollback), `backup.sh` (nightly to S3, 30 days kept).
 - **CI/CD** (`.github/workflows/`): `ci.yml` checks every pull request and push (types, lint, API build,
   all end-to-end suites on an empty database built from `db/baseline.sql`). `deploy.yml` runs on every
-  push to `kachabiti-nest`: CI, then both images built on GitHub's ARM runners, then `deploy.sh` on the server.
+  push to `kachabiti-nest`: CI, then the API image built on GitHub's ARM runners, then `deploy.sh` on
+  the server. Vercel builds the site from the same push.
 
 ## What it costs
 
@@ -34,7 +33,9 @@ Approximate on-demand prices in eu-north-1 (Stockholm), October 2026. Check the 
 | Disk snapshots, 7 daily (incremental: about the disk's used space, ~$0.05/GB) | ~$0.50–1 |
 | Data out to the internet (first 100 GB a month free) | $0 |
 | AWS Budgets (first two budgets free) | $0 |
-| **Total** | **~$19** |
+| **Total on AWS** | **~$19** |
+
+Plus Vercel for the site: Hobby is free but for non-commercial use; a shop taking orders belongs on Pro.
 
 On the Free plan the $100 sign-up credit covers about 5 months. Launching an EC2 instance and setting up
 a budget (both done by this Terraform) are two of the console's "Earn AWS credits" activities, $20
@@ -43,7 +44,7 @@ whichever comes first. **Upgrade to the paid plan before then, or the account cl
 with its database goes.** After that it's about $19 a month (less with a 1-year Savings Plan).
 
 The Free plan allows only some instance types (t3.micro, t3.small, t4g.micro, t4g.small, c7i-flex.large,
-m7i-flex.large); t4g.small is the smallest with enough memory for the site, the API and Postgres.
+m7i-flex.large); t4g.small is the smallest with comfortable memory for the API and Postgres.
 
 ## One-time setup
 
@@ -84,9 +85,11 @@ Afterwards: `terraform output server_public_ip` and `terraform output -raw serve
 lines of the server `.env`). Wait for the first boot: `ssh ubuntu@<ip> cloud-init status --wait`.
 
 ### 4. DNS
-At your domain's DNS provider, add an **A record** for `site_domain` (e.g. `test` for test.kachabiti.com)
-pointing to the server's IP, before the first deploy: Caddy gets the HTTPS certificate as soon as the
-name points at it.
+At your domain's DNS provider (Hostinger for kachabiti.com: hPanel → Domains → DNS records; not Vercel's
+DNS page, and leave the nameservers alone), before the first deploy:
+- **A** record for `site_domain` (e.g. `api-test`) → the server's IP. Caddy gets the HTTPS certificate as
+  soon as the name points at it.
+- **CNAME** for the site (e.g. `test`) → the value Vercel shows under the project's Settings → Domains.
 
 ### 5. GitHub
 Settings → **Environments** → **production** (add yourself as a required reviewer if you want to approve
@@ -95,20 +98,20 @@ each deploy):
   - `DEPLOY_HOST` = the IP, `DEPLOY_SSH_KEY` = the private deploy key, `DEPLOY_KNOWN_HOSTS` = the output
     of `ssh-keyscan -t ed25519 <ip>`.
   - `PROD_ENV` = the whole server `.env` (template: `deploy/.env.example`; `POSTGRES_PASSWORD` letters
-    and digits only; the S3 and domain lines from `terraform output -raw server_env`).
-  - `WEB_BUILD_ENV` = the site's build settings, fixed in the image when it's built:
-    ```
-    ENV=production
-    NEST_URL=http://api:4000
-    NEXT_PUBLIC_SITE_URL=https://<site_domain>
-    FILES_PUBLIC_URL=<the same as in PROD_ENV>
-    ```
-    plus any `NEXT_PUBLIC_*` you use (Sentry DSN, phone, social links: see `ENV-EXAMPLE.md`).
-- Variable: `SITE_URL` = `https://<site_domain>` (the deploy checks it answers).
+    and digits only; the S3 and domain lines from `terraform output -raw server_env`; `NEXT_URL` = the
+    Vercel site, for the cache refresh).
+- Variable: `API_URL` = `https://<site_domain>` (the deploy checks it answers).
 - Last, Settings → Secrets and variables → Actions → **Variables**: `DEPLOY_ENABLED` = `true`. Until then
   pushes run CI only, so nothing tries to reach a server that doesn't exist yet.
 
-### 6. First deploy and the data
+### 6. Vercel
+Import the repo, Production Branch `kachabiti-nest`, and in Settings → Environment Variables (Production):
+`NEST_URL=https://<site_domain>`, `FILES_PUBLIC_URL` (from `server_env`), the **same** `AUTH_SECRET` and
+`REVALIDATE_SECRET` as `PROD_ENV`, `ENV=production`, `NEXT_PUBLIC_SITE_URL` (the site's address), and the
+Sentry and other `NEXT_PUBLIC_*` values (see `ENV-EXAMPLE.md`). Then Settings → Domains → add the site's
+name. Redeploy once the API answers, so the pages are built with real data.
+
+### 7. First deploy and the data
 1. Actions → **Deploy** → Run workflow. On the empty server, `migrate.mjs` loads `db/baseline.sql`.
 2. Move the shop's data from Supabase as in `docs/MIGRATION-NESTJS.md` (phase 5 runbook). The target
    database is reached through an SSH tunnel:
@@ -121,12 +124,12 @@ each deploy):
 
 ## Everyday
 
-- **Deploy:** merge or push to `kachabiti-nest`. CI must pass; then both images build and deploy.
-- **Roll back:** Actions → Deploy → Run workflow on an older commit, or on the server
-  `cd /opt/kachabity && ./deploy.sh ghcr.io/<owner>/kachabity-api:<sha> ghcr.io/<owner>/kachabity-web:<sha>`.
+- **Deploy:** merge or push to `kachabiti-nest`. CI must pass; then the API deploys and Vercel builds the site.
+- **Roll back the API:** Actions → Deploy → Run workflow on an older commit, or on the server
+  `cd /opt/kachabity && ./deploy.sh ghcr.io/<owner>/kachabity-api:<older-sha>`.
   A failed health check rolls back by itself. Migrations are not undone: restore a backup for that.
 - **Logs and status:** `ssh deploy@<ip>` then `cd /opt/kachabity && docker compose -f docker-compose.prod.yml ps`
-  (or `logs -f api`, `logs -f web`).
+  (or `logs -f api`, `logs -f caddy`).
 - **New migration:** add the file to `supabase/migrations/`; the next deploy applies it after a backup.
 - **Costs:** Billing and Cost Management → Cost Explorer; the budget e-mails you at 80% of
   `monthly_budget_usd`.

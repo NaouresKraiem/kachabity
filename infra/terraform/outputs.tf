@@ -3,8 +3,8 @@ output "server_public_ip" {
   value       = aws_eip.server.public_ip
 }
 
-output "site_url" {
-  description = "SITE_URL (GitHub variable) and NEXT_PUBLIC_SITE_URL."
+output "api_url" {
+  description = "NEST_URL on Vercel and the GitHub variable API_URL."
   value       = "https://${var.site_domain}"
 }
 

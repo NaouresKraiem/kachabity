@@ -45,5 +45,5 @@ variable "ssh_allowed_cidr" {
 
 variable "site_domain" {
   type        = string
-  description = "Where the site answers, e.g. kachabiti.com, or test.kachabiti.com while testing."
+  description = "Where the API answers (Vercel's NEST_URL), e.g. api.kachabiti.com, or api-test.kachabiti.com while testing."
 }

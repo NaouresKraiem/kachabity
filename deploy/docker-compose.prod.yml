@@ -1,6 +1,7 @@
-# The production server (docs/DEPLOY.md): Postgres, the NestJS API, the Next.js site, and Caddy in
-# front on ports 80/443 (HTTPS certificates from Let's Encrypt, renewed by itself).
-# Lives in /opt/kachabity on the server with its .env; deploy.sh sets API_IMAGE and WEB_IMAGE.
+# The production API server (docs/DEPLOY.md): Postgres, the NestJS API, and Caddy in front on
+# ports 80/443 (HTTPS certificates from Let's Encrypt, renewed by itself). The site is on Vercel,
+# which forwards /api to https://<SITE_DOMAIN>.
+# Lives in /opt/kachabity on the server with its .env; deploy.sh sets API_IMAGE.
 name: kachabity
 
 services:
@@ -29,7 +30,6 @@ services:
       PORT: "4000"
       # POSTGRES_PASSWORD must be URL-safe (letters and digits), see .env.example.
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      NEXT_URL: http://web:3000
     depends_on:
       db: { condition: service_healthy }
     healthcheck:
@@ -38,43 +38,28 @@ services:
       retries: 4
       start_period: 20s
 
-  web:
-    image: ${WEB_IMAGE:-kachabity-web:current}
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      ENV: production
-      NEST_URL: http://api:4000
-    depends_on: [api]
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/ar').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
-      interval: 30s
-      retries: 4
-      start_period: 30s
-
   caddy:
     image: caddy:2.8.4-alpine
     restart: unless-stopped
     ports: ["80:80", "443:443", "443:443/udp"]
     configs: [{ source: caddyfile, target: /etc/caddy/Caddyfile }]
     volumes: [caddy_data:/data, caddy_config:/config]
-    depends_on: [web, api]
+    depends_on: [api]
 
 configs:
-  # /api goes straight to NestJS, except /api/internal (the cache refresh, in Next.js).
+  # shortcut: trusts X-Forwarded-For from anyone, so the API's per-IP limits see the shopper's address
+  # behind Vercel (whose IPs aren't fixed); a direct caller can fake it, but per-e-mail limits still
+  # hold. Restrict it if Vercel ever publishes stable egress IPs.
   caddyfile:
     content: |
+      {
+        servers {
+          trusted_proxies static 0.0.0.0/0 ::/0
+        }
+      }
       ${SITE_DOMAIN} {
         encode zstd gzip
-        handle /api/internal/* {
-          reverse_proxy web:3000
-        }
-        handle /api/* {
-          reverse_proxy api:4000
-        }
-        handle {
-          reverse_proxy web:3000
-        }
+        reverse_proxy api:4000
       }
 
 volumes:

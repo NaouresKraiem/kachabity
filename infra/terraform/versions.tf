@@ -1,6 +1,6 @@
-# The production infrastructure (docs/DEPLOY.md), all on AWS: one EC2 ARM instance that runs
-# Postgres, the NestJS API, the Next.js site and Caddy (deploy/docker-compose.prod.yml), and the S3
-# buckets for files and backups.
+# The production infrastructure (docs/DEPLOY.md) on AWS: one EC2 ARM instance that runs Postgres,
+# the NestJS API and Caddy (deploy/docker-compose.prod.yml), and the S3 buckets for files and backups.
+# The site is on Vercel.
 terraform {
   required_version = ">= 1.10"
 

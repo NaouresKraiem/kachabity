@@ -1,6 +1,6 @@
-# Everything runs on AWS: one EC2 instance (Graviton ARM, t4g.small by default) in the default VPC
-# runs Postgres, the NestJS API, the Next.js site and Caddy (HTTPS) from deploy/docker-compose.prod.yml;
-# files and backups are in S3, reached with the instance's role (no stored keys).
+# The API on AWS: one EC2 instance (Graviton ARM, t4g.small by default) in the default VPC runs
+# Postgres, the NestJS API and Caddy (HTTPS) from deploy/docker-compose.prod.yml; files and backups are
+# in S3, reached with the instance's role (no stored keys). The site is on Vercel.
 # The Free plan pays with credits for up to 6 months; the budget below warns before real charges.
 
 data "aws_vpc" "default" {

@@ -1,7 +1,7 @@
 #cloud-config
 # First boot of the server (infra/terraform/aws.tf): Docker from Ubuntu's packages, automatic
 # security updates, a 'deploy' user for CI (key-only), /opt/kachabity, the nightly backup, and 2 GB
-# of swap (the site, the API and Postgres share 2 GB of memory).
+# of swap (the API and Postgres share 2 GB of memory).
 package_update: true
 package_upgrade: true
 packages:
