@@ -13,7 +13,7 @@ Product photos ──▶ S3 bucket kachabity-products-<id> (public read); docume
 ```
 
 - **Infrastructure** (`infra/terraform/`): the instance and its role (read/write on the three buckets, so
-  no S3 keys anywhere), its firewall (80, 443, SSH), the Elastic IP, the buckets, and a monthly budget
+  no S3 keys anywhere), its firewall (80, 443, SSH), the Elastic IP, the buckets, daily disk snapshots and a monthly budget
   alert. You run Terraform yourself; nothing is created without `apply`.
 - **Server files** (`deploy/`): `docker-compose.prod.yml`, `deploy.sh` (backup → migrate → start →
   health checks → rollback), `backup.sh` (nightly to S3, 30 days kept).
@@ -31,6 +31,7 @@ Approximate on-demand prices in eu-north-1 (Stockholm), October 2026. Check the 
 | EBS gp3 30 GB × ~$0.084 | ~$2.50 |
 | Public IPv4 address (the Elastic IP), $0.005/h | ~$3.65 |
 | S3: a few GB of photos, documents, 30 days of backups, requests | < $0.50 |
+| Disk snapshots, 7 daily (incremental: about the disk's used space, ~$0.05/GB) | ~$0.50–1 |
 | Data out to the internet (first 100 GB a month free) | $0 |
 | AWS Budgets (first two budgets free) | $0 |
 | **Total** | **~$19** |
@@ -134,8 +135,15 @@ each deploy):
 
 ## Backups
 
-Nightly at 02:30 (server time) and before every deploy that has a previous version: `backup.sh` dumps the
-database into the private bucket `kachabity-backups-<id>` (30 days kept; 7 days on the server too).
+Two kinds, both automatic:
+- **Database dumps:** nightly at 02:30 (server time, UTC) and before every deploy that has a previous
+  version, `backup.sh` dumps the database into the private bucket `kachabity-backups-<id>` (30 days kept;
+  7 days on the server too). Use them to restore the database alone, on this server or another.
+- **Disk snapshots:** every day at 01:00 UTC, AWS snapshots the server's whole disk (Postgres included;
+  Data Lifecycle Manager, `aws_dlm_lifecycle_policy.server`), keeping the last `snapshot_days` (7). Use them
+  when the server itself is lost or broken: EC2 → Snapshots → the snapshot → Create volume (same
+  availability zone), stop the instance, detach its root volume, attach the new one as `/dev/sda1`, start.
+  Postgres starts from it as after a power cut (it replays its log), so a snapshot is consistent.
 
 Restore into an empty database:
 ```bash

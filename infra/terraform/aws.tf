@@ -110,6 +110,7 @@ resource "aws_instance" "server" {
     volume_type = "gp3"
     volume_size = var.disk_gb
     encrypted   = true
+    tags        = { Name = "kachabity", Snapshots = "daily" } # picked up by aws_dlm_lifecycle_policy.server
   }
 
   metadata_options {
@@ -131,6 +132,45 @@ resource "aws_eip" "server" {
   instance = aws_instance.server.id
   domain   = "vpc"
   tags     = { Name = "kachabity" }
+}
+
+# Daily snapshots of the server's disk (the database included), the last var.snapshot_days kept.
+# They restore the whole server; the nightly pg_dump in S3 (deploy/backup.sh) restores the database alone.
+resource "aws_iam_role" "snapshots" {
+  name = "kachabity-snapshots"
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [{ Effect = "Allow", Principal = { Service = "dlm.amazonaws.com" }, Action = "sts:AssumeRole" }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "snapshots" {
+  role       = aws_iam_role.snapshots.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSDataLifecycleManagerServiceRole"
+}
+
+resource "aws_dlm_lifecycle_policy" "server" {
+  description        = "Daily snapshots of the kachabity server disk"
+  execution_role_arn = aws_iam_role.snapshots.arn
+  state              = "ENABLED"
+
+  policy_details {
+    resource_types = ["VOLUME"]
+    target_tags    = { Snapshots = "daily" }
+
+    schedule {
+      name      = "daily"
+      copy_tags = true
+      create_rule {
+        interval      = 24
+        interval_unit = "HOURS"
+        times         = ["01:00"] # UTC, before the 02:30 pg_dump
+      }
+      retain_rule {
+        count = var.snapshot_days
+      }
+    }
+  }
 }
 
 # S3 bucket names are global, hence a random suffix.

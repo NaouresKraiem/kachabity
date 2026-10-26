@@ -13,6 +13,11 @@ variable "disk_gb" {
   type    = number
   default = 30
 }
+variable "snapshot_days" {
+  type        = number
+  default     = 7
+  description = "How many daily snapshots of the server's disk are kept."
+}
 
 # Cost alarm: an e-mail at 80% of this monthly amount, and when the month is forecast to pass it.
 variable "monthly_budget_usd" {
