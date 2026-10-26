@@ -1,17 +1,13 @@
-# The production infrastructure (docs/DEPLOY.md): one Oracle Cloud "Always Free" ARM VM that runs
-# Postgres + the NestJS API (deploy/docker-compose.prod.yml), and on Cloudflare the tunnel that
-# publishes the API, its DNS record and the R2 buckets. The storefront itself is on Vercel.
+# The production infrastructure (docs/DEPLOY.md), all on AWS: one EC2 ARM instance that runs
+# Postgres, the NestJS API, the Next.js site and Caddy (deploy/docker-compose.prod.yml), and the S3
+# buckets for files and backups.
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
 
   required_providers {
-    oci = {
-      source  = "oracle/oci"
+    aws = {
+      source  = "hashicorp/aws"
       version = "~> 6.0"
-    }
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 5.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -19,19 +15,16 @@ terraform {
     }
   }
 
-  # State in an R2 bucket (created by hand once, see docs/DEPLOY.md):
+  # State in an S3 bucket you create once by hand (docs/DEPLOY.md):
   # terraform init -backend-config=backend.hcl
   backend "s3" {}
 }
 
-provider "oci" {
-  tenancy_ocid     = var.oci_tenancy_ocid
-  user_ocid        = var.oci_user_ocid
-  fingerprint      = var.oci_fingerprint
-  private_key_path = var.oci_private_key_path
-  region           = var.oci_region
-}
+# Credentials from the environment: aws configure export-credentials (docs/DEPLOY.md).
+provider "aws" {
+  region = var.aws_region
 
-provider "cloudflare" {
-  api_token = var.cloudflare_api_token
+  default_tags {
+    tags = { Project = "kachabity" }
+  }
 }

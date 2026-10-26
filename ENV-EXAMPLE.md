@@ -23,14 +23,17 @@ GMAIL_APP_PASSWORD=your-16-character-app-password
 # Changing it signs everyone out within 15 minutes (their sessions renew with the new key).
 AUTH_SECRET=
 
-# File storage (NestJS): Cloudflare R2, or any S3-compatible service. Buckets `products` (public,
-# served at FILES_PUBLIC_URL, e.g. an R2 custom domain) and `documents` (private, signed links).
-# The Next.js build also reads FILES_PUBLIC_URL to allow those images in next/image.
-S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
-S3_REGION=auto
+# File storage (NestJS): AWS S3, or any S3-compatible service. Buckets products (public, served at
+# FILES_PUBLIC_URL) and documents (private, signed links); their real names in the two *_BUCKET vars.
+# Without keys, NestJS signs with the EC2 instance role (production). The Next.js build also reads
+# FILES_PUBLIC_URL to allow those images in next/image.
+S3_ENDPOINT=https://s3.<region>.amazonaws.com
+S3_REGION=<region>
 S3_ACCESS_KEY_ID=
 S3_SECRET_ACCESS_KEY=
-FILES_PUBLIC_URL=https://files.yourdomain.com
+S3_PRODUCTS_BUCKET=products
+S3_DOCUMENTS_BUCKET=documents
+FILES_PUBLIC_URL=https://<products bucket>.s3.<region>.amazonaws.com
 
 # Desktop notifications (NestJS sends Web Push): the same values the send-push Edge Function had.
 VAPID_KEYS={"publicKey":{...},"privateKey":{...}}

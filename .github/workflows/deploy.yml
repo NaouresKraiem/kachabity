@@ -1,10 +1,10 @@
-# Deploys the API to the server (docs/DEPLOY.md) after CI passes: builds the ARM image, pushes it to
-# GitHub's container registry, then on the server (over SSH) backs up the database, applies the
-# migrations and starts the new image, going back to the previous one if it isn't healthy.
-# The storefront deploys on Vercel from the same push.
+# Deploys to the AWS server (docs/DEPLOY.md) after CI passes: builds the API and site images for ARM,
+# pushes them to GitHub's container registry, then on the server (over SSH) backs up the database,
+# applies the migrations and starts the new images, going back to the previous ones if unhealthy.
 #
 # Secrets (Settings → Environments → production): DEPLOY_HOST, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS,
-# PROD_ENV (the server's .env, see deploy/.env.example). Variable: API_URL (https://api.<domain>).
+# PROD_ENV (the server's .env, see deploy/.env.example), WEB_BUILD_ENV (the site's build settings,
+# see docs/DEPLOY.md). Variable: SITE_URL (https://<site_domain>).
 name: Deploy
 
 on:
@@ -22,25 +22,39 @@ jobs:
     permissions:
       contents: read
 
-  deploy:
-    name: Deploy the API
+  build:
+    name: Build ${{ matrix.image }}
     needs: ci
     # Off until the server and secrets exist: set the repository variable DEPLOY_ENABLED=true (docs/DEPLOY.md).
     if: vars.DEPLOY_ENABLED == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    # The server is ARM (AWS Graviton): build natively, no emulation.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
     environment: production
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        include:
+          - image: kachabity-api
+            file: api/Dockerfile
+          - image: kachabity-web
+            file: Dockerfile
     steps:
       - uses: actions/checkout@v4
 
       - name: Image name
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/kachabity-api" >> "$GITHUB_ENV"
+        env:
+          NAME: ${{ matrix.image }}
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$NAME" >> "$GITHUB_ENV"
 
-      # The server is an ARM machine (Oracle Ampere A1).
-      - uses: docker/setup-qemu-action@v3
+      # NEXT_PUBLIC_* values and the image hosts are fixed when the site is built (the API ignores it).
+      - name: Site build settings
+        env:
+          WEB_BUILD_ENV: ${{ secrets.WEB_BUILD_ENV }}
+        run: printf '%s\n' "$WEB_BUILD_ENV" > "$RUNNER_TEMP/web.env"
+
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -51,14 +65,30 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: api/Dockerfile
+          file: ${{ matrix.file }}
           platforms: linux/arm64
+          secret-files: env=${{ runner.temp }}/web.env
           push: true
           tags: |
             ${{ env.IMAGE }}:${{ github.sha }}
             ${{ env.IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image names
+        run: echo "REGISTRY=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
 
       - name: SSH access
         env:
@@ -86,17 +116,17 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           # The registry login lasts only for this deploy (the token expires with the job anyway).
-          # The image name and actor are expanded here, on purpose, before going to the server.
+          # The image names and actor are expanded here, on purpose, before going to the server.
           # shellcheck disable=SC2029
           printf '%s' "$GHCR_TOKEN" | ssh "$HOST" "docker login ghcr.io -u '$ACTOR' --password-stdin >/dev/null"
           # shellcheck disable=SC2029
-          ssh "$HOST" "trap 'docker logout ghcr.io >/dev/null' EXIT; /opt/kachabity/deploy.sh '$IMAGE:$SHA'"
+          ssh "$HOST" "trap 'docker logout ghcr.io >/dev/null' EXIT; /opt/kachabity/deploy.sh '$REGISTRY/kachabity-api:$SHA' '$REGISTRY/kachabity-web:$SHA'"
 
-      - name: Health from outside (through Cloudflare)
+      - name: Health from outside
         env:
-          API_URL: ${{ vars.API_URL }}
-        if: env.API_URL != ''
+          SITE_URL: ${{ vars.SITE_URL }}
+        if: env.SITE_URL != ''
         run: |
-          for _ in $(seq 12); do curl -fs "$API_URL/api/health" && exit 0; sleep 5; done
-          echo "The API does not answer at $API_URL" >&2
+          for _ in $(seq 12); do curl -fs "$SITE_URL/api/health" && curl -fs -o /dev/null "$SITE_URL/ar" && exit 0; sleep 5; done
+          echo "The site does not answer at $SITE_URL" >&2
           exit 1

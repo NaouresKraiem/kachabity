@@ -26,7 +26,7 @@ import {
 } from '../common/storage';
 import { Database } from '../db/database';
 
-// Ports of app/api/upload/image and app/api/finance/documents, on S3-compatible storage (R2).
+// Ports of app/api/upload/image and app/api/finance/documents, on S3-compatible storage (AWS S3).
 // Access rules come from lib/api-access.ts (upload: products or marketing; documents: finance).
 
 type Upload = {

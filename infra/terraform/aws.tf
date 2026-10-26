@@ -1,0 +1,211 @@
+# Everything runs on AWS: one EC2 instance (Graviton ARM, t4g.small by default) in the default VPC
+# runs Postgres, the NestJS API, the Next.js site and Caddy (HTTPS) from deploy/docker-compose.prod.yml;
+# files and backups are in S3, reached with the instance's role (no stored keys).
+# The Free plan pays with credits for up to 6 months; the budget below warns before real charges.
+
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-*"]
+  }
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+resource "aws_security_group" "server" {
+  name        = "kachabity-server"
+  description = "Kachabity server: the site over HTTP/HTTPS (Caddy) and SSH"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    description = "HTTP (Caddy redirects to HTTPS and answers the certificate challenge)"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "SSH (key-only, see cloud-init.yaml)"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.ssh_allowed_cidr]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_key_pair" "admin" {
+  key_name   = "kachabity-admin"
+  public_key = var.admin_ssh_public_key
+}
+
+# The server's role: read and write the three buckets, nothing else.
+resource "aws_iam_role" "server" {
+  name = "kachabity-server"
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [{ Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" }, Action = "sts:AssumeRole" }]
+  })
+}
+
+resource "aws_iam_role_policy" "server_buckets" {
+  name = "buckets"
+  role = aws_iam_role.server.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Resource = [for bucket in local.buckets : "${bucket.arn}/*"]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = [for bucket in local.buckets : bucket.arn]
+      },
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "server" {
+  name = "kachabity-server"
+  role = aws_iam_role.server.name
+}
+
+resource "aws_instance" "server" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  key_name               = aws_key_pair.admin.key_name
+  vpc_security_group_ids = [aws_security_group.server.id]
+  iam_instance_profile   = aws_iam_instance_profile.server.name
+
+  user_data = templatefile("${path.module}/cloud-init.yaml", {
+    deploy_ssh_public_key = var.deploy_ssh_public_key
+  })
+
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = var.disk_gb
+    encrypted   = true
+  }
+
+  metadata_options {
+    http_tokens = "required" # IMDSv2 only
+    # 2: the API reaches the role's keys from inside its Docker container (one more network hop).
+    http_put_response_hop_limit = 2
+  }
+
+  tags = { Name = "kachabity" }
+
+  # A newer Ubuntu image or an edited cloud-init must not rebuild the server (and its database).
+  lifecycle {
+    ignore_changes = [ami, user_data]
+  }
+}
+
+# A fixed public IP: the DNS record, DEPLOY_HOST and your SSH access don't change on restarts.
+resource "aws_eip" "server" {
+  instance = aws_instance.server.id
+  domain   = "vpc"
+  tags     = { Name = "kachabity" }
+}
+
+# S3 bucket names are global, hence a random suffix.
+resource "random_id" "buckets" {
+  byte_length = 3
+}
+
+resource "aws_s3_bucket" "products" {
+  bucket = "kachabity-products-${random_id.buckets.hex}"
+}
+
+resource "aws_s3_bucket" "documents" {
+  bucket = "kachabity-documents-${random_id.buckets.hex}"
+}
+
+resource "aws_s3_bucket" "backups" {
+  bucket = "kachabity-backups-${random_id.buckets.hex}"
+}
+
+locals {
+  buckets = [aws_s3_bucket.products, aws_s3_bucket.documents, aws_s3_bucket.backups]
+}
+
+# Product photos are public (FILES_PUBLIC_URL); documents and backups stay private (the default).
+resource "aws_s3_bucket_public_access_block" "products" {
+  bucket                  = aws_s3_bucket.products.id
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_policy" "products_public_read" {
+  bucket = aws_s3_bucket.products.id
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [{ Effect = "Allow", Principal = "*", Action = "s3:GetObject", Resource = "${aws_s3_bucket.products.arn}/*" }]
+  })
+  depends_on = [aws_s3_bucket_public_access_block.products]
+}
+
+# Backups are kept 30 days (deploy/backup.sh uploads one a night).
+resource "aws_s3_bucket_lifecycle_configuration" "backups" {
+  bucket = aws_s3_bucket.backups.id
+  rule {
+    id     = "expire"
+    status = "Enabled"
+    filter {}
+    expiration {
+      days = 30
+    }
+  }
+}
+
+# An e-mail when this month's costs reach 80% of the limit, or are forecast to pass it.
+resource "aws_budgets_budget" "monthly" {
+  name         = "kachabity-monthly"
+  budget_type  = "COST"
+  limit_amount = var.monthly_budget_usd
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 80
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "ACTUAL"
+    subscriber_email_addresses = [var.budget_email]
+  }
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 100
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "FORECASTED"
+    subscriber_email_addresses = [var.budget_email]
+  }
+}

@@ -1,6 +1,7 @@
 #cloud-config
-# First boot of the server (infra/terraform/oracle.tf): Docker from Ubuntu's packages, automatic
-# security updates, a 'deploy' user for CI (key-only), /opt/kachabity and the nightly backup.
+# First boot of the server (infra/terraform/aws.tf): Docker from Ubuntu's packages, automatic
+# security updates, a 'deploy' user for CI (key-only), /opt/kachabity, the nightly backup, and 2 GB
+# of swap (the site, the API and Postgres share 2 GB of memory).
 package_update: true
 package_upgrade: true
 packages:
@@ -11,6 +12,11 @@ packages:
 
 ssh_pwauth: false
 
+swap:
+  filename: /swapfile
+  size: 2G
+  maxsize: 2G
+
 users:
   - default
   - name: deploy
@@ -20,7 +26,7 @@ users:
       - ${deploy_ssh_public_key}
 
 write_files:
-  # Nightly database backup to R2 at 02:30 server time (deploy/backup.sh).
+  # Nightly database backup to S3 at 02:30 server time (deploy/backup.sh).
   - path: /etc/cron.d/kachabity-backup
     permissions: "0644"
     content: |

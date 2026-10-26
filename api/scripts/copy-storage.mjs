@@ -1,9 +1,11 @@
 // Phase 4 switch-over: copies the Supabase Storage buckets (products, documents) to S3-compatible
-// storage (Cloudflare R2), then, with --rewrite, points the stored product-image URLs at it.
+// storage (AWS S3), then, with --rewrite, points the stored product-image URLs at it.
 // Reads the source only; safe to re-run (objects already copied are skipped).
 //
 // Env: SOURCE_SUPABASE_URL, SOURCE_SERVICE_ROLE_KEY (the project to copy from), S3_ENDPOINT,
-// S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY (target), and for --rewrite DATABASE_URL and
+// S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_SESSION_TOKEN (short-lived keys only),
+// S3_PRODUCTS_BUCKET, S3_DOCUMENTS_BUCKET
+// (target; the bucket names default to products and documents), and for --rewrite DATABASE_URL and
 // FILES_PUBLIC_URL (the public address of the products bucket).
 // Usage: node scripts/copy-storage.mjs [--rewrite]
 import { AwsClient } from 'aws4fetch';
@@ -20,12 +22,14 @@ const S3 = env('S3_ENDPOINT');
 const s3 = new AwsClient({
   accessKeyId: env('S3_ACCESS_KEY_ID'),
   secretAccessKey: env('S3_SECRET_ACCESS_KEY'),
+  sessionToken: process.env.S3_SESSION_TOKEN,
   service: 's3',
   region: env('S3_REGION', 'auto'),
 });
 const source = (path, init = {}) =>
   fetch(`${SOURCE}/storage/v1${path}`, { ...init, headers: { Authorization: `Bearer ${KEY}`, apikey: KEY, ...init.headers } });
-const target = (bucket, key) => `${S3}/${bucket}/${key.split('/').map(encodeURIComponent).join('/')}`;
+const BUCKETS = { products: env('S3_PRODUCTS_BUCKET', 'products'), documents: env('S3_DOCUMENTS_BUCKET', 'documents') };
+const target = (bucket, key) => `${S3}/${BUCKETS[bucket]}/${key.split('/').map(encodeURIComponent).join('/')}`;
 
 /** Every object key in a bucket (Supabase lists one folder level at a time). */
 async function keys(bucket, prefix = '') {

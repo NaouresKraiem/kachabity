@@ -1,37 +1,27 @@
-# Oracle Cloud API key (Profile → API keys → Add API key; the dialog shows these values).
-variable "oci_tenancy_ocid" { type = string }
-variable "oci_user_ocid" { type = string }
-variable "oci_fingerprint" { type = string }
-variable "oci_private_key_path" {
+variable "aws_region" {
   type        = string
-  description = "Path to the API key's private .pem file (never commit it)."
-}
-variable "oci_region" {
-  type        = string
-  description = "Your home region, e.g. eu-frankfurt-1 or eu-marseille-1 (Always Free resources live there)."
-}
-variable "oci_compartment_ocid" {
-  type        = string
-  description = "Compartment for the resources; the tenancy OCID (root compartment) is fine."
-}
-variable "availability_domain_index" {
-  type        = number
-  default     = 0
-  description = "Try 1 or 2 when the region says it is out of capacity for A1 machines."
+  description = "Your project's Region (AWS Settings → the project → Overview → Region); resources can't go elsewhere."
 }
 
-# The machine: Always Free allows up to 4 ARM cores, 24 GB of memory and 200 GB of disk in total.
-variable "ocpus" {
-  type    = number
-  default = 4
+# The machine: Graviton (ARM), like the images CI builds. t4g.small = 2 cores, 2 GB of memory, and
+# among the types the Free plan allows.
+variable "instance_type" {
+  type    = string
+  default = "t4g.small"
 }
-variable "memory_gb" {
+variable "disk_gb" {
   type    = number
-  default = 24
+  default = 30
 }
-variable "boot_volume_gb" {
-  type    = number
-  default = 100
+
+# Cost alarm: an e-mail at 80% of this monthly amount, and when the month is forecast to pass it.
+variable "monthly_budget_usd" {
+  type    = string
+  default = "25"
+}
+variable "budget_email" {
+  type        = string
+  description = "Who receives the budget alerts."
 }
 
 variable "admin_ssh_public_key" {
@@ -48,22 +38,7 @@ variable "ssh_allowed_cidr" {
   description = "Who may reach SSH (key-only logins). GitHub's runners use many addresses, hence open by default."
 }
 
-# Cloudflare: an API token with Zone DNS edit, Account Cloudflare Tunnel edit and Account R2 edit.
-variable "cloudflare_api_token" {
-  type      = string
-  sensitive = true
-}
-variable "cloudflare_account_id" { type = string }
-variable "cloudflare_zone_id" {
+variable "site_domain" {
   type        = string
-  description = "The zone of var.domain (Cloudflare dashboard → the domain → Overview)."
-}
-variable "domain" {
-  type        = string
-  description = "e.g. kachabity.com: the API answers at api.<domain>, files at files.<domain>."
-}
-variable "r2_location" {
-  type        = string
-  default     = "weur"
-  description = "R2 location hint (weur: Western Europe)."
+  description = "Where the site answers, e.g. kachabiti.com, or test.kachabiti.com while testing."
 }
